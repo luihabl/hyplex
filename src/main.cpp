@@ -23,7 +23,6 @@
 
 using namespace std;
 using namespace std::chrono;
-void finalize();
 
 // ----------------------------- Main function -------------------------------
 int main(int argc, char* argv[])
@@ -43,7 +42,7 @@ int main(int argc, char* argv[])
     fmatrix mesh_x = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix mesh_y = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix vmesh = fmatrix::zeros(N_MESH_X, N_MESH_Y);
-    fmatrix voltages = fmatrix::zeros(2);
+    fmatrix voltages = fmatrix::zeros(3);
     
     // Average field variablesd
     #ifdef VERBOSE
@@ -86,17 +85,19 @@ int main(int argc, char* argv[])
     init_volume_mesh(vmesh, mesh_x, mesh_y);
 
     // Initializing solver 
-    rsolver solver(mesh_x, mesh_y, vmesh, 2, 2);
+    rsolver solver(mesh_x, mesh_y, vmesh, 2, 3);
 
-    imatrix box_w = {0, 0, 0, N_MESH_Y - 1};
-    imatrix box_e = {N_MESH_X - 1, 0, N_MESH_X - 1, N_MESH_Y - 1};
-    solver.set_dirichlet_box(box_w, 0);
-    solver.set_dirichlet_box(box_e, 1);
+    imatrix box_thruster = {0, 0, 0, N_THRUSTER - 1};
+    imatrix box_2 = {0, N_MESH_Y - 1, N_MESH_X - 1, N_MESH_Y - 1};
+    imatrix box_3 = {N_MESH_X - 1, 0, N_MESH_X - 1, N_MESH_Y - 1};
+    solver.set_dirichlet_box(box_thruster, 0);
+    solver.set_dirichlet_box(box_2, 1);
+    solver.set_dirichlet_box(box_3, 2);
 
-    imatrix box_n = {1, N_MESH_Y - 1, N_MESH_X - 2, N_MESH_Y - 1};
-    imatrix box_s = {1, 0, N_MESH_X - 2, 0};
-    solver.set_neumann_box(box_n, 0);
-    solver.set_neumann_box(box_s, 1);
+    imatrix box_1 = {0, N_THRUSTER, 0, N_MESH_Y - 2};
+    imatrix box_4 = {1, 0, N_MESH_X - 2, 0};
+    solver.set_neumann_box(box_1, 0);
+    solver.set_neumann_box(box_4, 1);
 
     solver.assemble();
 
@@ -129,7 +130,7 @@ int main(int argc, char* argv[])
         if(i % K_SUB == 0) weight(p_i, n_active_i, wmesh_i, mesh_x, mesh_y, lpos_i);
 
         // Step 2.0 integration of Poisson's equation
-        voltages = {VOLT_0_NORM, ac_voltage_at_time(i, DT, FREQ, VOLT_1_NORM, 0.0)};
+        voltages = {VOLT_0_NORM, VOLT_1_NORM, VOLT_1_NORM};
         solver.solve(phi, voltages, wmesh_i, wmesh_e);
 
         // Step 2.1: calculation of electric field
@@ -139,6 +140,12 @@ int main(int argc, char* argv[])
         electric_field_at_particles(efield_x_at_p_e, efield_y_at_p_e, efield_x, efield_y, p_e, n_active_e, mesh_x, mesh_y, lpos_e);
         if(i % K_SUB == 0) electric_field_at_particles(efield_x_at_p_i, efield_y_at_p_i, efield_x, efield_y, p_i, n_active_i, mesh_x, mesh_y, lpos_i);
         
+
+        add_flux_particles(p_i, n_active_i, T_I, VD_I, M_I, 100);
+        add_flux_particles(p_e, n_active_e, T_EL, 0, M_EL, 100);
+
+
+        // TODO: check if injection is good, put parameters of simulation and run
         // Step 3: integration of equations of motion
         move_e(p_e, n_active_e, efield_x_at_p_e, efield_y_at_p_e);
         if(i % K_SUB == 0) move_i(p_i, n_active_i, efield_x_at_p_i, efield_y_at_p_i);
@@ -148,8 +155,8 @@ int main(int argc, char* argv[])
         if(i % K_SUB == 0) boundaries(p_i, n_active_i, lpos_i);
 
         // Step 5: Monte-Carlo collisions
-        collisions_e(p_e, n_active_e, lpos_e, p_i, n_active_i, lpos_i, M_I, N_NEUTRAL, p_null_e, nu_prime_e);
-        if(i % K_SUB == 0) collisions_i(p_i, n_active_i, M_I, N_NEUTRAL, p_null_i, nu_prime_i);
+        // collisions_e(p_e, n_active_e, lpos_e, p_i, n_active_i, lpos_i, M_I, N_NEUTRAL, p_null_e, nu_prime_e);
+        // if(i % K_SUB == 0) collisions_i(p_i, n_active_i, M_I, N_NEUTRAL, p_null_i, nu_prime_i);
 
         print_info(i, p_e, n_active_e, p_i, n_active_i, 1000);
         // average_field(phi_av, phi, i);
@@ -168,12 +175,7 @@ int main(int argc, char* argv[])
     fmatrix dens_i_av_corrected = (4 / pow(DX, 2)) *  N_FACTOR * dens_i_av / vmesh;
     save_to_csv(dens_e_av_corrected, "dens_e.csv");
     save_to_csv(dens_i_av_corrected, "dens_i.csv");
-
+    
+    delete_cross_sections_arrays();
 	return 0;
 }
-
-void finalize(){
-    delete_cross_sections_arrays();
-    // finalize_hypre(); 
-}
-

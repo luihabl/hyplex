@@ -39,6 +39,7 @@ double VOLT_1;
 double T_NEUTRAL;
 double N_NEUTRAL;
 double PLASMA_DENSITY;
+int N_THRUSTER;
 
 // Particle 1 - Electrons
 double M_EL;
@@ -48,6 +49,8 @@ double T_EL;
 // Particle 2 - Ions
 string GAS_NAME;
 double Q_I;
+double MACH_I;
+double VD_I;
 double T_I;
   
 double M_I;
@@ -105,19 +108,21 @@ void load_config_file(string filename){
     FREQ = reader.GetReal("global", "FREQ", -1);
     VOLT_0 = reader.GetReal("global", "VOLT_0", -1);
     VOLT_1 = reader.GetReal("global", "VOLT_1", -1);      
-    T_NEUTRAL = reader.GetReal("global", "T_NEUTRAL", -1) * K_BOLTZ / Q;
+    T_NEUTRAL = reader.GetReal("global", "T_NEUTRAL", -1);
     N_NEUTRAL = reader.GetReal("global", "N_NEUTRAL", -1);
     PLASMA_DENSITY = reader.GetReal("global", "PLASMA_DENSITY", -1);
+    N_THRUSTER = (int) reader.GetReal("global", "N_THRUSTER", -1);
 
     // Particle 1 - Electrons
     M_EL = reader.GetReal("electrons", "M_EL", -1);
     Q_EL = reader.GetReal("electrons", "Q_EL", -1);
-    T_EL = reader.GetReal("electrons", "T_EL", -1) * K_BOLTZ / Q;
+    T_EL = reader.GetReal("electrons", "T_EL", -1);
 
     // Particle 2 - Ions
     GAS_NAME = reader.Get("ions", "GAS_NAME", "");
     Q_I = reader.GetReal("ions", "Q_I", -1);
-    T_I = reader.GetReal("ions", "T_I", -1) * K_BOLTZ / Q;
+    T_I = reader.GetReal("ions", "T_I", -1);
+    MACH_I = reader.GetReal("ions", "MACH_I", -1);
     
     M_I = reader.GetReal(GAS_NAME, "M_I", -1);
     N_EXC = (int) reader.GetReal(GAS_NAME, "N_EXC", -1);
@@ -141,8 +146,10 @@ void load_config_file(string filename){
     DY =  L_Y / ((double) N_MESH_Y - 1);
     VOLT_0_NORM = VOLT_0 * Q * pow(DT, 2) / (M_EL * pow(DX, 2));
     VOLT_1_NORM = VOLT_1 * Q * pow(DT, 2) / (M_EL * pow(DX, 2));
+    VD_I = MACH_I * sqrt(T_EL * Q / M_I);
     N_TOTAL = PARTICLE_PER_CELL * (N_MESH_X - 1) * (N_MESH_Y - 1);
     N_FACTOR = PLASMA_DENSITY * L_X * L_Y / N_TOTAL;
     GAMMA = 2 * N_FACTOR * pow(Q, 2) * pow(DT, 2) / (M_EL * EPS_0 * pow(DX, 2));
     ALPHA = K_SUB * M_EL / M_I;
+
 }

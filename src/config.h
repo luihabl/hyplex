@@ -37,7 +37,8 @@ extern double VOLT_0;
 extern double VOLT_1;         
 extern double T_NEUTRAL;
 extern double N_NEUTRAL;      
-extern double PLASMA_DENSITY;  
+extern double PLASMA_DENSITY;
+extern int N_THRUSTER; 
 
 // Particle 1 - Electrons
 extern double M_EL;
@@ -48,6 +49,8 @@ extern double T_EL;
 extern string GAS_NAME;
 extern double M_I;
 extern double Q_I;
+extern double MACH_I;
+extern double VD_I;
 extern double T_I;  
 extern double E_IZ;
 extern int N_EXC;

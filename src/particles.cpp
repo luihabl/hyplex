@@ -41,7 +41,23 @@ void add_maxwellian_particles(fmatrix & p, int & n_active, const double temperat
 		p.val[i * 6 + 5] = (DT / DX) * r_norm(0.0, v_temperature);
 	}
 	n_active += n_add;
+}
 
+void add_flux_particles(fmatrix & p, int & n_active, const double temperature, const double v_drift, const double mass, const size_t n_add){
+
+	double v_temperature = sqrt(Q * temperature / mass);
+
+	for (size_t i = n_active; i < n_active + n_add; i++)
+	{	
+		p.val[i * 6 + 3] = (DT / DX) * (v_temperature * sqrt(- 2 * log(r_unif())) + v_drift);
+		p.val[i * 6 + 4] = (DT / DX) * r_norm(0.0, v_temperature);
+		p.val[i * 6 + 5] = (DT / DX) * r_norm(0.0, v_temperature);
+
+		p.val[i * 6 + 0] = p.val[i * 6 + 3] * r_unif();
+		p.val[i * 6 + 1] = (DY / DX) * ((double) N_THRUSTER - 1.0) * r_unif();
+		p.val[i * 6 + 2] = 0.0;
+	}
+	n_active += n_add;
 }
 
 void add_maxwellian_particle_at_position(fmatrix & p, int & n_active, imatrix & lpos, const double temperature, const double mass, double x_pos, double y_pos, int lpos_x, int lpos_y)
@@ -84,24 +100,22 @@ void boundaries(fmatrix & p, int & n_active, imatrix & lpos)
 	int tbremoved[100000]; // Modify fmatrix class to include int as template. Make a smart guess of the maximum removed particles.
 
 	double pos_x = 0.0;
+	double pos_y = 0.0;
 	double x_max = ((double) N_MESH_X - 1);
 	double y_max = ((double) N_MESH_Y - 1) * (DY / DX);
 
 	for (int i = 0; i < n_active; i++)
 	{
 		pos_x = p.val[i * 6 + 0];
+		pos_y = p.val[i * 6 + 1];
 
-		if (pos_x <= 0 || pos_x >= x_max)
+		if (pos_x <= 0 || pos_x >= x_max || pos_y >= y_max)
 		{
 			tbremoved[n_remove] = i;
 			n_remove += 1;
-		} else {
-			while (p.val[i * 6 + 1] < 0){
-				p.val[i * 6 + 1] = p.val[i * 6 + 1] + y_max;
-			}
-			while(p.val[i * 6 + 1] > y_max){
-				p.val[i * 6 + 1] = p.val[i * 6 + 1] - y_max;
-			}
+		} else if (pos_y < 0) {
+			p.val[i * 6 + 1] = - p.val[i * 6 + 1];
+			p.val[i * 6 + 4] = - p.val[i * 6 + 4];
 		}
 
 		if (n_remove >= 100000)
