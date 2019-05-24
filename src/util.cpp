@@ -147,8 +147,8 @@ void print_info(int i, fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_activ
     {
         cout << "   progress: " << (double) (i + 1) / N_STEPS << endl;
         cout << "       step: " << i + 1 << endl;
-        cout << " n_active_e: " << n_active_e / N_TOTAL << endl;
-        cout << " n_active_i: " << n_active_i / N_TOTAL << endl;
+        cout << " n_active_e: " << n_active_e << endl;
+        cout << " n_active_i: " << n_active_i << endl;
         cout << endl;
     }
 }
@@ -170,3 +170,8 @@ int clamp(int low, int hi, int val){
     else {return val;}
 }
 
+void verbose_log(string message){
+    #ifdef VERBOSE
+    cout << message << endl;
+    #endif
+}

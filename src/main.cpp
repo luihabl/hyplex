@@ -33,9 +33,7 @@ int main(int argc, char* argv[])
     // Initialization ---------------------------------------------
 
 	// General field variables
-    #ifdef VERBOSE
-    printf ("Initializing general variables\n");
-    #endif
+    verbose_log("Initializing general variables");
 	fmatrix phi = fmatrix::zeros(N_MESH_X, N_MESH_Y);
 	fmatrix efield_x = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix efield_y = fmatrix::zeros(N_MESH_X, N_MESH_Y);
@@ -45,9 +43,7 @@ int main(int argc, char* argv[])
     fmatrix voltages = fmatrix::zeros(3);
     
     // Average field variablesd
-    #ifdef VERBOSE
-    printf ("Initializing average field variables\n");
-    #endif
+    verbose_log("Initializing average field variables");
     fmatrix phi_av = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix efield_av_x = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix efield_av_y = fmatrix::zeros(N_MESH_X, N_MESH_Y);
@@ -55,9 +51,7 @@ int main(int argc, char* argv[])
     fmatrix dens_i_av = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     
 	// Particle 1 - Electrons
-    #ifdef VERBOSE
-    printf ("Initializing variables for Electrons\n");
-    #endif
+    verbose_log("Initializing electrons variables");
 	int n_active_e = 0;
 	fmatrix p_e = fmatrix::zeros(N_MAX_PARTICLES, 6);
     imatrix lpos_e = imatrix::zeros(N_MAX_PARTICLES, 2);
@@ -68,9 +62,7 @@ int main(int argc, char* argv[])
 	double p_null_e = p_null(nu_prime_e, DT);
 	
 	// Particle 2 - Ions
-    #ifdef VERBOSE
-    printf ("Initializing variables for Ions\n");
-    #endif
+    verbose_log("Initializing ions variables");
 	int n_active_i = 0;
 	fmatrix p_i = fmatrix::zeros(N_MAX_PARTICLES, 6);
     imatrix lpos_i = imatrix::zeros(N_MAX_PARTICLES, 2);
@@ -81,10 +73,12 @@ int main(int argc, char* argv[])
 	double p_null_i = p_null(nu_prime_i, DT * K_SUB);
 
     //initializing mesh
+    verbose_log("Initializing mesh");
     init_mesh(mesh_x,  mesh_y, A_X, A_Y, N_MESH_X, N_MESH_Y);
     init_volume_mesh(vmesh, mesh_x, mesh_y);
 
     // Initializing solver 
+    verbose_log("Initializing solver");
     rsolver solver(mesh_x, mesh_y, vmesh, 2, 3);
 
     imatrix box_thruster = {0, 0, 0, N_THRUSTER - 1};
@@ -101,30 +95,18 @@ int main(int argc, char* argv[])
 
     solver.assemble();
 
-	// Insert initial particles	
-    #ifdef VERBOSE
-    printf ("Adding particles\n");
-    #endif
-    add_maxwellian_particles(p_e, n_active_e, T_EL, M_EL, N_TOTAL);
-    add_maxwellian_particles(p_i, n_active_i, T_I, M_I, N_TOTAL);
-
     // Printing initial information
+    std::cout << endl << endl; 
     std::cout << setw(11) << "n_mesh x: " << N_MESH_X << " y: " << N_MESH_Y << endl; 
-    std::cout << setw(11) << "n_part_e: " << n_active_e << endl;
-    std::cout << setw(11) << "n_part_i: " << n_active_i << endl;
     std::cout << setw(11) << "n_steps: " << N_STEPS << endl;
     std::cout << setw(11) << "p_null_e: " << p_null_e << endl;
     std::cout << setw(11) << "p_null_i: " << p_null_i << endl << endl;
-
-    #ifdef VERBOSE
-    printf ("Starting main loop\n");
-    #endif
-
+    
 	// Main loop ------------------------------------------------------
+    verbose_log(" ---- starting main loop ---- ");
     auto start = high_resolution_clock::now();
 	for (int i = 0; i < N_STEPS; i++)
 	{   
-        
 		// Step 1.0: particle weighting
 		weight(p_e, n_active_e, wmesh_e, mesh_x, mesh_y, lpos_e);
         if(i % K_SUB == 0) weight(p_i, n_active_i, wmesh_i, mesh_x, mesh_y, lpos_i);
@@ -140,29 +122,28 @@ int main(int argc, char* argv[])
         electric_field_at_particles(efield_x_at_p_e, efield_y_at_p_e, efield_x, efield_y, p_e, n_active_e, mesh_x, mesh_y, lpos_e);
         if(i % K_SUB == 0) electric_field_at_particles(efield_x_at_p_i, efield_y_at_p_i, efield_x, efield_y, p_i, n_active_i, mesh_x, mesh_y, lpos_i);
         
+        // Step 3: particles injection
+        add_flux_particles(p_i, n_active_i, T_I, VD_I, M_I, N_INJ_I);
+        add_flux_particles(p_e, n_active_e, T_EL, 0, M_EL, N_INJ_EL);
 
-        add_flux_particles(p_i, n_active_i, T_I, VD_I, M_I, 100);
-        add_flux_particles(p_e, n_active_e, T_EL, 0, M_EL, 100);
-
-
-        // TODO: check if injection is good, put parameters of simulation and run
-        // Step 3: integration of equations of motion
+        // Step 4: integration of equations of motion
         move_e(p_e, n_active_e, efield_x_at_p_e, efield_y_at_p_e);
         if(i % K_SUB == 0) move_i(p_i, n_active_i, efield_x_at_p_i, efield_y_at_p_i);
 
-        // Step 4: particle loss at boundaries
+        // Step 5: particle loss at boundaries
         boundaries(p_e, n_active_e, lpos_e);
         if(i % K_SUB == 0) boundaries(p_i, n_active_i, lpos_i);
 
-        // Step 5: Monte-Carlo collisions
+        // Step 6: Monte-Carlo collisions
         // collisions_e(p_e, n_active_e, lpos_e, p_i, n_active_i, lpos_i, M_I, N_NEUTRAL, p_null_e, nu_prime_e);
         // if(i % K_SUB == 0) collisions_i(p_i, n_active_i, M_I, N_NEUTRAL, p_null_i, nu_prime_i);
 
-        print_info(i, p_e, n_active_e, p_i, n_active_i, 1000);
+        print_info(i, p_e, n_active_e, p_i, n_active_i, 100);
         // average_field(phi_av, phi, i);
         // average_field(efield_av_x, efield_x, i);
         average_field(dens_e_av, wmesh_e, i);
         average_field(dens_i_av, wmesh_i, i);
+
 	}
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>(stop - start);

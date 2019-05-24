@@ -4,6 +4,7 @@
 
 #include <string>
 #include <cmath>
+#include <iostream>
 
 using namespace std;
 
@@ -25,7 +26,6 @@ int N_MESH_Y;
 double A_X;
 double A_Y;
 int N_MAX_PARTICLES;
-int PARTICLE_PER_CELL;
 int N_STEPS;
 int N_AVERAGE;
 int K_SUB;
@@ -45,6 +45,8 @@ int N_THRUSTER;
 double M_EL;
 double Q_EL;
 double T_EL;
+double J_EL;
+double N_INJ_EL;
 
 // Particle 2 - Ions
 string GAS_NAME;
@@ -52,6 +54,8 @@ double Q_I;
 double MACH_I;
 double VD_I;
 double T_I;
+double J_I;
+double N_INJ_I;
   
 double M_I;
 int N_EXC;
@@ -70,7 +74,6 @@ double DX;
 double DY;
 double VOLT_0_NORM;
 double VOLT_1_NORM;
-double N_TOTAL;
 double N_FACTOR;
 double GAMMA;
 double ALPHA;
@@ -90,38 +93,49 @@ void load_config_file(string filename){
     PI = reader.GetReal("physical", "PI", -1);
     K_BOLTZ = reader.GetReal("physical", "K_BOLTZ", -1);
 
-    // Solver parameters
-    N_MESH_X = (int) reader.GetReal("solver", "N_MESH_X", -1);
-    N_MESH_Y = (int) reader.GetReal("solver", "N_MESH_Y", -1);
-    A_X = reader.GetReal("solver", "A_X", -1);
-    A_Y = reader.GetReal("solver", "A_Y", -1);
-    N_MAX_PARTICLES = (int) reader.GetReal("solver", "N_MAX_PARTICLES", -1);
-    PARTICLE_PER_CELL = (int) reader.GetReal("solver", "PARTICLE_PER_CELL", -1);
-    N_STEPS = (int) reader.GetReal("solver", "N_STEPS", -1);
-    N_AVERAGE = (int) reader.GetReal("solver", "N_AVERAGE", -1);
-    K_SUB =  (int) reader.GetReal("solver", "K_SUB", -1);
+    // Geometry
+    L_X = reader.GetReal("geometry", "L_X", -1);
+    L_Y = reader.GetReal("geometry", "L_Y", -1);
+    N_MESH_X = (int) reader.GetReal("geometry", "N_MESH_X", -1);
+    N_MESH_Y = (int) reader.GetReal("geometry", "N_MESH_Y", -1);
+    N_THRUSTER = (int) reader.GetReal("geometry", "N_THRUSTER", -1);
+    A_X = reader.GetReal("geometry", "A_X", -1);
+    A_Y = reader.GetReal("geometry", "A_Y", -1);
 
-    // Physical parameters
-    L_X = reader.GetReal("global", "L_X", -1);
-    double L_Y = reader.GetReal("global", "L_Y", -1);
-    // L_Y = 0.5 * L_X * (N_MESH_Y - 1) / (N_MESH_X - 1);
-    FREQ = reader.GetReal("global", "FREQ", -1);
-    VOLT_0 = reader.GetReal("global", "VOLT_0", -1);
-    VOLT_1 = reader.GetReal("global", "VOLT_1", -1);      
-    T_NEUTRAL = reader.GetReal("global", "T_NEUTRAL", -1);
-    N_NEUTRAL = reader.GetReal("global", "N_NEUTRAL", -1);
-    PLASMA_DENSITY = reader.GetReal("global", "PLASMA_DENSITY", -1);
-    N_THRUSTER = (int) reader.GetReal("global", "N_THRUSTER", -1);
+    // Time
+    DT = reader.GetReal("time", "DT", -1); 
+    N_STEPS = (int) reader.GetReal("time", "N_STEPS", -1);
+    N_AVERAGE = (int) reader.GetReal("time", "N_AVERAGE", -1);
+    K_SUB =  (int) reader.GetReal("time", "K_SUB", -1);
+
+    // Boundary conditions
+    VOLT_0 = reader.GetReal("boundary-conditions", "VOLT_0", -1);
+    VOLT_1 = reader.GetReal("boundary-conditions", "VOLT_1", -1);   
+    
+    // Plasma
+    PLASMA_DENSITY = reader.GetReal("plasma", "PLASMA_DENSITY", -1);
+    N_FACTOR = reader.GetReal("plasma", "N_FACTOR", -1);
+    N_MAX_PARTICLES = (int) reader.GetReal("plasma", "N_MAX_PARTICLES", -1);
+
+    
+    // ---------------------- species ---------------------------
+
+    // neutral
+    T_NEUTRAL = reader.GetReal("neutral", "T_NEUTRAL", -1);
+    N_NEUTRAL = reader.GetReal("neutral", "N_NEUTRAL", -1);
+    
 
     // Particle 1 - Electrons
     M_EL = reader.GetReal("electrons", "M_EL", -1);
     Q_EL = reader.GetReal("electrons", "Q_EL", -1);
     T_EL = reader.GetReal("electrons", "T_EL", -1);
+    J_EL = reader.GetReal("electrons", "J_EL", -1);
 
     // Particle 2 - Ions
     GAS_NAME = reader.Get("ions", "GAS_NAME", "");
     Q_I = reader.GetReal("ions", "Q_I", -1);
     T_I = reader.GetReal("ions", "T_I", -1);
+    J_I = reader.GetReal("ions", "J_I", -1);
     MACH_I = reader.GetReal("ions", "MACH_I", -1);
     
     M_I = reader.GetReal(GAS_NAME, "M_I", -1);
@@ -140,15 +154,16 @@ void load_config_file(string filename){
         E_EXC_PATH[i] =  reader.Get(GAS_NAME, "EXC" + to_string(i + 1) + "_PATH", "");
     }
 
-    // Operational parameters
-    DT = 1.0 / (reader.GetReal("global", "DT_DENOMINATOR", -1) * FREQ);  // [benchmark-parameter]
-    DX =  L_X / ((double) N_MESH_X - 1);
-    DY =  L_Y / ((double) N_MESH_Y - 1);
+    // Calculated parameters
+    DX = L_X / ((double) N_MESH_X - 1);
+    DY = L_Y / ((double) N_MESH_Y - 1);
     VOLT_0_NORM = VOLT_0 * Q * pow(DT, 2) / (M_EL * pow(DX, 2));
     VOLT_1_NORM = VOLT_1 * Q * pow(DT, 2) / (M_EL * pow(DX, 2));
+    
     VD_I = MACH_I * sqrt(T_EL * Q / M_I);
-    N_TOTAL = PARTICLE_PER_CELL * (N_MESH_X - 1) * (N_MESH_Y - 1);
-    N_FACTOR = PLASMA_DENSITY * L_X * L_Y / N_TOTAL;
+    N_INJ_EL = J_EL * ((double)N_THRUSTER - 1) * DY * DT / (Q * N_FACTOR);
+    N_INJ_I = J_I * ((double)N_THRUSTER - 1) * DY * DT / (Q * N_FACTOR);
+    
     GAMMA = 2 * N_FACTOR * pow(Q, 2) * pow(DT, 2) / (M_EL * EPS_0 * pow(DX, 2));
     ALPHA = K_SUB * M_EL / M_I;
 

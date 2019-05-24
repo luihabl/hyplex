@@ -7,6 +7,7 @@
 #include <iomanip>
 #include "fmatrix.h"
 #include "config.h"
+#include "util.h"
 
 #define GET_VARIABLE_NAME(Variable) (#Variable)
 
@@ -22,6 +23,7 @@ imatrix sample_from_sequence_naive(int sample_size, int range);
 void print_info(int i, fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i,  int step_interval = 1000);
 void average_field(fmatrix & av_field, const fmatrix & field, int i);
 int clamp(int low, int hi, int val);
+void verbose_log(string message);
 
 inline
 void swap(double& a, double& b) {
@@ -33,10 +35,6 @@ void swap(double& a, double& b) {
 template <class T>
 void save_to_csv(tmatrix<T> & m, string name = "out.csv", int nrows = -1, int ncols = -1)
 {
-    #ifdef VERBOSE
-    cout << "Saving " << name << "...";
-    #endif
-
     name = OUTPUT_PATH + name;
     nrows = nrows < 0 ? (int) m.n1 : nrows;
     ncols = ncols < 0 ? (int) m.n2 : ncols;
@@ -56,9 +54,8 @@ void save_to_csv(tmatrix<T> & m, string name = "out.csv", int nrows = -1, int nc
     }
     
     file.close();
-    #ifdef VERBOSE
-    cout << "OK" << endl;
-    #endif
+
+    verbose_log("Saved " + name);
 }
 
 template <class T>

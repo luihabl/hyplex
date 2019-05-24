@@ -46,6 +46,7 @@ double ac_voltage_at_time(size_t i, double dt, double freq_hz, double amplitude,
  */
 void calculate_efield(fmatrix & efield_x, fmatrix & efield_y, fmatrix & phi, fmatrix & w_i, fmatrix & w_e, fmatrix & mesh_x , fmatrix & mesh_y, fmatrix & vmesh)
 {
+	/*
     for(size_t i = 0; i < phi.n1; i++){
         for(size_t j = 0; j < phi.n2; j++)
         {
@@ -64,14 +65,36 @@ void calculate_efield(fmatrix & efield_x, fmatrix & efield_y, fmatrix & phi, fma
                 efield_y.val[i * efield_y.n2 + j] = (phi.val[i * phi.n2 + (j - 1)] - phi.val[i * phi.n2 + (j + 1)]) / (mesh_y.val[i * mesh_y.n2 + (j + 1)] - mesh_y.val[i * mesh_y.n2 + (j - 1)]);
         }
     }
+	*/
+
+	for(size_t i = 0; i < phi.n1; i++){
+        for(size_t j = 0; j < phi.n2; j++)
+        {
+            if (i == 0)
+                efield_x.val[i * efield_x.n2 + j] = (phi.val[i * phi.n2 + j] - phi.val[(i + 1) * phi.n2 + j]) / (mesh_x.val[(i + 1) * mesh_x.n2 + j] - mesh_x.val[i * mesh_x.n2 + j]);
+            else if(i == phi.n1 - 1)
+                efield_x.val[i * efield_x.n2 + j] = (phi.val[(i - 1) * phi.n2 + j] - phi.val[i * phi.n2 + j]) / (mesh_x.val[i * mesh_x.n2 + j] - mesh_x.val[(i - 1) * mesh_x.n2 + j]);
+            else
+                efield_x.val[i * efield_x.n2 + j] = (phi.val[(i - 1) * phi.n2 + j] - phi.val[(i + 1) * phi.n2 + j]) / (mesh_x.val[(i + 1) * mesh_x.n2 + j] - mesh_x.val[(i - 1) * mesh_x.n2 + j]);
+            
+            if (j == 0)
+                efield_y.val[i * efield_y.n2 + j] = (phi.val[i * phi.n2 + j] - phi.val[i * phi.n2 + (j + 1)]) / (mesh_y.val[i * mesh_y.n2 + (j + 1)] - mesh_y.val[i * mesh_y.n2 + j]);
+            else if(j == phi.n2 - 1)
+                efield_y.val[i * efield_y.n2 + j] = (phi.val[i * phi.n2 + (j - 1)] - phi.val[i * phi.n2 + j]) / (mesh_y.val[i * mesh_y.n2 + j] - mesh_y.val[i * mesh_y.n2 + (j - 1)]);
+            else
+                efield_y.val[i * efield_y.n2 + j] = (phi.val[i * phi.n2 + (j - 1)] - phi.val[i * phi.n2 + (j + 1)]) / (mesh_y.val[i * mesh_y.n2 + (j + 1)] - mesh_y.val[i * mesh_y.n2 + (j - 1)]);
+        }
+    }
+
+	
+	// ADD HERE ELECTRIC FIELD CORRECTION <--------------------------
+
+
+
 }
 
 void init_mesh(fmatrix & mesh_x, fmatrix & mesh_y, double a_x, double a_y, int n_mesh_x, int n_mesh_y)
 {
-	#ifdef VERBOSE
-    printf ("Initializing mesh\n");
-    #endif
-
 	for (size_t i = 0; i < mesh_x.n1; i++) {
 		for (size_t j = 0; j < mesh_x.n2; j++) {
 			
@@ -91,11 +114,6 @@ void init_mesh(fmatrix & mesh_x, fmatrix & mesh_y, double a_x, double a_y, int n
  @param mesh_y array of y coordinates of the mesh
  */
 void init_volume_mesh(fmatrix & vmesh, fmatrix & mesh_x, fmatrix & mesh_y){
-	
-	#ifdef VERBOSE
-    printf ("Initializing volume mesh\n");
-    #endif
-
 	size_t ip, im, jp, jm;
 	for(size_t i = 0; i < vmesh.n1; i++){
 		for(size_t j = 0; j < vmesh.n2; j++){

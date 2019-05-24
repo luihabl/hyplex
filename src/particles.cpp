@@ -43,21 +43,24 @@ void add_maxwellian_particles(fmatrix & p, int & n_active, const double temperat
 	n_active += n_add;
 }
 
-void add_flux_particles(fmatrix & p, int & n_active, const double temperature, const double v_drift, const double mass, const size_t n_add){
-
+void add_flux_particles(fmatrix & p, int & n_active, const double temperature, const double v_drift, const double mass, const double n_add){
+	
+	double f_n_add = floor(n_add);
+	size_t n_new = r_unif() < (n_add - f_n_add) ?  (size_t) f_n_add + 1 : (size_t) f_n_add;
+	
 	double v_temperature = sqrt(Q * temperature / mass);
 
-	for (size_t i = n_active; i < n_active + n_add; i++)
+	for (size_t i = n_active; i < n_active + n_new; i++)
 	{	
 		p.val[i * 6 + 3] = (DT / DX) * (v_temperature * sqrt(- 2 * log(r_unif())) + v_drift);
 		p.val[i * 6 + 4] = (DT / DX) * r_norm(0.0, v_temperature);
 		p.val[i * 6 + 5] = (DT / DX) * r_norm(0.0, v_temperature);
 
-		p.val[i * 6 + 0] = p.val[i * 6 + 3] * r_unif();
+		p.val[i * 6 + 0] = p.val[i * 6 + 3] * r_unif(); // maybe necessary to multiply K_SUB here!
 		p.val[i * 6 + 1] = (DY / DX) * ((double) N_THRUSTER - 1.0) * r_unif();
 		p.val[i * 6 + 2] = 0.0;
 	}
-	n_active += n_add;
+	n_active += n_new;
 }
 
 void add_maxwellian_particle_at_position(fmatrix & p, int & n_active, imatrix & lpos, const double temperature, const double mass, double x_pos, double y_pos, int lpos_x, int lpos_y)

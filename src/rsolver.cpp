@@ -1,6 +1,7 @@
 
 #include "rsolver.h"
 
+#include <chrono>
 #include <iostream>
 #include "mpi.h"
 #include "HYPRE_struct_ls.h"
@@ -303,13 +304,13 @@ void rsolver::solve(fmatrix & solution, fmatrix & voltages, fmatrix & w_i, fmatr
         ll = {(int) dirichlet_input.val[n * 4 + 0], (int) dirichlet_input.val[n * 4 + 1]};
         HYPRE_StructVectorAddToValues(hypre_b, ll.val, voltages.val[(int) dirichlet_input.val[n * 4 + 2]] * dirichlet_input.val[n * 4 + 3]);
     }
-    
+
     HYPRE_StructVectorAssemble(hypre_b);
     HYPRE_StructVectorAssemble(hypre_x);
 
     HYPRE_StructPCGSetup(hypre_solver, hypre_A, hypre_b, hypre_x);
     HYPRE_StructPCGSolve(hypre_solver, hypre_A, hypre_b, hypre_x);
-    
+
     double val[1];
     for(int i = 0; i < n_mesh_x; i++)
         for(int j = 0; j < n_mesh_y; j++){
@@ -325,7 +326,6 @@ void rsolver::solve(fmatrix & solution, fmatrix & voltages, fmatrix & w_i, fmatr
         solution.setbox_value(voltages.val[n], dirichlet_boxes.val[n * 4 + 0], dirichlet_boxes.val[n * 4 + 1], dirichlet_boxes.val[n * 4 + 2], dirichlet_boxes.val[n * 4 + 3]);
     }
 }
-
 // ------------------- utilities ------------------------------
 
 bool rsolver::in_box(int i, int j, int ill, int jll, int iur, int jur){
