@@ -156,6 +156,7 @@ int main(int argc, char* argv[])
     fmatrix dens_i_av_corrected = (4 / pow(DX, 2)) *  N_FACTOR * dens_i_av / vmesh;
     save_to_csv(dens_e_av_corrected, "dens_e.csv");
     save_to_csv(dens_i_av_corrected, "dens_i.csv");
+	save_to_csv(phi, "phi.csv");
     
     delete_cross_sections_arrays();
 	return 0;
