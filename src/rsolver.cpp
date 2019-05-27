@@ -1,7 +1,6 @@
 
 #include "rsolver.h"
 
-#include <chrono>
 #include <iostream>
 #include "mpi.h"
 #include "HYPRE_struct_ls.h"
@@ -79,7 +78,7 @@ void rsolver::init_vectors(){
 
 void rsolver::init_solver(){
     HYPRE_StructPCGCreate(MPI_COMM_WORLD, &hypre_solver);
-    HYPRE_StructPCGSetTol(hypre_solver, 1.0e-10); 
+//    HYPRE_StructPCGSetTol(hypre_solver, 1.0e-10);
 }
 
 void rsolver::assemble(){

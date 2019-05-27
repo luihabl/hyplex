@@ -161,8 +161,8 @@ void load_config_file(string filename){
     VOLT_1_NORM = VOLT_1 * Q * pow(DT, 2) / (M_EL * pow(DX, 2));
     
     VD_I = MACH_I * sqrt(T_EL * Q / M_I);
-    N_INJ_EL = J_EL * ((double)N_THRUSTER - 1) * DY * DT / (Q * N_FACTOR);
-    N_INJ_I = J_I * ((double)N_THRUSTER - 1) * DY * DT / (Q * N_FACTOR);
+    N_INJ_EL = J_EL * DT / (Q * N_FACTOR);
+    N_INJ_I  = J_I  * DT / (Q * N_FACTOR);
     
     GAMMA = 2 * N_FACTOR * pow(Q, 2) * pow(DT, 2) / (M_EL * EPS_0 * pow(DX, 2));
     ALPHA = K_SUB * M_EL / M_I;

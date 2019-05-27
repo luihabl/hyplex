@@ -87,7 +87,7 @@ int main(int argc, char* argv[])
     solver.set_dirichlet_box(box_thruster, 0);
     solver.set_dirichlet_box(box_2, 1);
     solver.set_dirichlet_box(box_3, 2);
-
+    
     imatrix box_1 = {0, N_THRUSTER, 0, N_MESH_Y - 2};
     imatrix box_4 = {1, 0, N_MESH_X - 2, 0};
     solver.set_neumann_box(box_1, 0);
@@ -108,7 +108,7 @@ int main(int argc, char* argv[])
 	for (int i = 0; i < N_STEPS; i++)
 	{   
 		// Step 1.0: particle weighting
-		weight(p_e, n_active_e, wmesh_e, mesh_x, mesh_y, lpos_e);
+        weight(p_e, n_active_e, wmesh_e, mesh_x, mesh_y, lpos_e);
         if(i % K_SUB == 0) weight(p_i, n_active_i, wmesh_i, mesh_x, mesh_y, lpos_i);
 
         // Step 2.0 integration of Poisson's equation
@@ -123,8 +123,8 @@ int main(int argc, char* argv[])
         if(i % K_SUB == 0) electric_field_at_particles(efield_x_at_p_i, efield_y_at_p_i, efield_x, efield_y, p_i, n_active_i, mesh_x, mesh_y, lpos_i);
         
         // Step 3: particles injection
-        add_flux_particles(p_i, n_active_i, T_I, VD_I, M_I, N_INJ_I);
         add_flux_particles(p_e, n_active_e, T_EL, 0, M_EL, N_INJ_EL);
+        if(i % K_SUB == 0) add_flux_particles(p_i, n_active_i, T_I, VD_I, M_I, N_INJ_I, K_SUB);
 
         // Step 4: integration of equations of motion
         move_e(p_e, n_active_e, efield_x_at_p_e, efield_y_at_p_e);
@@ -139,10 +139,10 @@ int main(int argc, char* argv[])
         // if(i % K_SUB == 0) collisions_i(p_i, n_active_i, M_I, N_NEUTRAL, p_null_i, nu_prime_i);
 
         print_info(i, p_e, n_active_e, p_i, n_active_i, 100);
-        // average_field(phi_av, phi, i);
-        // average_field(efield_av_x, efield_x, i);
-        average_field(dens_e_av, wmesh_e, i);
-        average_field(dens_i_av, wmesh_i, i);
+//        average_field(phi_av, phi, i);
+//        average_field(efield_av_x, efield_x, i);
+//        average_field(dens_e_av, wmesh_e, i);
+//        average_field(dens_i_av, wmesh_i, i);
 
 	}
     auto stop = high_resolution_clock::now();
@@ -150,10 +150,10 @@ int main(int argc, char* argv[])
 
     std::cout << "total exec. duration: " << (double) duration.count() / (1.0e6 * 60) << " min" << endl;
 
-    // phi  = phi * (M_EL * pow(DX, 2))/(Q * pow(DT, 2));
+     phi  = phi * (M_EL * pow(DX, 2))/(Q * pow(DT, 2));
     // efield_x = efield_x * (M_EL * DX/ (Q * pow(DT, 2)));
-    fmatrix dens_e_av_corrected = (4 / pow(DX, 2)) *  N_FACTOR * dens_e_av / vmesh;
-    fmatrix dens_i_av_corrected = (4 / pow(DX, 2)) *  N_FACTOR * dens_i_av / vmesh;
+    fmatrix dens_e_av_corrected = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_e / vmesh;
+    fmatrix dens_i_av_corrected = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_i / vmesh;
     save_to_csv(dens_e_av_corrected, "dens_e.csv");
     save_to_csv(dens_i_av_corrected, "dens_i.csv");
 	save_to_csv(phi, "phi.csv");

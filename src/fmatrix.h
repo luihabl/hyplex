@@ -265,7 +265,6 @@ tmatrix<T> tmatrix<T>::getnewbox(int ilower, int jlower, int iupper, int jupper)
 			m.val[i * m.n2 + j] = val[(i + ilower) * n2 + (j + jlower)];
 		}
 	}
-	
 	return m;
 }
 

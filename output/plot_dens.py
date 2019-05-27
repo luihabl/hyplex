@@ -15,8 +15,8 @@ x, y = np.meshgrid(x, y)
 
 fig, axes = plt.subplots(nrows=2, figsize=(10, 6))
 
-i = axes[0].contourf(x, y, dens_i)
-e = axes[1].contourf(x, y, dens_e)
+i = axes[0].contourf(x, y, dens_i, levels=50)
+e = axes[1].contourf(x, y, dens_e, levels=50)
 
 axes[0].xaxis.set_major_locator(plt.MultipleLocator(64))
 axes[1].xaxis.set_major_locator(plt.MultipleLocator(64))

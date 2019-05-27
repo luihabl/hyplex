@@ -2,3 +2,4 @@
 /lib/hypre-2.16.0/*
 /output/*.csv
 /.vscode/ipch/
+*.DS_Store
