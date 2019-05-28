@@ -150,14 +150,17 @@ int main(int argc, char* argv[])
 
     std::cout << "total exec. duration: " << (double) duration.count() / (1.0e6 * 60) << " min" << endl;
 
-     phi  = phi * (M_EL * pow(DX, 2))/(Q * pow(DT, 2));
+    // -------------------- saving outputs ------------------------
+
+    fmatrix dens_e_corrected = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_e / vmesh;
+    fmatrix dens_i_corrected = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_i / vmesh;
+    fmatrix phi_corrected  = phi * (M_EL * pow(DX, 2))/(Q * pow(DT, 2));
     // efield_x = efield_x * (M_EL * DX/ (Q * pow(DT, 2)));
-    fmatrix dens_e_av_corrected = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_e / vmesh;
-    fmatrix dens_i_av_corrected = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_i / vmesh;
-    save_to_csv(dens_e_av_corrected, "dens_e.csv");
-    save_to_csv(dens_i_av_corrected, "dens_i.csv");
-	save_to_csv(phi, "phi.csv");
+    save_to_csv(dens_e_corrected, "dens_e.csv");
+    save_to_csv(dens_i_corrected, "dens_i.csv");
+	save_to_csv(phi_corrected, "phi.csv");
     
+    // -------------------- finalizing ----------------------------
     delete_cross_sections_arrays();
 	return 0;
 }

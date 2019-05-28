@@ -34,7 +34,6 @@ public:
     void init_grid();
     void init_matrix();
     void init_vectors();
-    void init_solver();
     void find_node_types();
     void set_stencils();
     void set_inner_nodes();

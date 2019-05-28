@@ -42,7 +42,6 @@ rsolver::~rsolver(){
     HYPRE_StructMatrixDestroy(hypre_A);
     HYPRE_StructVectorDestroy(hypre_b);
     HYPRE_StructVectorDestroy(hypre_x);
-//    HYPRE_StructSMGDestroy(hypre_solver);
     MPI_Finalize();
 }
 
@@ -79,18 +78,12 @@ void rsolver::init_vectors(){
     HYPRE_StructVectorInitialize(hypre_x);
 }
 
-void rsolver::init_solver(){
-//    HYPRE_StructSMGCreate(MPI_COMM_WORLD, &hypre_solver);
-//    HYPRE_StructSMGSetTol(hypre_solver, 1.0e-6);
-}
-
 void rsolver::assemble(){
     init_grid();
     find_node_types();
     init_matrix();
     set_stencils();
     init_vectors();
-    init_solver();
 }
 
 // ------------------- setting boundaries -------------------------
@@ -310,12 +303,10 @@ void rsolver::solve(fmatrix & solution, fmatrix & voltages, fmatrix & w_i, fmatr
     HYPRE_StructVectorAssemble(hypre_b);
     HYPRE_StructVectorAssemble(hypre_x);
 
-//    auto t0 = high_resolution_clock::now();
     HYPRE_StructSMGCreate(MPI_COMM_WORLD, &hypre_solver);
 //    HYPRE_StructSMGSetTol(hypre_solver, 1.0e-6);
     HYPRE_StructSMGSetup(hypre_solver, hypre_A, hypre_b, hypre_x);
     HYPRE_StructSMGSolve(hypre_solver, hypre_A, hypre_b, hypre_x);
-//    auto t1 = high_resolution_clock::now();
 
     double val[1];
     for(int i = 0; i < n_mesh_x; i++)
@@ -333,7 +324,6 @@ void rsolver::solve(fmatrix & solution, fmatrix & voltages, fmatrix & w_i, fmatr
     }
     
     HYPRE_StructSMGDestroy(hypre_solver);
-//    cout << "solver: " << (double) duration_cast<microseconds>(t1 - t0).count() / (1.0e3) << " ms" << endl;
 }
 // ------------------- utilities ------------------------------
 
