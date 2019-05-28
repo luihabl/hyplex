@@ -9,6 +9,9 @@
 #include "config.h"
 #include "util.h"
 
+#include <chrono>
+using namespace std::chrono;
+
 using namespace std;
 // ------------------- constructors / destructor -------------------------
 
@@ -39,7 +42,7 @@ rsolver::~rsolver(){
     HYPRE_StructMatrixDestroy(hypre_A);
     HYPRE_StructVectorDestroy(hypre_b);
     HYPRE_StructVectorDestroy(hypre_x);
-    HYPRE_StructPCGDestroy(hypre_solver);
+//    HYPRE_StructSMGDestroy(hypre_solver);
     MPI_Finalize();
 }
 
@@ -77,8 +80,8 @@ void rsolver::init_vectors(){
 }
 
 void rsolver::init_solver(){
-    HYPRE_StructPCGCreate(MPI_COMM_WORLD, &hypre_solver);
-//    HYPRE_StructPCGSetTol(hypre_solver, 1.0e-10);
+//    HYPRE_StructSMGCreate(MPI_COMM_WORLD, &hypre_solver);
+//    HYPRE_StructSMGSetTol(hypre_solver, 1.0e-6);
 }
 
 void rsolver::assemble(){
@@ -307,8 +310,12 @@ void rsolver::solve(fmatrix & solution, fmatrix & voltages, fmatrix & w_i, fmatr
     HYPRE_StructVectorAssemble(hypre_b);
     HYPRE_StructVectorAssemble(hypre_x);
 
-    HYPRE_StructPCGSetup(hypre_solver, hypre_A, hypre_b, hypre_x);
-    HYPRE_StructPCGSolve(hypre_solver, hypre_A, hypre_b, hypre_x);
+//    auto t0 = high_resolution_clock::now();
+    HYPRE_StructSMGCreate(MPI_COMM_WORLD, &hypre_solver);
+//    HYPRE_StructSMGSetTol(hypre_solver, 1.0e-6);
+    HYPRE_StructSMGSetup(hypre_solver, hypre_A, hypre_b, hypre_x);
+    HYPRE_StructSMGSolve(hypre_solver, hypre_A, hypre_b, hypre_x);
+//    auto t1 = high_resolution_clock::now();
 
     double val[1];
     for(int i = 0; i < n_mesh_x; i++)
@@ -324,6 +331,9 @@ void rsolver::solve(fmatrix & solution, fmatrix & voltages, fmatrix & w_i, fmatr
     {
         solution.setbox_value(voltages.val[n], dirichlet_boxes.val[n * 4 + 0], dirichlet_boxes.val[n * 4 + 1], dirichlet_boxes.val[n * 4 + 2], dirichlet_boxes.val[n * 4 + 3]);
     }
+    
+    HYPRE_StructSMGDestroy(hypre_solver);
+//    cout << "solver: " << (double) duration_cast<microseconds>(t1 - t0).count() / (1.0e3) << " ms" << endl;
 }
 // ------------------- utilities ------------------------------
 

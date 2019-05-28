@@ -92,7 +92,8 @@ int main(int argc, char* argv[])
     imatrix box_4 = {1, 0, N_MESH_X - 2, 0};
     solver.set_neumann_box(box_1, 0);
     solver.set_neumann_box(box_4, 1);
-
+    
+    voltages = {VOLT_0_NORM, VOLT_1_NORM, VOLT_1_NORM};
     solver.assemble();
 
     // Printing initial information
@@ -112,7 +113,6 @@ int main(int argc, char* argv[])
         if(i % K_SUB == 0) weight(p_i, n_active_i, wmesh_i, mesh_x, mesh_y, lpos_i);
 
         // Step 2.0 integration of Poisson's equation
-        voltages = {VOLT_0_NORM, VOLT_1_NORM, VOLT_1_NORM};
         solver.solve(phi, voltages, wmesh_i, wmesh_e);
 
         // Step 2.1: calculation of electric field

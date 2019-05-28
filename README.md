@@ -10,6 +10,7 @@ This is a 2D particle-in-cell (PIC) code for simulation of the expansion of a pl
 ## Building
 
 Before using the code it is necessary to install:
+
 - Open MPI - https://www.open-mpi.org/
 - HYPRE - https://github.com/hypre-space/hypre
 
@@ -20,8 +21,10 @@ Compile with the `-D VERBOSE` flag to print more information during execution.
 ## To do
 
 Next:
+
+- Increase speed of Poisson solver. What is causing such a slow solution (90 ms per loop for 257 x 65 grid)
 - Correction of electric field in Dirichlet boundaries. How to correct in an interface between Dirichlet and Neumann boundaries?
-- Run simulation in cartesian coordinates
+
 
 Planned:
 

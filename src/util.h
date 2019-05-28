@@ -70,7 +70,7 @@ void print_fmatrix(tmatrix<T> & phi){
 
 template <class T>
 bool hasnan(tmatrix<T> & m, int max_n=-1){
-    max_n = max_n < 0 ? (int) m.n1 * m.n2 * m.n3 : max_n;
+    max_n = (int) (max_n < 0 ? m.n1 * m.n2 * m.n3 : max_n);
     for(int i = 0; i < max_n; i++){
         if(isnan(m.val[i]) || isinf(m.val[i])){
             return true;
