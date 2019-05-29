@@ -8,6 +8,7 @@
 #include <random>
 #include <algorithm>
 #include <cmath>
+#include <chrono>
 
 #include "fmatrix.h"
 #include "fmath.h"
@@ -15,6 +16,7 @@
 #include "random-numbers.h"
 
 using namespace std;
+using namespace std::chrono;
 
 double interp(const fmatrix & data, double x)
 {
@@ -143,15 +145,30 @@ fmatrix load_csv(string file_path, char delim)
 
 void print_info(int i, fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i,  int step_interval)
 {
+    static high_resolution_clock::time_point t0;
+    if(i==0) t0 = high_resolution_clock::now();
     if ((i + 1) % step_interval == 0 || i == 0)
     {
-        cout << "   progress: " << (double) (i + 1) / N_STEPS << endl;
-        cout << "       step: " << i + 1 << endl;
-        cout << " n_active_e: " << n_active_e << endl;
-        cout << " n_active_i: " << n_active_i << endl;
-        cout << endl;
+        printf("[%05.2f%%] ", (double) (100.0 * (i + 1) / N_STEPS));
+        printf("Step: %-8d ", i + 1);
+        printf("Active electrons: %-8d ", n_active_e);
+        printf("Active ions: %-8d ", n_active_i);
+        printf("Loop time: %.2f ms ", (double) duration_cast<microseconds>(high_resolution_clock::now() - t0).count() / (1e3 * step_interval));
+        printf("\n");
+        t0 = high_resolution_clock::now();
     }
 }
+
+void print_initial_info(double p_null_e, double p_null_i)
+{
+    verbose_log("\n ---- Simulation parameters ----");
+    printf("Grid size:\t\t (%d, %d)\n", N_MESH_X, N_MESH_Y);
+    printf("Number of steps:\t %d\n", N_STEPS);
+    printf("P Null (e):\t\t %f\n", p_null_e);
+    printf("P Null (I):\t\t %f\n\n", p_null_i);
+}
+
+
 
 void average_field(fmatrix & av_field, const fmatrix & field, int i)
 {

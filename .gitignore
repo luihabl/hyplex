@@ -1,5 +1,5 @@
 /run
 /lib/hypre-2.16.0/*
 /output/*.csv
-/.vscode/ipch/
+/.vscode/
 *.DS_Store

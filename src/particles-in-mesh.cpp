@@ -90,6 +90,8 @@ void electric_field_at_particles(fmatrix & efield_at_particles_x, fmatrix & efie
 	double e_p_x = 0.0;
 	double e_p_y = 0.0;
 
+	const int mesh_n2 = (int) mesh_x.n2;;
+
 	for (int i = 0; i < n_active; i++)
 	{
 		x_p = p.val[i * 6 + 0];
@@ -98,10 +100,10 @@ void electric_field_at_particles(fmatrix & efield_at_particles_x, fmatrix & efie
 		left_index_x = lpos.val[i * 2 + 0];
 		left_index_y = lpos.val[i * 2 + 1];
 
-		x_0_mesh = mesh_x.val[left_index_x * mesh_x.n2 + left_index_y];
-		x_1_mesh = mesh_x.val[(left_index_x + 1) * mesh_x.n2 + left_index_y];
-		y_0_mesh = mesh_y.val[left_index_x * mesh_y.n2 + left_index_y];
-		y_1_mesh = mesh_y.val[left_index_x * mesh_y.n2 + (left_index_y + 1)];
+		x_0_mesh = mesh_x.val[left_index_x * mesh_n2 + left_index_y];
+		x_1_mesh = mesh_x.val[(left_index_x + 1) * mesh_n2 + left_index_y];
+		y_0_mesh = mesh_y.val[left_index_x * mesh_n2 + left_index_y];
+		y_1_mesh = mesh_y.val[left_index_x * mesh_n2 + (left_index_y + 1)];
 
 		area_1 = (x_1_mesh - x_p) * (y_1_mesh - y_p);
 		area_2 = (x_p - x_0_mesh) * (y_1_mesh - y_p);
@@ -109,17 +111,17 @@ void electric_field_at_particles(fmatrix & efield_at_particles_x, fmatrix & efie
 		area_4 = (x_1_mesh - x_p) * (y_p - y_0_mesh);
 		cell_area = area_1 + area_2 + area_3 + area_4;
 		
-		e_p_x = efield_x.val[left_index_x * efield_x.n2 + left_index_y] 				* area_1;
-		e_p_x += efield_x.val[(left_index_x + 1) * efield_x.n2 + left_index_y] 			* area_2;
-		e_p_x += efield_x.val[(left_index_x + 1) * efield_x.n2 + (left_index_y + 1)] 	* area_3;
-		e_p_x += efield_x.val[left_index_x * efield_x.n2 + (left_index_y + 1)] 			* area_4;
+		e_p_x = efield_x.val[left_index_x * mesh_n2 + left_index_y] 				* area_1;
+		e_p_x += efield_x.val[(left_index_x + 1) * mesh_n2 + left_index_y] 			* area_2;
+		e_p_x += efield_x.val[(left_index_x + 1) * mesh_n2 + (left_index_y + 1)] 	* area_3;
+		e_p_x += efield_x.val[left_index_x * mesh_n2 + (left_index_y + 1)] 			* area_4;
 
 		efield_at_particles_x.val[i] = e_p_x / cell_area;
 
-		e_p_y = efield_y.val[left_index_x * efield_y.n2 + left_index_y] 				* area_1;
-		e_p_y += efield_y.val[(left_index_x + 1) * efield_y.n2 + left_index_y] 			* area_2;
-		e_p_y += efield_y.val[(left_index_x + 1) * efield_y.n2 + (left_index_y + 1)] 	* area_3;
-		e_p_y += efield_y.val[left_index_x * efield_y.n2 + (left_index_y + 1)] 			* area_4;
+		e_p_y = efield_y.val[left_index_x * mesh_n2 + left_index_y] 				* area_1;
+		e_p_y += efield_y.val[(left_index_x + 1) * mesh_n2 + left_index_y] 			* area_2;
+		e_p_y += efield_y.val[(left_index_x + 1) * mesh_n2 + (left_index_y + 1)] 	* area_3;
+		e_p_y += efield_y.val[left_index_x * mesh_n2 + (left_index_y + 1)] 			* area_4;
 
 		efield_at_particles_y.val[i] = e_p_y / cell_area;
 	}

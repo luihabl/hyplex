@@ -1,36 +1,33 @@
 
-#include <iostream>
-#include <iomanip>
 #include <chrono>
 #include <cmath>
-
-#include "fmatrix.h"
-#include "fmath.h"
-
-#include "config.h"
-#include "util.h"
-#include "fields.h"
-#include "particles.h"
-#include "particles-in-mesh.h"
-#include "mcc.h"
+#include <iostream>
+#include <iomanip>
 
 #include "cross-sections.h"
-
-#include "rsolver.h"
+#include "config.h"
+#include "fields.h"
+#include "fmatrix.h"
+#include "fmath.h"
+#include "mcc.h"
 #include "mpi.h"
+#include "particles.h"
+#include "particles-in-mesh.h"
+#include "rsolver.h"
+#include "util.h"
 
 #define CONFIG_PATH "src/config/config.ini"
 
 using namespace std;
 using namespace std::chrono;
 
-// ----------------------------- Main function -------------------------------
+// ----------------------------- Main function --------------------------------
 int main(int argc, char* argv[])
 {
     load_config_file(argv[1] == NULL ? CONFIG_PATH : argv[1]);
     load_cross_sections();
 
-    // Initialization ---------------------------------------------
+    // ----------------------------- Initialization ---------------------------
 
 	// General field variables
     verbose_log("Initializing general variables");
@@ -97,21 +94,17 @@ int main(int argc, char* argv[])
     solver.assemble();
 
     // Printing initial information
-    std::cout << endl << endl; 
-    std::cout << setw(11) << "n_mesh x: " << N_MESH_X << " y: " << N_MESH_Y << endl; 
-    std::cout << setw(11) << "n_steps: " << N_STEPS << endl;
-    std::cout << setw(11) << "p_null_e: " << p_null_e << endl;
-    std::cout << setw(11) << "p_null_i: " << p_null_i << endl << endl;
+    print_initial_info(p_null_e, p_null_i);
     
-	// Main loop ------------------------------------------------------
-    verbose_log(" ---- starting main loop ---- ");
+	// ----------------------------- Main loop --------------------------------
+    verbose_log(" ---- Starting main loop ---- ");
     auto start = high_resolution_clock::now();
 	for (int i = 0; i < N_STEPS; i++)
 	{   
 		// Step 1.0: particle weighting
         weight(p_e, n_active_e, wmesh_e, mesh_x, mesh_y, lpos_e);
         if(i % K_SUB == 0) weight(p_i, n_active_i, wmesh_i, mesh_x, mesh_y, lpos_i);
-
+        
         // Step 2.0 integration of Poisson's equation
         solver.solve(phi, voltages, wmesh_i, wmesh_e);
 
@@ -139,18 +132,17 @@ int main(int argc, char* argv[])
         // if(i % K_SUB == 0) collisions_i(p_i, n_active_i, M_I, N_NEUTRAL, p_null_i, nu_prime_i);
 
         print_info(i, p_e, n_active_e, p_i, n_active_i, 100);
-//        average_field(phi_av, phi, i);
-//        average_field(efield_av_x, efield_x, i);
-//        average_field(dens_e_av, wmesh_e, i);
-//        average_field(dens_i_av, wmesh_i, i);
+        // average_field(phi_av, phi, i);
+        // average_field(efield_av_x, efield_x, i);
+        // average_field(dens_e_av, wmesh_e, i);
+        // average_field(dens_i_av, wmesh_i, i);
 
 	}
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>(stop - start);
+    std::cout << "Total execution duration: " << (double) duration.count() / (1.0e6 * 60) << " min" << endl;
 
-    std::cout << "total exec. duration: " << (double) duration.count() / (1.0e6 * 60) << " min" << endl;
-
-    // -------------------- saving outputs ------------------------
+    // ----------------------------- Saving outputs ---------------------------
 
     fmatrix dens_e_corrected = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_e / vmesh;
     fmatrix dens_i_corrected = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_i / vmesh;
@@ -160,7 +152,7 @@ int main(int argc, char* argv[])
     save_to_csv(dens_i_corrected, "dens_i.csv");
 	save_to_csv(phi_corrected, "phi.csv");
     
-    // -------------------- finalizing ----------------------------
+    // ----------------------------- Finalizing -------------------------------
     delete_cross_sections_arrays();
 	return 0;
 }

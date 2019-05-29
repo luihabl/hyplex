@@ -22,13 +22,14 @@ Compile with the `-D VERBOSE` flag to print more information during execution.
 
 Next:
 
-- Increase speed of Poisson solver. What is causing such a slow solution (90 ms per loop for 257 x 65 grid)
+- Change the outer boundary conditions and repeat the benchmark
+- Add collisions with neutrals. First a uniform neutral density, and then a varying neutral density
+- Add a time-varying electron injection to the simulation
+- Add an external circuit to the outer boundary when it is floating
 - Correction of electric field in Dirichlet boundaries. How to correct in an interface between Dirichlet and Neumann boundaries?
 
 
 Planned:
 
-- Inject electrons with RF (pulse) injection
-- Solve Kirchkoff for capacitor circuit between thruster and chamber
 - Solving in cylindrical coordinates
-- Include electron boundaries
+
