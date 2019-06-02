@@ -1,7 +1,9 @@
 
 #include "rsolver.h"
 
+#include <chrono>
 #include <iostream>
+
 #include "mpi.h"
 #include "HYPRE_struct_ls.h"
 #include "fmatrix.h"
@@ -9,7 +11,9 @@
 #include "config.h"
 #include "util.h"
 
-#include <chrono>
+#define SOLVER_PRINT_LEVEL 2
+#define SOLVER_F(A, B) A ## SMG ## B
+
 using namespace std::chrono;
 
 using namespace std;
@@ -165,80 +169,64 @@ void rsolver::set_dirichlet_nodes(){
 
 
 void rsolver::set_neumann_nodes(){
-    int k = 0;
     for (int i = 0; i < n_mesh_x; i++)
         for (int j = 0; j < n_mesh_y; j++)
             
             if(get_node_type(i, j) == 2){
+                
+                double d0 = 0;
+                double d1 = 0;
+                double d2 = 0;
+                double d3 = 0;
+                double d4 = 0;
 
-                // Set neumann for each possible direction
-                k = 1;
-                if (get_node_type(i, j, stencil_offsets[k][0], stencil_offsets[k][1]) == 0) {
+                // Neumann point in the x direction
+                if (get_node_type(i, j, stencil_offsets[2][0], stencil_offsets[2][1]) == -1) {
 
-                    double vol = vmesh.val[i * vmesh.n2 + j];
+                    d0 +=  1 / (k1_x(mesh_x, i, j) * k1_x(mesh_x, i, j));
+                    d1 = - 1 / (k1_x(mesh_x, i, j) * k1_x(mesh_x, i, j));
+                    d2 =   0.0;
 
-                    double dx0 =   1 / (k1_x(mesh_x, i, j) * k1_x(mesh_x, i, j)) + 1/(k1_y(mesh_y, i, j) * k2_y(mesh_y, i, j));
-                    double dx1 = - 1 / (k1_x(mesh_x, i, j) * k1_x(mesh_x, i, j));
-                    double dx2 =   0.0; 
-                    double dx3 = - 1 / (k1_y(mesh_y, i, j) * k3_y(mesh_y, i, j));
-                    double dx4 = - 1 / (k2_y(mesh_y, i, j) * k3_y(mesh_y, i, j)); 
-
-                    double val[5] = {vol * dx0, vol * dx1, vol * dx2, vol * dx3, vol * dx4};
-
-                    ll = {i, j};
-                    HYPRE_StructMatrixSetValues(hypre_A, ll.val, 5, stencil_indices, val);
                 }
+                else if (get_node_type(i, j, stencil_offsets[1][0], stencil_offsets[1][1]) == -1) {
 
-                k = 2;
-                if (get_node_type(i, j, stencil_offsets[k][0], stencil_offsets[k][1]) == 0) {
+                    d0 +=  1 / (k2_x(mesh_x, i, j) * k2_x(mesh_x, i, j));
+                    d1 =   0.0;
+                    d2 = - 1 / (k2_x(mesh_x, i, j) * k2_x(mesh_x, i, j));
 
-                    double vol = vmesh.val[i * vmesh.n2 + j];
-
-                    double dx0 =   1 / (k2_x(mesh_x, i, j) * k2_x(mesh_x, i, j)) + 1/(k1_y(mesh_y, i, j) * k2_y(mesh_y, i, j));
-                    double dx1 =   0.0;
-                    double dx2 = - 1 / (k2_x(mesh_x, i, j) * k2_x(mesh_x, i, j));
-                    double dx3 = - 1 / (k1_y(mesh_y, i, j) * k3_y(mesh_y, i, j));
-                    double dx4 = - 1 / (k2_y(mesh_y, i, j) * k3_y(mesh_y, i, j)); 
-
-                    double val[5] = {vol * dx0, vol * dx1, vol * dx2, vol * dx3, vol * dx4};
-
-                    ll = {i, j};
-                    HYPRE_StructMatrixSetValues(hypre_A, ll.val, 5, stencil_indices, val);
                 }
-
-                k = 3;
-                if (get_node_type(i, j, stencil_offsets[k][0], stencil_offsets[k][1]) == 0) {
-
-                    double vol = vmesh.val[i * vmesh.n2 + j];
-
-                    double dx0 =   1 / (k1_x(mesh_x, i, j) * k2_x(mesh_x, i, j)) + 1/(k1_y(mesh_y, i, j) * k1_y(mesh_y, i, j));
-                    double dx1 = - 1 / (k1_x(mesh_x, i, j) * k3_x(mesh_x, i, j));
-                    double dx2 = - 1 / (k2_x(mesh_x, i, j) * k3_x(mesh_x, i, j));
-                    double dx3 = - 1 / (k1_y(mesh_y, i, j) * k1_y(mesh_y, i, j));
-                    double dx4 =   0.0;
-
-                    double val[5] = {vol * dx0, vol * dx1, vol * dx2, vol * dx3, vol * dx4};
-
-                    ll = {i, j};
-                    HYPRE_StructMatrixSetValues(hypre_A, ll.val, 5, stencil_indices, val);
+                else {
+                    d0 +=  1 / (k1_x(mesh_x, i, j) * k2_x(mesh_x, i, j));
+                    d1 = - 1 / (k1_x(mesh_x, i, j) * k3_x(mesh_x, i, j));
+                    d2 = - 1 / (k2_x(mesh_x, i, j) * k3_x(mesh_x, i, j));
                 }
+                
+                // Neumann point in the y direction
+                if (get_node_type(i, j, stencil_offsets[4][0], stencil_offsets[4][1]) == -1) {
 
-                k = 4;
-                if (get_node_type(i, j, stencil_offsets[k][0], stencil_offsets[k][1]) == 0) {
+                    d0 +=  1 / (k1_y(mesh_y, i, j) * k1_y(mesh_y, i, j));
+                    d3 = - 1 / (k1_y(mesh_y, i, j) * k1_y(mesh_y, i, j));
+                    d4 =   0.0;
 
-                    double vol = vmesh.val[i * vmesh.n2 + j];
-
-                    double dx0 =   1 / (k1_x(mesh_x, i, j) * k2_x(mesh_x, i, j)) + 1/(k2_y(mesh_y, i, j) * k2_y(mesh_y, i, j));
-                    double dx1 = - 1 / (k1_x(mesh_x, i, j) * k3_x(mesh_x, i, j));
-                    double dx2 = - 1 / (k2_x(mesh_x, i, j) * k3_x(mesh_x, i, j));
-                    double dx3 =   0.0;
-                    double dx4 = - 1 / (k2_y(mesh_y, i, j) * k2_y(mesh_y, i, j));
-
-                    double val[5] = {vol * dx0, vol * dx1, vol * dx2, vol * dx3, vol * dx4};
-
-                    ll = {i, j};
-                    HYPRE_StructMatrixSetValues(hypre_A, ll.val, 5, stencil_indices, val);
                 }
+                else if (get_node_type(i, j, stencil_offsets[3][0], stencil_offsets[3][1]) == -1) {
+
+                    d0 +=  1 / (k2_y(mesh_y, i, j) * k2_y(mesh_y, i, j));
+                    d3 =   0.0;
+                    d4 = - 1 / (k2_y(mesh_y, i, j) * k2_y(mesh_y, i, j));
+                    
+                }
+                else {
+                    d0 +=  1 / (k1_y(mesh_y, i, j) * k2_y(mesh_y, i, j));
+                    d3 = - 1 / (k1_y(mesh_y, i, j) * k3_y(mesh_y, i, j));
+                    d4 = - 1 / (k2_y(mesh_y, i, j) * k3_y(mesh_y, i, j));
+                }
+                
+                double vol = vmesh.val[i * vmesh.n2 + j];
+                double val[5] = {vol * d0, vol * d1, vol * d2, vol * d3, vol * d4};
+                
+                ll = {i, j};
+                HYPRE_StructMatrixSetValues(hypre_A, ll.val, 5, stencil_indices, val);
             }
 }
 
@@ -303,10 +291,11 @@ void rsolver::solve(fmatrix & solution, fmatrix & voltages, fmatrix & w_i, fmatr
     HYPRE_StructVectorAssemble(hypre_b);
     HYPRE_StructVectorAssemble(hypre_x);
 
-    HYPRE_StructSMGCreate(MPI_COMM_WORLD, &hypre_solver);
-//    HYPRE_StructSMGSetTol(hypre_solver, 1.0e-6);
-    HYPRE_StructSMGSetup(hypre_solver, hypre_A, hypre_b, hypre_x);
-    HYPRE_StructSMGSolve(hypre_solver, hypre_A, hypre_b, hypre_x);
+    SOLVER_F(HYPRE_Struct, Create)(MPI_COMM_WORLD, &hypre_solver);
+    SOLVER_F(HYPRE_Struct, SetTol)(hypre_solver, 1.0e-6);
+    SOLVER_F(HYPRE_Struct, SetPrintLevel)(hypre_solver, SOLVER_PRINT_LEVEL);
+    SOLVER_F(HYPRE_Struct, Setup)(hypre_solver, hypre_A, hypre_b, hypre_x);
+    SOLVER_F(HYPRE_Struct, Solve)(hypre_solver, hypre_A, hypre_b, hypre_x);
 
     double val[1];
     for(int i = 0; i < n_mesh_x; i++)
@@ -323,7 +312,7 @@ void rsolver::solve(fmatrix & solution, fmatrix & voltages, fmatrix & w_i, fmatr
         solution.setbox_value(voltages.val[n], dirichlet_boxes.val[n * 4 + 0], dirichlet_boxes.val[n * 4 + 1], dirichlet_boxes.val[n * 4 + 2], dirichlet_boxes.val[n * 4 + 3]);
     }
     
-    HYPRE_StructSMGDestroy(hypre_solver);
+    SOLVER_F(HYPRE_Struct, Destroy)(hypre_solver);
 }
 // ------------------- utilities ------------------------------
 

@@ -76,21 +76,23 @@ int main(int argc, char* argv[])
 
     // Initializing solver 
     verbose_log("Initializing solver");
-    rsolver solver(mesh_x, mesh_y, vmesh, 2, 3);
+    rsolver solver(mesh_x, mesh_y, vmesh, 4, 1);
 
     imatrix box_thruster = {0, 0, 0, N_THRUSTER - 1};
-    imatrix box_2 = {0, N_MESH_Y - 1, N_MESH_X - 1, N_MESH_Y - 1};
-    imatrix box_3 = {N_MESH_X - 1, 0, N_MESH_X - 1, N_MESH_Y - 1};
+    
     solver.set_dirichlet_box(box_thruster, 0);
-    solver.set_dirichlet_box(box_2, 1);
-    solver.set_dirichlet_box(box_3, 2);
     
     imatrix box_1 = {0, N_THRUSTER, 0, N_MESH_Y - 2};
+    imatrix box_2 = {0, N_MESH_Y - 1, N_MESH_X - 2, N_MESH_Y - 1};
+    imatrix box_3 = {N_MESH_X - 1, 0, N_MESH_X - 1, N_MESH_Y - 1};
     imatrix box_4 = {1, 0, N_MESH_X - 2, 0};
-    solver.set_neumann_box(box_1, 0);
-    solver.set_neumann_box(box_4, 1);
     
-    voltages = {VOLT_0_NORM, VOLT_1_NORM, VOLT_1_NORM};
+    solver.set_neumann_box(box_1, 0);
+    solver.set_neumann_box(box_2, 1);
+    solver.set_neumann_box(box_3, 2);
+    solver.set_neumann_box(box_4, 3);
+    
+    voltages = {VOLT_0_NORM};
     solver.assemble();
 
     // Printing initial information
@@ -107,6 +109,11 @@ int main(int argc, char* argv[])
         
         // Step 2.0 integration of Poisson's equation
         solver.solve(phi, voltages, wmesh_i, wmesh_e);
+        
+//        if(hasnan(phi)){
+//            cout << "phi has nan, step: " << i << endl;
+//            break;
+//        }
 
         // Step 2.1: calculation of electric field
         calculate_efield(efield_x, efield_y, phi, wmesh_i, wmesh_e, mesh_x, mesh_y, vmesh);
@@ -128,7 +135,7 @@ int main(int argc, char* argv[])
         if(i % K_SUB == 0) boundaries(p_i, n_active_i, lpos_i);
 
         // Step 6: Monte-Carlo collisions
-        // collisions_e(p_e, n_active_e, lpos_e, p_i, n_active_i, lpos_i, M_I, N_NEUTRAL, p_null_e, nu_prime_e);
+//         collisions_e(p_e, n_active_e, lpos_e, p_i, n_active_i, lpos_i, M_I, N_NEUTRAL, p_null_e, nu_prime_e);
         // if(i % K_SUB == 0) collisions_i(p_i, n_active_i, M_I, N_NEUTRAL, p_null_i, nu_prime_i);
 
         print_info(i, p_e, n_active_e, p_i, n_active_i, 100);
@@ -147,6 +154,10 @@ int main(int argc, char* argv[])
     fmatrix dens_e_corrected = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_e / vmesh;
     fmatrix dens_i_corrected = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_i / vmesh;
     fmatrix phi_corrected  = phi * (M_EL * pow(DX, 2))/(Q * pow(DT, 2));
+    
+//    print_fmatrix(phi_corrected);
+//    print_fmatrix(solver.node_type);
+//
     // efield_x = efield_x * (M_EL * DX/ (Q * pow(DT, 2)));
     save_to_csv(dens_e_corrected, "dens_e.csv");
     save_to_csv(dens_i_corrected, "dens_i.csv");
