@@ -5,27 +5,27 @@ import pandas as pd
 import numpy as np
 from scipy.constants import m_e, e, epsilon_0
 
-dens_i = pd.read_csv('dens_i.csv', header=None).values
-dens_e = pd.read_csv('dens_e.csv', header=None).values
+dens_i = np.mean(np.transpose(pd.read_csv('dens_i.csv', header=None).values), axis=0)
+dens_e = np.mean(np.transpose(pd.read_csv('dens_e.csv', header=None).values), axis=0)
 
-di = dens_i[:, 0]
-de = dens_e[:, 0]
+di = dens_i
+de = dens_e
+diff = di - de
 
 x = np.arange(dens_i.shape[0])
 
 fig, ax = plt.subplots(nrows=1, figsize=(6, 5))
 
-ax.semilogy(x, di, 'b', label='Ions')
-ax.semilogy(x, de, 'r', label='Electron')
+#ax.plot(x, di, 'b', label='Ions')
+#ax.plot(x, de, 'r', label='Electrons')
+ax.plot(x, diff, 'b', label='Difference')
 
 ax.xaxis.set_major_locator(plt.MultipleLocator(64))
 
-plt.axhline(1e16, color="k", linestyle='--')
-plt.ylabel('$n$ [$10^{16}$ $m^{-3}$]')
+#plt.axhline(1, color="k", linestyle='--')
+plt.ylabel('$\Delta n$ [$m^{-3}$]')
 plt.xlabel('x/$\lambda_{De}$')
 
 plt.xlim( (0, 256) )
-plt.ylim( (1e14, 1e17) )
 #plt.tight_layout()
-plt.legend()
 plt.show()

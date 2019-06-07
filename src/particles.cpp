@@ -6,6 +6,7 @@
 #include "particles.h"
 
 #include <iostream>
+#include <algorithm>
 #include <cmath>
 
 #include "fmatrix.h"
@@ -16,16 +17,7 @@
 
 using namespace std;
 
-void remove_particle(fmatrix & p, int & n_active, int position, imatrix & lpos)
-{
-	for (size_t j = 0; j < 6; j++)
-	{
-		swap(p.val[position * 6 + j], p.val[(n_active - 1) * 6 + j]);
-	}
-	swap(lpos.val[position * 2 + 0], lpos.val[(n_active - 1) * 2 + 0]);
-	swap(lpos.val[position * 2 + 1], lpos.val[(n_active - 1) * 2 + 1]);
-	n_active -= 1;
-}
+//  ----------------------------- Particle Creation ---------------------------
 
 void add_maxwellian_particles(fmatrix & p, int & n_active, const double temperature, const double mass, const size_t n_add)
 {
@@ -97,15 +89,37 @@ int add_particle_copy(fmatrix & p, int & n_active, imatrix & lpos, const int & i
     return copied_position;
 }
 
-void boundaries(fmatrix & p, int & n_active, imatrix & lpos)
+double balanced_injection(double old_n_inj, double rate_constant, fmatrix & wmesh_i, fmatrix & wmesh_e, int ill, int jll, int iur, int jur){
+
+	double dw = 0;
+	const int mesh_n2 = wmesh_i.n2;
+
+	for (int i = ill; i < iur + 1; i++)
+	{
+		for (int j = jll; j < jur + 1; j++)
+		{
+			dw += wmesh_i.val[i * mesh_n2 + j] -  wmesh_e.val[i * mesh_n2 + j];
+		}
+	}
+	dw = dw/((iur - ill + 1) * (jur - jll + 1));
+	double new_n_inj = old_n_inj + rate_constant * dw;
+
+	return new_n_inj > 0 ? new_n_inj : 0;
+}
+
+//  ----------------------------- Boundaries ----------------------------------
+
+void boundaries_i(fmatrix & p, int & n_active, imatrix & lpos, int & n_removed_ob)
 {
+	n_removed_ob = 0;
 	int n_remove = 0;
-	int tbremoved[100000]; // Modify fmatrix class to include int as template. Make a smart guess of the maximum removed particles.
+	static imatrix tbremoved(100000); // Modify fmatrix class to include int as template. Make a smart guess of the maximum removed particles.
 
 	double pos_x = 0.0;
 	double pos_y = 0.0;
-	double x_max = ((double) N_MESH_X - 1);
-	double y_max = ((double) N_MESH_Y - 1) * (DY / DX);
+	static const double x_max = ((double) N_MESH_X - 1);
+	static const double y_max = ((double) N_MESH_Y - 1) * (DY / DX);
+	static const double y_thr = ((double) N_THRUSTER - 1) * (DY / DX);
 
 	for (int i = 0; i < n_active; i++)
 	{
@@ -114,26 +128,145 @@ void boundaries(fmatrix & p, int & n_active, imatrix & lpos)
 
 		if (pos_x <= 0 || pos_x >= x_max || pos_y >= y_max)
 		{
-			tbremoved[n_remove] = i;
+			tbremoved.val[n_remove] = i;
 			n_remove += 1;
+
+			if(!(pos_y < y_thr && pos_x <= 0)){
+				n_removed_ob += 1;
+			}
+
 		} else if (pos_y < 0) {
 			p.val[i * 6 + 1] = - p.val[i * 6 + 1];
 			p.val[i * 6 + 4] = - p.val[i * 6 + 4];
 		}
 
-		if (n_remove >= 100000)
-		{
-			printf("Out of bounds in tbremoved\n");
-			break;
-		}
 	}
 
 	for (int i = n_remove - 1; i >= 0; i--)
 	{
-		remove_particle(p, n_active, tbremoved[i], lpos);
+		remove_particle(p, n_active, tbremoved.val[i], lpos);
+	}
+}
+
+
+void boundaries_e(fmatrix & p, int & n_active, imatrix & lpos, int n_out_i)
+{
+	int n_out = 0;
+	static imatrix out(100000); 
+
+	int n_out_ob = 0;
+	static imatrix out_ob(100000); 
+
+	double pos_x = 0.0;
+	double pos_y = 0.0;
+	static const double x_max = ((double) N_MESH_X - 1);
+	static const double y_max = ((double) N_MESH_Y - 1) * (DY / DX);
+	static const double y_thr = ((double) N_THRUSTER - 1) * (DY / DX);
+
+	for (int i = 0; i < n_active; i++)
+	{
+		pos_x = p.val[i * 6 + 0];
+		pos_y = p.val[i * 6 + 1];
+
+		if(pos_x <= 0 || pos_x >= x_max || pos_y >= y_max || pos_y <= 0){
+			out.val[n_out] = i;
+			n_out += 1;
+
+			if(!(pos_y < y_thr && pos_x <= 0)){
+				out_ob.val[n_out_ob] = i;
+				n_out_ob += 1;
+			}
+
+
+		}
 	}
 
+	double e_crit = find_e_crit(n_out_i, out_ob, n_out_ob, p, n_active);
+	static double energy, x, y, vx, vy, vz;
+	static bool in_thr, in_sym, is_crt;
+	for (int n = n_out - 1; n >= 0; n--){
+		
+		x = p.val[out.val[n] * 6 + 0];
+		y = p.val[out.val[n] * 6 + 1];
+		vx= p.val[out.val[n] * 6 + 3];
+		vy= p.val[out.val[n] * 6 + 4];
+		vz= p.val[out.val[n] * 6 + 5];
+		
+		energy = (vx * vx) + (vy * vy) + (vz * vz);
+
+		is_crt = energy >= e_crit;
+		in_thr = (y <= y_thr) && (y > 0) && (x <= 0);
+		in_sym = y <= 0;
+
+		if(in_sym || (!is_crt && !in_thr)){
+			reflect_particle(p, n_active, out.val[n], x, y, vx, vy);
+		} else {
+			remove_particle(p, n_active, out.val[n], lpos);
+		} 
+	}
 }
+
+
+double find_e_crit(int n_out_i, imatrix & out, int n_out, fmatrix & p, int n_active){
+
+	if(n_out_i >= n_out){
+		return 0.0;
+	}
+	else if(n_out_i == 0){
+		return 1e99; //Any large number
+	}
+	else {
+		fmatrix energy(n_out);
+		double vx, vy, vz;
+		for (int n = 0; n < n_out; n++)
+		{
+			vx =  p.val[out.val[n] * 6 + 3];
+			vy =  p.val[out.val[n] * 6 + 4];
+			vz =  p.val[out.val[n] * 6 + 5];
+			energy.val[n] = (vx * vx) + (vy * vy) + (vz * vz);
+		}
+
+		nth_element(&energy.val[0], &energy.val[n_out - n_out_i], &energy.val[n_out]);
+		return energy.val[n_out - n_out_i];
+	}
+}
+
+void reflect_particle(fmatrix & p, int & n_active, int i, double x, double y, double vx, double vy)
+{
+	static const double x_max = ((double) N_MESH_X - 1);
+	static const double y_max = ((double) N_MESH_Y - 1) * (DY / DX);
+
+	if(x <= 0){
+		p.val[i * 6 + 0] = - x;
+		p.val[i * 6 + 3] = - vx;
+	} else if (x >= x_max) {
+		p.val[i * 6 + 0] = 2*x_max - x;
+		p.val[i * 6 + 3] = - vx;
+	}
+
+	if(y <= 0){
+		p.val[i * 6 + 1] = - y;
+		p.val[i * 6 + 4] = - vy;
+
+	} else if(y >= y_max){
+		p.val[i * 6 + 1] = 2*y_max - y;
+		p.val[i * 6 + 4] = - vy;
+	}
+}
+
+
+void remove_particle(fmatrix & p, int & n_active, int i, imatrix & lpos)
+{
+	for (size_t j = 0; j < 6; j++)
+	{
+		swap(p.val[i * 6 + j], p.val[(n_active - 1) * 6 + j]);
+	}
+	swap(lpos.val[i * 2 + 0], lpos.val[(n_active - 1) * 2 + 0]);
+	swap(lpos.val[i * 2 + 1], lpos.val[(n_active - 1) * 2 + 1]);
+	n_active -= 1;
+}
+
+//  ----------------------------- Particle Movement ---------------------------
 
 void move_e(fmatrix & p, int & n_active, fmatrix & electric_field_at_particles_x, fmatrix & electric_field_at_particles_y)
 {

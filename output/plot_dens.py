@@ -4,20 +4,21 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import pandas as pd
 import numpy as np
 from scipy.constants import m_e, e, epsilon_0
+import scipy.ndimage
 m_i = 6.7e-27
 
 
 dens_i = np.transpose(pd.read_csv('dens_i.csv', header=None).values)
 dens_e = np.transpose(pd.read_csv('dens_e.csv', header=None).values)
 
-x = np.arange(dens_i.shape[1])
-y = np.arange(dens_i.shape[0])
+x = np.arange(dens_e.shape[1])
+y = np.arange(dens_e.shape[0])
 x, y = np.meshgrid(x, y)
 
 fig, axes = plt.subplots(nrows=2, figsize=(10, 6))
 
-i = axes[0].contourf(x, y, dens_i, levels=50)
-e = axes[1].contourf(x, y, dens_e, levels=50)
+i = axes[0].contourf(x, y, dens_i, levels=50, cmap='plasma')
+e = axes[1].contourf(x, y, dens_e, levels=50, cmap='plasma')
 
 axes[0].xaxis.set_major_locator(plt.MultipleLocator(64))
 axes[1].xaxis.set_major_locator(plt.MultipleLocator(64))
