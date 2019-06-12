@@ -22,8 +22,9 @@ Compile with the `-D VERBOSE` flag to print more information during execution.
 
 Next:
 
-- Change the outer boundary conditions and repeat the benchmark
-- Add collisions with neutrals. First a uniform neutral density, and then a varying neutral density
+- Add second derivative boundary condition (d\phi^2/dx^2 = 0). How to use a 9-pt stencil in HYPRE?
+- Smooth the calculation of E_crit with moving average. Is there a way to do this without having to calculate the energy of all particles every step?
+- Add collisions with neutrals. First a uniform neutral density, and then a varying neutral density (DSMC). Maybe do external code to do the DSMC simulation? 
 - Add a time-varying electron injection to the simulation
 - Add an external circuit to the outer boundary when it is floating
 - Correction of electric field in Dirichlet boundaries. How to correct in an interface between Dirichlet and Neumann boundaries?

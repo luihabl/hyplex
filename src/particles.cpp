@@ -115,27 +115,30 @@ void boundaries_i(fmatrix & p, int & n_active, imatrix & lpos, int & n_removed_o
 	int n_remove = 0;
 	static imatrix tbremoved(100000); // Modify fmatrix class to include int as template. Make a smart guess of the maximum removed particles.
 
-	double pos_x = 0.0;
-	double pos_y = 0.0;
+	double x, y;
+	bool in_thr, in_sym;
 	static const double x_max = ((double) N_MESH_X - 1);
 	static const double y_max = ((double) N_MESH_Y - 1) * (DY / DX);
 	static const double y_thr = ((double) N_THRUSTER - 1) * (DY / DX);
 
 	for (int i = 0; i < n_active; i++)
 	{
-		pos_x = p.val[i * 6 + 0];
-		pos_y = p.val[i * 6 + 1];
+		x = p.val[i * 6 + 0];
+		y = p.val[i * 6 + 1];
 
-		if (pos_x <= 0 || pos_x >= x_max || pos_y >= y_max)
+		if (x <= 0 || x >= x_max || y >= y_max)
 		{
 			tbremoved.val[n_remove] = i;
 			n_remove += 1;
 
-			if(!(pos_y < y_thr && pos_x <= 0)){
+			in_thr = (y <= y_thr) && (y > 0) && (x <= 0);
+			in_sym = y <= 0;
+
+			if(!in_thr && !in_sym){
 				n_removed_ob += 1;
 			}
 
-		} else if (pos_y < 0) {
+		} else if (y < 0) {
 			p.val[i * 6 + 1] = - p.val[i * 6 + 1];
 			p.val[i * 6 + 4] = - p.val[i * 6 + 4];
 		}
@@ -157,33 +160,32 @@ void boundaries_e(fmatrix & p, int & n_active, imatrix & lpos, int n_out_i)
 	int n_out_ob = 0;
 	static imatrix out_ob(100000); 
 
-	double pos_x = 0.0;
-	double pos_y = 0.0;
-	static const double x_max = ((double) N_MESH_X - 1);
-	static const double y_max = ((double) N_MESH_Y - 1) * (DY / DX);
-	static const double y_thr = ((double) N_THRUSTER - 1) * (DY / DX);
-
+	bool in_thr, in_sym, is_crt;
+	double energy, x, y, vx, vy, vz;
+	const double x_max = ((double) N_MESH_X - 1);
+	const double y_max = ((double) N_MESH_Y - 1) * (DY / DX);
+	const double y_thr = ((double) N_THRUSTER - 1) * (DY / DX);
+	
 	for (int i = 0; i < n_active; i++)
 	{
-		pos_x = p.val[i * 6 + 0];
-		pos_y = p.val[i * 6 + 1];
+		x = p.val[i * 6 + 0];
+		y = p.val[i * 6 + 1];
 
-		if(pos_x <= 0 || pos_x >= x_max || pos_y >= y_max || pos_y <= 0){
+		if(x <= 0 || x >= x_max || y >= y_max || y <= 0){
 			out.val[n_out] = i;
 			n_out += 1;
 
-			if(!(pos_y < y_thr && pos_x <= 0)){
+			in_thr = (y <= y_thr) && (y > 0) && (x <= 0);
+			in_sym = y <= 0;
+
+			if(!in_thr && !in_sym){
 				out_ob.val[n_out_ob] = i;
 				n_out_ob += 1;
 			}
-
-
 		}
 	}
 
 	double e_crit = find_e_crit(n_out_i, out_ob, n_out_ob, p, n_active);
-	static double energy, x, y, vx, vy, vz;
-	static bool in_thr, in_sym, is_crt;
 	for (int n = n_out - 1; n >= 0; n--){
 		
 		x = p.val[out.val[n] * 6 + 0];
@@ -196,7 +198,7 @@ void boundaries_e(fmatrix & p, int & n_active, imatrix & lpos, int n_out_i)
 
 		is_crt = energy >= e_crit;
 		in_thr = (y <= y_thr) && (y > 0) && (x <= 0);
-		in_sym = y <= 0;
+		in_sym = (y <= 0) && (x >= 0) && (x <= x_max);
 
 		if(in_sym || (!is_crt && !in_thr)){
 			reflect_particle(p, n_active, out.val[n], x, y, vx, vy);
@@ -209,15 +211,17 @@ void boundaries_e(fmatrix & p, int & n_active, imatrix & lpos, int n_out_i)
 
 double find_e_crit(int n_out_i, imatrix & out, int n_out, fmatrix & p, int n_active){
 
+	static fmatrix energy(10000);
+	double vx, vy, vz;
+
+	
 	if(n_out_i >= n_out){
 		return 0.0;
 	}
 	else if(n_out_i == 0){
-		return 1e99; //Any large number
+		return 1e99;
 	}
 	else {
-		fmatrix energy(n_out);
-		double vx, vy, vz;
 		for (int n = 0; n < n_out; n++)
 		{
 			vx =  p.val[out.val[n] * 6 + 3];
@@ -225,7 +229,6 @@ double find_e_crit(int n_out_i, imatrix & out, int n_out, fmatrix & p, int n_act
 			vz =  p.val[out.val[n] * 6 + 5];
 			energy.val[n] = (vx * vx) + (vy * vy) + (vz * vz);
 		}
-
 		nth_element(&energy.val[0], &energy.val[n_out - n_out_i], &energy.val[n_out]);
 		return energy.val[n_out - n_out_i];
 	}
