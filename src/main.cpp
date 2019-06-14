@@ -140,8 +140,8 @@ int main(int argc, char* argv[])
         boundaries_e(p_e, n_active_e, lpos_e, n_out_i);
 
         // Step 6: Monte-Carlo collisions
-//         collisions_e(p_e, n_active_e, lpos_e, p_i, n_active_i, lpos_i, M_I, N_NEUTRAL, p_null_e, nu_prime_e);
-        // if(i % K_SUB == 0) collisions_i(p_i, n_active_i, M_I, N_NEUTRAL, p_null_i, nu_prime_i);
+        collisions_e(p_e, n_active_e, lpos_e, p_i, n_active_i, lpos_i, M_I, N_NEUTRAL, p_null_e, nu_prime_e);
+        if(i % K_SUB == 0) collisions_i(p_i, n_active_i, M_I, N_NEUTRAL, p_null_i, nu_prime_i);
 
         print_info(i, p_e, n_active_e, p_i, n_active_i, 100);
         // average_field(phi_av, phi, i);

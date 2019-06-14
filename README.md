@@ -22,15 +22,16 @@ Compile with the `-D VERBOSE` flag to print more information during execution.
 
 Next:
 
-- Add second derivative boundary condition (d\phi^2/dx^2 = 0). How to use a 9-pt stencil in HYPRE?
+- Correction of electric field in Dirichlet boundaries with Gauss law!!
 - Smooth the calculation of E_crit with moving average. Is there a way to do this without having to calculate the energy of all particles every step?
-- Add collisions with neutrals. First a uniform neutral density, and then a varying neutral density (DSMC). Maybe do external code to do the DSMC simulation? 
+- Add collisions with neutrals with constant neutral density
+- Do colisionless DSMC to simulate expansion of neutrals
 - Add a time-varying electron injection to the simulation
-- Add an external circuit to the outer boundary when it is floating
-- Correction of electric field in Dirichlet boundaries. How to correct in an interface between Dirichlet and Neumann boundaries?
+
 
 
 Planned:
 
+- Add an external circuit to the outer boundary when it is floating
 - Solving in cylindrical coordinates
 
