@@ -46,6 +46,8 @@ int main(int argc, char* argv[])
     fmatrix efield_av_y     = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix dens_e_av       = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix dens_i_av       = fmatrix::zeros(N_MESH_X, N_MESH_Y);
+    fmatrix kefield_i       = fmatrix::zeros(N_MESH_X, N_MESH_Y);
+    fmatrix kefield_e       = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     
 	// Particle 1 - Electrons
     verbose_log("Initializing electrons variables");
@@ -158,14 +160,17 @@ int main(int argc, char* argv[])
 
     fmatrix dens_e_corrected = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_e / vmesh;
     fmatrix dens_i_corrected = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_i / vmesh;
-    fmatrix phi_corrected  = phi * (M_EL * pow(DX, 2))/(Q * pow(DT, 2));
+    fmatrix phi_corrected    = phi * (M_EL * pow(DX, 2))/(Q * pow(DT, 2));
     
-//    print_fmatrix(phi_corrected);
-//    print_fmatrix(solver.node_type);
-//
-    // efield_x = efield_x * (M_EL * DX/ (Q * pow(DT, 2)));
+    weight(p_i, n_active_i, wmesh_i, mesh_x, mesh_y, lpos_i);
+    weight(p_e, n_active_e, wmesh_e, mesh_x, mesh_y, lpos_e);
+    energy_field(kefield_e, p_e, n_active_e, mesh_x, mesh_y, wmesh_e, lpos_e, M_EL);
+    energy_field(kefield_i, p_i, n_active_i, mesh_x, mesh_y, wmesh_i, lpos_i, M_I);
+    
     save_to_csv(dens_e_corrected, "dens_e.csv");
     save_to_csv(dens_i_corrected, "dens_i.csv");
+    save_to_csv(kefield_e, "ke_e.csv");
+    save_to_csv(kefield_i, "ke_i.csv");
 	save_to_csv(phi_corrected, "phi.csv");
     
     // ----------------------------- Finalizing -------------------------------

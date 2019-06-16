@@ -92,7 +92,7 @@ int add_particle_copy(fmatrix & p, int & n_active, imatrix & lpos, const int & i
 double balanced_injection(double old_n_inj, double rate_constant, fmatrix & wmesh_i, fmatrix & wmesh_e, int ill, int jll, int iur, int jur){
 
 	double dw = 0;
-	const int mesh_n2 = wmesh_i.n2;
+	const int mesh_n2 = (int) wmesh_i.n2;
 
 	for (int i = ill; i < iur + 1; i++)
 	{
