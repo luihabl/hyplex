@@ -12,7 +12,7 @@ x, y = np.meshgrid(x, y)
 
 fig, axes = plt.subplots(nrows=1, figsize=(10, 4))
 
-p = axes.contourf(x, y, phi, levels=50, cmap='plasma')
+p = axes.imshow(phi, cmap='plasma', origin='lower')
 
 axes.xaxis.set_major_locator(plt.MultipleLocator(64))
 axes.yaxis.set_major_locator(plt.MultipleLocator(16))

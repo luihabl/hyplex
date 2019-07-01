@@ -3,6 +3,7 @@
 #include <cmath>
 #include <iostream>
 #include <iomanip>
+#include <sstream>
 
 #include "cross-sections.h"
 #include "config.h"
@@ -113,11 +114,6 @@ int main(int argc, char* argv[])
         
         // Step 2.0 integration of Poisson's equation
         solver.solve(phi, voltages, wmesh_i, wmesh_e);
-        
-//        if(hasnan(phi)){
-//            cout << "phi has nan, step: " << i << endl;
-//            break;
-//        }
 
         // Step 2.1: calculation of electric field
         calculate_efield(efield_x, efield_y, phi, wmesh_i, wmesh_e, mesh_x, mesh_y, vmesh);
@@ -144,8 +140,24 @@ int main(int argc, char* argv[])
         // Step 6: Monte-Carlo collisions
         collisions_e(p_e, n_active_e, lpos_e, p_i, n_active_i, lpos_i, M_I, N_NEUTRAL, p_null_e, nu_prime_e);
         if(i % K_SUB == 0) collisions_i(p_i, n_active_i, M_I, N_NEUTRAL, p_null_i, nu_prime_i);
-
+        
         print_info(i, p_e, n_active_e, p_i, n_active_i, 100);
+        
+        
+        // save anination of the last 30k steps
+        if(i >= 200000 && (i % 100 == 0)){
+//            fmatrix dens_e_corrected = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_e / vmesh;
+            fmatrix dens_i_corrected = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_i / vmesh;
+            
+            stringstream file_name;
+//            file_name << "dens_e" << i << ".csv";
+//            save_to_csv(dens_e_corrected, file_name.str());
+//
+//            file_name.str("");
+            file_name << "dens_i" << i << ".csv";
+            save_to_csv(dens_i_corrected, file_name.str());
+        }
+    
         // average_field(phi_av, phi, i);
         // average_field(efield_av_x, efield_x, i);
         // average_field(dens_e_av, wmesh_e, i);

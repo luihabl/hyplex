@@ -18,14 +18,15 @@ x, y = np.meshgrid(x, y)
 
 fig, axes = plt.subplots(nrows=2, figsize=(10, 6))
 
-i = axes[0].contourf(x, y, ke_i, levels=50, cmap='plasma')
-e = axes[1].contourf(x, y, ke_e, levels=50, cmap='plasma')
+i = axes[0].imshow(ke_i, cmap='plasma', origin='lower')
+e = axes[1].imshow(ke_e, cmap='plasma', origin='lower')
 
 axes[0].xaxis.set_major_locator(plt.MultipleLocator(64))
 axes[1].xaxis.set_major_locator(plt.MultipleLocator(64))
 
-axes[0].yaxis.set_major_locator(plt.MultipleLocator(8))
-axes[1].yaxis.set_major_locator(plt.MultipleLocator(8))
+axes[0].yaxis.set_major_locator(plt.MultipleLocator(16))
+axes[1].yaxis.set_major_locator(plt.MultipleLocator(16))
+
 
 divider0 = make_axes_locatable(axes[0])
 divider1 = make_axes_locatable(axes[1])
