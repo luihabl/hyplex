@@ -1,5 +1,7 @@
 /run
 /lib/hypre-2.16.0/*
 /output/*.csv
+/output/*.mp4
+/output/*.png
 /.vscode/
 *.DS_Store

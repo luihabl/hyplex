@@ -3,8 +3,8 @@
 
 #include "fmatrix.h"
 
-double find_nu_prime_e(double neutral_density);
-double find_nu_prime_i(double neutral_density);
+double find_nu_prime_e(fmatrix & wmesh_n, fmatrix & vmesh);
+double find_nu_prime_i(fmatrix & wmesh_n, fmatrix & vmesh);
 double p_null(double nu_prime, double dt);
 
 double kinetic_energy_ev(const fmatrix & p, const int & i, double const & mass);

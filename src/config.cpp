@@ -8,8 +8,6 @@
 
 using namespace std;
 
-// INIReader reader("config.ini");
-
 // Project configuration
 string OUTPUT_PATH;
 string CROSS_SECTIONS_PATH;
@@ -56,7 +54,14 @@ double VD_I;
 double T_I;
 double J_I;
 double N_INJ_I;
-  
+
+// Neutrals
+string EXPM_NEUTRAL;
+double MASS_FLOW_RATE;
+double ETA_PROPELLANT;
+double N_FACTOR_NEUTRAL;
+double N_INJ_N;
+
 double M_I;
 int N_EXC;
 double E_IZ;
@@ -77,6 +82,7 @@ double VOLT_1_NORM;
 double N_FACTOR;
 double GAMMA;
 double ALPHA;
+double SCCM_2_KGS;
 
 void load_config_file(string filename){
 
@@ -114,8 +120,8 @@ void load_config_file(string filename){
     
     // Plasma
     PLASMA_DENSITY = reader.GetReal("plasma", "PLASMA_DENSITY", -1);
-    N_FACTOR = reader.GetReal("plasma", "N_FACTOR", -1);
-    N_MAX_PARTICLES = (int) reader.GetReal("plasma", "N_MAX_PARTICLES", -1);
+    N_FACTOR = reader.GetReal("particles", "N_FACTOR", -1);
+    N_MAX_PARTICLES = (int) reader.GetReal("particles", "N_MAX_PARTICLES", -1);
 
     
     // ---------------------- species ---------------------------
@@ -123,7 +129,10 @@ void load_config_file(string filename){
     // neutral
     T_NEUTRAL = reader.GetReal("neutral", "T_NEUTRAL", -1);
     N_NEUTRAL = reader.GetReal("neutral", "N_NEUTRAL", -1);
-    
+    EXPM_NEUTRAL = reader.Get("neutral", "EXPM_NEUTRAL", "");
+    MASS_FLOW_RATE = reader.GetReal("thruster", "MASS_FLOW_RATE", -1);
+    ETA_PROPELLANT = reader.GetReal("thruster", "ETA_PROPELLANT", -1);
+    N_FACTOR_NEUTRAL = reader.GetReal("particles", "N_FACTOR_NEUTRAL", -1);
 
     // Particle 1 - Electrons
     M_EL = reader.GetReal("electrons", "M_EL", -1);
@@ -163,6 +172,9 @@ void load_config_file(string filename){
     VD_I = MACH_I * sqrt(T_EL * Q / M_I);
     N_INJ_EL = J_EL * DT / (Q * N_FACTOR);
     N_INJ_I  = J_I  * DT / (Q * N_FACTOR);
+    
+    SCCM_2_KGS = 4.477962e17; // Set this to 1/M_I if the MFR is given in kg/s
+    N_INJ_N  = (1 - ETA_PROPELLANT) * (SCCM_2_KGS * MASS_FLOW_RATE) * DT / (N_FACTOR_NEUTRAL);
     
     GAMMA = 2 * N_FACTOR * pow(Q, 2) * pow(DT, 2) / (M_EL * EPS_0 * pow(DX, 2));
     ALPHA = K_SUB * M_EL / M_I;

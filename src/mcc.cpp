@@ -28,10 +28,12 @@ double calc_total_cs(double energy){
     return total_cs;
 }
 
-double find_nu_prime_e(double neutral_density)
+double find_nu_prime_e(fmatrix & wmesh_n, fmatrix & vmesh)
 {
 	double nu_prime = 0.0;
-
+    fmatrix dens_n_mesh = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_n / vmesh;
+    double neutral_density = dens_n_mesh.max();
+    
 	double total_cs;
 	double velocity;
 	double energy;
@@ -71,9 +73,11 @@ double find_nu_prime_e(double neutral_density)
 	return nu_prime;
 }
 
-double find_nu_prime_i(double neutral_density)
+double find_nu_prime_i(fmatrix & wmesh_n, fmatrix & vmesh)
 {
 	double nu_prime = 0.0;
+    fmatrix dens_n_mesh = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_n / vmesh;
+    double neutral_density = dens_n_mesh.max();
 
 	double total_cs;
 	double velocity;

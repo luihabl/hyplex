@@ -143,6 +143,20 @@ fmatrix load_csv(string file_path, char delim)
     return data;
 }
 
+void print_dsmc_info(int i, int n_active_n, int step_interval, int n_steps){
+    static high_resolution_clock::time_point t0;
+    if(i==0) t0 = high_resolution_clock::now();
+    if ((i + 1) % step_interval == 0 || i == 0)
+    {
+        printf("[%05.2f%%] ", (double) (100.0 * (i + 1) / n_steps));
+        printf("Step: %-8d ", i + 1);
+        printf("Active neutrals: %-8d ", n_active_n);
+        printf("Loop time: %.2f ms ", (double) duration_cast<microseconds>(high_resolution_clock::now() - t0).count() / (1e3 * step_interval));
+        printf("\n");
+        t0 = high_resolution_clock::now();
+    }
+}
+
 void print_info(int i, fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i,  int step_interval)
 {
     static high_resolution_clock::time_point t0;
@@ -164,8 +178,8 @@ void print_initial_info(double p_null_e, double p_null_i)
     verbose_log("\n ---- Simulation parameters ----");
     printf("Grid size:\t\t (%d, %d)\n", N_MESH_X, N_MESH_Y);
     printf("Number of steps:\t %d\n", N_STEPS);
-    printf("P Null (e):\t\t %f\n", p_null_e);
-    printf("P Null (I):\t\t %f\n\n", p_null_i);
+    printf("P Null (e):\t\t %.4e\n", p_null_e);
+    printf("P Null (I):\t\t %.4e\n\n", p_null_i);
 }
 
 

@@ -37,6 +37,8 @@ extern double VOLT_1;
 extern double T_NEUTRAL;
 extern double N_NEUTRAL;
 extern double PLASMA_DENSITY;
+extern double MASS_FLOW_RATE;
+extern double ETA_PROPELLANT;
 extern int N_THRUSTER;
 
 // Particle 1 - Electrons
@@ -54,6 +56,8 @@ extern double VD_I;
 extern double T_I;
 extern double J_I;
 extern double N_INJ_I;
+
+extern double N_INJ_N;
   
 extern double M_I;
 extern int N_EXC;
@@ -73,6 +77,8 @@ extern double DY;
 extern double VOLT_0_NORM;
 extern double VOLT_1_NORM;
 extern double N_FACTOR;
+extern double N_FACTOR_NEUTRAL;
+extern string EXPM_NEUTRAL;
 extern double GAMMA;
 extern double ALPHA;
 

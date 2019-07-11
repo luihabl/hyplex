@@ -58,8 +58,6 @@ int main(int argc, char* argv[])
 	fmatrix wmesh_e         = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix efield_x_at_p_e = fmatrix::zeros(N_MAX_PARTICLES);
     fmatrix efield_y_at_p_e = fmatrix::zeros(N_MAX_PARTICLES);
-	double nu_prime_e       = find_nu_prime_e(N_NEUTRAL);
-	double p_null_e         = p_null(nu_prime_e, DT);
     double n_inj_balanced_e = N_INJ_EL;
 	
 	// Particle 2 - Ions
@@ -70,9 +68,15 @@ int main(int argc, char* argv[])
 	fmatrix wmesh_i         = fmatrix::zeros(N_MESH_X, N_MESH_Y);
 	fmatrix efield_x_at_p_i = fmatrix::zeros(N_MAX_PARTICLES);
     fmatrix efield_y_at_p_i = fmatrix::zeros(N_MAX_PARTICLES);
-	double nu_prime_i       = find_nu_prime_i(N_NEUTRAL);
-	double p_null_i         = p_null(nu_prime_i, DT * K_SUB);
     int n_out_i             = 0;
+    
+    // Particle 3 - Neutrals
+    verbose_log("Initializing neutral variables");
+    int n_active_n          = 0;
+    fmatrix p_n             = fmatrix::zeros(N_MAX_PARTICLES, 6);
+    imatrix lpos_n          = imatrix::zeros(N_MAX_PARTICLES, 2);
+    fmatrix wmesh_n         = fmatrix::zeros(N_MESH_X, N_MESH_Y);
+    int n_out_n             = 0;
 
     //initializing mesh
     verbose_log("Initializing mesh");
@@ -84,14 +88,12 @@ int main(int argc, char* argv[])
     rsolver solver(mesh_x, mesh_y, vmesh, 4, 1);
 
     imatrix box_thruster = {0, 0, 0, N_THRUSTER - 1};
-    
     solver.set_dirichlet_box(box_thruster, 0);
     
     imatrix box_1 = {0, N_THRUSTER, 0, N_MESH_Y - 2};
     imatrix box_2 = {0, N_MESH_Y - 1, N_MESH_X - 2, N_MESH_Y - 1};
     imatrix box_3 = {N_MESH_X - 1, 0, N_MESH_X - 1, N_MESH_Y - 1};
     imatrix box_4 = {1, 0, N_MESH_X - 2, 0};
-    
     solver.set_neumann_box(box_1, 0);
     solver.set_neumann_box(box_2, 1);
     solver.set_neumann_box(box_3, 2);
@@ -100,9 +102,42 @@ int main(int argc, char* argv[])
     voltages = {VOLT_0_NORM};
     solver.assemble();
 
+    
+    
+    // ----------------------------- DSMC loop --------------------------------
+    
+    if (EXPM_NEUTRAL == "dsmc"){
+        verbose_log(" ---- Starting DSMC loop ---- ");
+        for (int i = 0; i < 1000000; i++){
+            move_n(p_n, n_active_n, 100);
+            boundaries_i(p_n, n_active_n, lpos_n, n_out_n);
+            add_flux_particles(p_n, n_active_n, T_NEUTRAL, 0, M_I, N_INJ_N, 100);
+            
+            print_dsmc_info(i, n_active_n, 5000, 1000000);
+        }
+        weight(p_n, n_active_n, wmesh_n, mesh_x, mesh_y, lpos_n);
+        wmesh_n = (N_FACTOR_NEUTRAL / N_FACTOR) * wmesh_n;
+    }
+    else if (EXPM_NEUTRAL == "constant") {
+        wmesh_n = (N_NEUTRAL / ((4 / pow(DX, 2)) *  N_FACTOR)) * vmesh;
+    }
+    
+    fmatrix dens_n_corrected = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_n / vmesh;
+    save_to_csv(dens_n_corrected, "dens_n.csv");
+    save_to_csv(wmesh_n, "wmesh_n.csv");
+    save_to_csv(vmesh, "vmesh.csv");
+    
+    // Initial MCC parameters
+    double nu_prime_e       = find_nu_prime_e(wmesh_n, vmesh);
+    cout << nu_prime_e << endl;
+    double p_null_e         = p_null(nu_prime_e, DT);
+    double nu_prime_i       = find_nu_prime_i(wmesh_n, vmesh);
+    cout << nu_prime_i << endl;
+    double p_null_i         = p_null(nu_prime_i, DT * K_SUB);
+    
     // Printing initial information
     print_initial_info(p_null_e, p_null_i);
-       
+    return 0;
 	// ----------------------------- Main loop --------------------------------
     verbose_log(" ---- Starting main loop ---- ");
     auto start = high_resolution_clock::now();
@@ -145,19 +180,14 @@ int main(int argc, char* argv[])
         
         
         // save anination of the last 30k steps
-        if(i >= 200000 && (i % 100 == 0)){
-//            fmatrix dens_e_corrected = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_e / vmesh;
-            fmatrix dens_i_corrected = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_i / vmesh;
-            
-            stringstream file_name;
-//            file_name << "dens_e" << i << ".csv";
-//            save_to_csv(dens_e_corrected, file_name.str());
+//        if(i >= 200000 && (i % 100 == 0)){
+//            fmatrix dens_i_corrected = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_i / vmesh;
 //
-//            file_name.str("");
-            file_name << "dens_i" << i << ".csv";
-            save_to_csv(dens_i_corrected, file_name.str());
-        }
-    
+//            stringstream file_name;
+//            file_name << "dens_i" << i << ".csv";
+//            save_to_csv(dens_i_corrected, file_name.str());
+//        }
+//
         // average_field(phi_av, phi, i);
         // average_field(efield_av_x, efield_x, i);
         // average_field(dens_e_av, wmesh_e, i);

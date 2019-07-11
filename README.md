@@ -20,22 +20,15 @@ Compile with the `-D VERBOSE` flag to print more information during execution.
 
 ## To do
 
-Next:
-
-
-- Strategies to mitigate streaming instabilities (is it physical?). 
-    - Change `DT` ;
-    - Change `N_NEUTRAL`
-    
-- Do the rectangular 1D simulation of the domain to check the wavenumber of the instabilities and to compare it with the kinetic theory;
-- Do colisionless DSMC to simulate expansion of neutrals. Check the messages of Trevor to check the step-by-step to do this simulation in the beginning of each run.
-
+- Do colisionless DSMC to simulate expansion of neutrals
 
 Backlog:
 
-- Correction of electric field in Dirichlet boundaries with Gauss law!!
-- Smooth the calculation of E_crit with moving average. Is there a way to do this without having to calculate the energy of all particles every step?
+- Correction of electric field in Dirichlet boundaries with Gauss law
+- Smooth the calculation of E_crit with moving average
 - Add a time-varying electron injection to the simulation
 - Add an external circuit to the outer boundary when it is floating
 - Solving in cylindrical coordinates
-
+- How to better organize the code and declutter the main function
+- Do modular particle boundaries 
+- Organize `config.h` and `config.cpp` with the same categories as `config.ini` 

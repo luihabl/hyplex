@@ -17,6 +17,6 @@ double find_e_crit(int n_out_i, imatrix & out, int n_out, fmatrix & p, int n_act
 
 void move_e(fmatrix & p, int & n_active, fmatrix & electric_field_at_particles_x, fmatrix & electric_field_at_particles_y);
 void move_i(fmatrix & p, int & n_active, fmatrix & electric_field_at_particles_x, fmatrix & electric_field_at_particles_y);
-
+void move_n(fmatrix & p, int & n_active, double k_sub);
 
 #endif // !PARTICLES_H

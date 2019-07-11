@@ -292,3 +292,12 @@ void move_i(fmatrix & p, int & n_active, fmatrix & electric_field_at_particles_x
 		p.val[i * 6 + 1] = p.val[i * 6 + 1] + p.val[i * 6 + 4] * K_SUB; // K_SUB must be multiplied here?
     }
 }
+
+void move_n(fmatrix & p, int & n_active, double k_sub)
+{
+    for (int i = 0; i < n_active; i++)
+    {
+        p.val[i * 6 + 0] = p.val[i * 6 + 0] + k_sub * p.val[i * 6 + 3];
+        p.val[i * 6 + 1] = p.val[i * 6 + 1] + k_sub * p.val[i * 6 + 4];
+    }
+}

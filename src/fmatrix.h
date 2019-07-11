@@ -37,6 +37,8 @@ struct tmatrix
 	void setbox(tmatrix<T> & box, int ilower, int jlower, int iupper, int jupper);
 	void setbox_value(T value, int ilower, int jlower, int iupper, int jupper);
 	tmatrix<T> getnewbox(int ilower, int jlower, int iupper, int jupper);
+    double max();
+    double min();
 
     static tmatrix<T> zeros(int n1, int n2 = 1, int n3 = 1);
     static tmatrix<T> linspace(double x_0, double x_1, int size = 50);
@@ -266,6 +268,20 @@ tmatrix<T> tmatrix<T>::getnewbox(int ilower, int jlower, int iupper, int jupper)
 		}
 	}
 	return m;
+}
+
+template <class T>
+double tmatrix<T>::max(){
+    double v = val[0];
+    for (size_t i = 1; i < n1 * n2 * n3; i++) if(v < val[i]) v = val[i];
+    return v;
+}
+
+template <class T>
+double tmatrix<T>::min(){
+    double v = val[0];
+    for (size_t i = 1; i < n1 * n2 * n3; i++) if(v > val[i]) v = val[i];
+    return v;
 }
 
 // Type definitions
