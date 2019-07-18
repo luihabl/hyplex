@@ -11,6 +11,7 @@ double balanced_injection(double old_n_inj, double rate_constant, fmatrix & wmes
 
 void boundaries_i(fmatrix & p, int & n_active, imatrix & lpos, int & n_removed);
 void boundaries_e(fmatrix & p, int & n_active, imatrix & lpos, int n_out_i);
+void boundaries_n(fmatrix & p, int & n_active, imatrix & lpos);
 void remove_particle(fmatrix & p, int & n_active, int i, imatrix & lpos);
 void reflect_particle(fmatrix & p, int & n_active, int i, double x, double y, double vx, double vy);
 double find_e_crit(int n_out_i, imatrix & out, int n_out, fmatrix & p, int n_active);

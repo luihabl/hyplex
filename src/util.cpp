@@ -184,13 +184,11 @@ void print_initial_info(double p_null_e, double p_null_i)
 
 
 
-void average_field(fmatrix & av_field, const fmatrix & field, int i)
+void average_field(fmatrix & av_field, const fmatrix & field, int step)
 {
-    if(i > (N_STEPS - N_AVERAGE)) {
-        double step = (double) i - (N_STEPS - N_AVERAGE);
-        for (size_t j = 0; j < field.n1 * field.n2 * field.n3; j++) {
-            av_field.val[j] = ((step - 1) * av_field.val[j] / step) + (field.val[j] / step);
-        }
+    // step is actually step = i - (N_STEPS - N_AVERAGE);
+    for (size_t j = 0; j < field.n1 * field.n2 * field.n3; j++) {
+        av_field.val[j] = ((step - 1) * av_field.val[j] / step) + (field.val[j] / step);
     }
 }
 

@@ -23,7 +23,7 @@ imatrix sample_from_sequence_naive(int sample_size, int range);
 void print_info(int i, fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i,  int step_interval = 1000);
 void print_initial_info(double p_null_e, double p_null_i);
 void print_dsmc_info(int i, int n_active_n, int step_interval, int n_steps);
-void average_field(fmatrix & av_field, const fmatrix & field, int i);
+void average_field(fmatrix & av_field, const fmatrix & field, int step);
 int clamp(int low, int hi, int val);
 void verbose_log(string message);
 

@@ -173,8 +173,8 @@ void load_config_file(string filename){
     N_INJ_EL = J_EL * DT / (Q * N_FACTOR);
     N_INJ_I  = J_I  * DT / (Q * N_FACTOR);
     
-    SCCM_2_KGS = 4.477962e17; // Set this to 1/M_I if the MFR is given in kg/s
-    N_INJ_N  = (1 - ETA_PROPELLANT) * (SCCM_2_KGS * MASS_FLOW_RATE) * DT / (N_FACTOR_NEUTRAL);
+//    SCCM_2_KGS = 4.477962e17; // Set this to 1/M_I if the MFR is given in kg/s
+    N_INJ_N  = (1 - ETA_PROPELLANT) * (4.477962e17 * MASS_FLOW_RATE) * DT / (N_FACTOR_NEUTRAL);
     
     GAMMA = 2 * N_FACTOR * pow(Q, 2) * pow(DT, 2) / (M_EL * EPS_0 * pow(DX, 2));
     ALPHA = K_SUB * M_EL / M_I;

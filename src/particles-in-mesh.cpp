@@ -186,3 +186,55 @@ void energy_field(fmatrix & kefield, fmatrix & p, int & n_active, fmatrix & mesh
             kefield.val[i] = 0;
     }
 }
+
+void flux_field(fmatrix & ffield_x, fmatrix & ffield_y, fmatrix & p, int & n_active, fmatrix & mesh_x, fmatrix & mesh_y, imatrix & lpos){
+    
+    ffield_x.set_zero();
+    ffield_y.set_zero();
+    
+    double x_p, y_p, vx, vy;
+    
+    double x_0_mesh = 0;
+    double x_1_mesh = 0;
+    double y_0_mesh = 0;
+    double y_1_mesh = 0;
+    
+    double cell_area, area_1, area_2, area_3, area_4;
+    
+    int left_index_x = 0;
+    int left_index_y = 0;
+    
+    const int mesh_n2 = (int) mesh_x.n2;
+    
+    for (int i = 0; i < n_active; i++)
+    {
+        x_p = p.val[i * 6 + 0];
+        y_p = p.val[i * 6 + 1];
+        vx =  p.val[i * 6 + 3];
+        vy =  p.val[i * 6 + 4];
+        
+        left_index_x = lpos.val[i * 2 + 0];
+        left_index_y = lpos.val[i * 2 + 1];
+        
+        x_0_mesh = mesh_x.val[left_index_x * mesh_n2 + left_index_y];
+        x_1_mesh = mesh_x.val[(left_index_x + 1) * mesh_n2 + left_index_y];
+        y_0_mesh = mesh_y.val[left_index_x * mesh_n2 + left_index_y];
+        y_1_mesh = mesh_y.val[left_index_x * mesh_n2 + (left_index_y + 1)];
+        
+        area_1 = (x_1_mesh - x_p) * (y_1_mesh - y_p);
+        area_2 = (x_p - x_0_mesh) * (y_1_mesh - y_p);
+        area_3 = (x_p - x_0_mesh) * (y_p - y_0_mesh);
+        area_4 = (x_1_mesh - x_p) * (y_p - y_0_mesh);
+        cell_area = (x_1_mesh - x_0_mesh) * (y_1_mesh - y_0_mesh);
+        
+        ffield_x.val[left_index_x * mesh_n2 + left_index_y] +=              vx * area_1 / cell_area;
+        ffield_x.val[(left_index_x + 1) * mesh_n2 + left_index_y] +=        vx * area_2 / cell_area;
+        ffield_x.val[(left_index_x + 1) * mesh_n2 + (left_index_y + 1)] +=  vx * area_3 / cell_area;
+        ffield_x.val[left_index_x * mesh_n2 + (left_index_y + 1)] +=        vx * area_4 / cell_area;
+        
+        ffield_y.val[left_index_x * mesh_n2 + left_index_y] +=              vy * area_1 / cell_area;
+        ffield_y.val[(left_index_x + 1) * mesh_n2 + left_index_y] +=        vy * area_2 / cell_area;
+        ffield_y.val[(left_index_x + 1) * mesh_n2 + (left_index_y + 1)] +=  vy * area_3 / cell_area;
+        ffield_y.val[left_index_x * mesh_n2 + (left_index_y + 1)] +=        vy * area_4 / cell_area;
+    }
+}

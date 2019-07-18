@@ -37,8 +37,9 @@ void add_maxwellian_particles(fmatrix & p, int & n_active, const double temperat
 
 void add_flux_particles(fmatrix & p, int & n_active, const double temperature, const double v_drift, const double mass, const double n_add, double k_sub){
 	
-	double f_n_add = floor(n_add);
-	size_t n_new = k_sub * (r_unif() < (n_add - f_n_add) ?  (size_t) f_n_add + 1 : (size_t) f_n_add);
+	double f_n_add = floor(k_sub * n_add);
+	int n_new = (r_unif() < (k_sub * n_add - f_n_add) ?  f_n_add + 1 : f_n_add);
+//    cout << n_add << " " << n_new << endl;
 	
 	double v_temperature = sqrt(Q * temperature / mass);
 
@@ -108,6 +109,36 @@ double balanced_injection(double old_n_inj, double rate_constant, fmatrix & wmes
 }
 
 //  ----------------------------- Boundaries ----------------------------------
+
+void boundaries_n(fmatrix & p, int & n_active, imatrix & lpos){
+    int n_remove = 0;
+    static imatrix tbremoved(100000); // Modify fmatrix class to include int as template. Make a smart guess of the maximum removed particles.
+    
+    double x, y;
+    static const double x_max = ((double) N_MESH_X - 1);
+    static const double y_max = ((double) N_MESH_Y - 1) * (DY / DX);
+    
+    for (int i = 0; i < n_active; i++)
+    {
+        x = p.val[i * 6 + 0];
+        y = p.val[i * 6 + 1];
+        
+        if (x < 0 || x > x_max || y > y_max)
+        {
+            tbremoved.val[n_remove] = i;
+            n_remove += 1;
+
+        } else if (y < 0) {
+            p.val[i * 6 + 1] = - p.val[i * 6 + 1];
+            p.val[i * 6 + 4] = - p.val[i * 6 + 4];
+        }
+    }
+    
+    for (int i = n_remove - 1; i >= 0; i--)
+    {
+        remove_particle(p, n_active, tbremoved.val[i], lpos);
+    }
+}
 
 void boundaries_i(fmatrix & p, int & n_active, imatrix & lpos, int & n_removed_ob)
 {

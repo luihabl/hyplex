@@ -76,7 +76,6 @@ int main(int argc, char* argv[])
     fmatrix p_n             = fmatrix::zeros(N_MAX_PARTICLES, 6);
     imatrix lpos_n          = imatrix::zeros(N_MAX_PARTICLES, 2);
     fmatrix wmesh_n         = fmatrix::zeros(N_MESH_X, N_MESH_Y);
-    int n_out_n             = 0;
 
     //initializing mesh
     verbose_log("Initializing mesh");
@@ -104,40 +103,104 @@ int main(int argc, char* argv[])
 
     
     
+    
+    
+    
+    
+    
+    
+    
+    
+    
     // ----------------------------- DSMC loop --------------------------------
+    int total_steps =   1000000;
+    int n_av = 1000;
+    double k_sub_n = 1;
+    cout << N_INJ_N << endl;
+    fmatrix wmesh_n_av = fmatrix::zeros(N_MESH_X, N_MESH_Y);
+    fmatrix fluxn_x = fmatrix::zeros(N_MESH_X, N_MESH_Y);
+    fmatrix fluxn_y = fmatrix::zeros(N_MESH_X, N_MESH_Y);
+    
+    fmatrix fluxn_x_av = fmatrix::zeros(N_MESH_X, N_MESH_Y);
+    fmatrix fluxn_y_av = fmatrix::zeros(N_MESH_X, N_MESH_Y);
+    
     
     if (EXPM_NEUTRAL == "dsmc"){
         verbose_log(" ---- Starting DSMC loop ---- ");
-        for (int i = 0; i < 1000000; i++){
-            move_n(p_n, n_active_n, 100);
-            boundaries_i(p_n, n_active_n, lpos_n, n_out_n);
-            add_flux_particles(p_n, n_active_n, T_NEUTRAL, 0, M_I, N_INJ_N, 100);
+        for (int i = 0; i < total_steps; i++){
+            move_n(p_n, n_active_n, k_sub_n);
+            boundaries_n(p_n, n_active_n, lpos_n);
+            add_flux_particles(p_n, n_active_n, T_NEUTRAL, 0, M_I, N_INJ_N, k_sub_n);
+            print_dsmc_info(i, n_active_n, 1000, total_steps);
             
-            print_dsmc_info(i, n_active_n, 5000, 1000000);
+            if(i > total_steps - n_av){
+                weight(p_n, n_active_n, wmesh_n, mesh_x, mesh_y, lpos_n);
+                flux_field(fluxn_x, fluxn_y, p_n, n_active_n, mesh_x, mesh_y, lpos_n);
+                average_field(wmesh_n_av, wmesh_n, i - (total_steps - n_av));
+                average_field(fluxn_x_av, fluxn_x, i - (total_steps - n_av));
+                average_field(fluxn_y_av, fluxn_y, i - (total_steps - n_av));
+            }
+            
         }
-        weight(p_n, n_active_n, wmesh_n, mesh_x, mesh_y, lpos_n);
-        wmesh_n = (N_FACTOR_NEUTRAL / N_FACTOR) * wmesh_n;
+//        weight(p_n, n_active_n, wmesh_n, mesh_x, mesh_y, lpos_n);
+        wmesh_n = (N_FACTOR_NEUTRAL / N_FACTOR) * wmesh_n_av;
     }
     else if (EXPM_NEUTRAL == "constant") {
         wmesh_n = (N_NEUTRAL / ((4 / pow(DX, 2)) *  N_FACTOR)) * vmesh;
     }
     
+    
+    fmatrix fluxn_x_corrected = (4 / (DX * DT)) * N_FACTOR_NEUTRAL * fluxn_x_av / vmesh;
+    fmatrix fluxn_y_corrected = (4 / (DX * DT)) * N_FACTOR_NEUTRAL * fluxn_y_av / vmesh;
+    
+
     fmatrix dens_n_corrected = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_n / vmesh;
+    cout << dens_n_corrected.max() << endl;
+
     save_to_csv(dens_n_corrected, "dens_n.csv");
     save_to_csv(wmesh_n, "wmesh_n.csv");
     save_to_csv(vmesh, "vmesh.csv");
+    save_to_csv(fluxn_x_corrected, "fluxn_x.csv");
+    save_to_csv(fluxn_y_corrected, "fluxn_y.csv");
+    
+    
+    
+    double k = 0;
+    for (int i = 0; i < n_active_n; i++) {
+        k += (2.0/3.0) * kinetic_energy_ev(p_n, i, M_I);
+    }
+    cout << "av temp: " << k / n_active_n << endl;
+    
+    
+    return 0;
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    // -----------------------------------------------------------------------
     
     // Initial MCC parameters
     double nu_prime_e       = find_nu_prime_e(wmesh_n, vmesh);
-    cout << nu_prime_e << endl;
     double p_null_e         = p_null(nu_prime_e, DT);
     double nu_prime_i       = find_nu_prime_i(wmesh_n, vmesh);
-    cout << nu_prime_i << endl;
     double p_null_i         = p_null(nu_prime_i, DT * K_SUB);
     
     // Printing initial information
     print_initial_info(p_null_e, p_null_i);
-    return 0;
+    
 	// ----------------------------- Main loop --------------------------------
     verbose_log(" ---- Starting main loop ---- ");
     auto start = high_resolution_clock::now();
