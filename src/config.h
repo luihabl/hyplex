@@ -8,80 +8,92 @@
 #include <string>
 using namespace std;
 
-// Project configuration
+//[project]
 extern string OUTPUT_PATH;
 extern string CROSS_SECTIONS_PATH;
 
-// Physical constants
-extern double Q;
-extern double EPS_0;
-extern double PI;
-extern double K_BOLTZ;
+//; ----------------------------- Constants -------------------------------------
+//[physical]
+extern double Q                      ;//Elementary charge [C]
+extern double EPS_0                  ;//Vacuum permittivity [F * m^-1]
+extern double PI                     ;//Pi []
+extern double K_BOLTZ                ;//Boltzmann constant [J * K^-1]
 
-// Solver parameters
-extern int N_MESH_X;
-extern int N_MESH_Y;
-extern double A_X;
-extern double A_Y;
-extern int N_MAX_PARTICLES;
-extern int N_STEPS;
-extern int N_AVERAGE;
-extern int K_SUB;
+//; ----------------------------- Domain ----------------------------------------
+//[geometry]
+extern double L_X                    ;//Lenght of simulation domain in x [m]
+extern double L_Y                    ;//Lenght of simulation domain in y [m]
+extern int N_MESH_X                  ;//Number of grid points in the x direction (n_benchmark + 1) []
+extern int N_MESH_Y                  ;//Number of grid points in the y direction []
+extern int N_THRUSTER                ;//Number of nodes that represent the thruster []
+extern double A_X                    ;//Grid distorsion coefficient in the x direction []
+extern double A_Y                    ;//Grid distorsion coefficient in the y direction []
 
-// Physical parameters
-extern double L_X;
-extern double L_Y;
-extern double FREQ;
-extern double VOLT_0;
-extern double VOLT_1;      
-extern double T_NEUTRAL;
-extern double N_NEUTRAL;
-extern double PLASMA_DENSITY;
-extern double MASS_FLOW_RATE;
-extern double ETA_PROPELLANT;
-extern int N_THRUSTER;
+//[time]
+extern double DT                     ;//Time step [s]
+extern int N_STEPS                   ;//Number of simulation steps to be executed []
+extern int N_STEPS_DSMC              ;//Number of DSMC simulation steps to be executed []
+extern int N_AVERAGE                 ;//Number of average steps []
+extern int N_AVERAGE_DSMC            ;//Number of DSMC average steps []
+extern int K_SUB                     ;//Ion subcycling factor []
+extern int K_SUB_DSMC                ;//DSMC subcycling factor []
 
-// Particle 1 - Electrons
-extern double M_EL;
-extern double Q_EL;
-extern double T_EL;
-extern double J_EL;
-extern double N_INJ_EL;
+//[boundary-conditions]
+extern double VOLT_0                 ;//Voltage on the thruster [V]
+extern double VOLT_1                 ;//Voltage on the chamber walls [V]
 
-// Particle 2 - Ions
-extern string GAS_NAME;
-extern double Q_I;
-extern double MACH_I;
-extern double VD_I;
-extern double T_I;
-extern double J_I;
-extern double N_INJ_I;
+//; ----------------------------- Species ---------------------------------------
 
-extern double N_INJ_N;
-  
-extern double M_I;
-extern int N_EXC;
-extern double E_IZ;
-extern double* E_EXC;
+//[thruster]
+extern double PLASMA_DENSITY        ;//Reference plasma density [m^-3]
+extern double MASS_FLOW_RATE        ;//Mass flow rate of thruster [sccm]
+extern double ETA_PROPELLANT        ;//Propellant utilization efficiency []
 
-extern string ELS_PATH;
-extern string* E_EXC_PATH;
-extern string IZ_PATH;
-extern string BS_PATH;
-extern string ISO_PATH;
+//[particles]
+extern double N_FACTOR              ;//Macro-particle weight factor (i.e. how many particles one macro-particle represents) []
+extern double N_FACTOR_DSMC         ;//Macro-particle weight factor for neutrals []
+extern int N_MAX_PARTICLES          ;//Maximum number of particles in the array []
 
-// Operational parameters
-extern double DT;
+//[neutral]
+extern string EXPM_NEUTRAL          ;//Expansion model of neutral flow: 'dsmc' or 'constant'
+extern double T_NEUTRAL             ;//Temperature of neutral gas [eV]
+extern double N_NEUTRAL             ;//Density of neutral gas [m^-3]
+
+//[electrons]
+extern double M_EL                  ;//Electron mass [kg]
+extern double Q_EL                  ;//Electron charge [C]
+extern double T_EL                  ;//Initial electron temperature [eV]
+extern double J_EL                  ;//Electron injection current [A/m]
+
+//[ions]
+extern string GAS_NAME              ;//Name of gas: 'helium' or 'xenon'
+extern double Q_I                   ;//Ion charge [kg]
+extern double T_I                   ;//Initial ion temperature [eV]
+extern double J_I                   ;//Ion injection current [A/m]
+extern double MACH_I                ;//Injection mach number []
+
+extern double M_I                   ;//Ion mass [kg]
+extern double* E_EXC                ;//First excitation energy [eV]
+extern double E_IZ                  ;//Ionization energy [eV]
+extern int N_EXC                    ;//Number of excited states considered (1 or 2)
+
+extern string ELS_PATH;             ;//Path to elastic cross section
+extern string* E_EXC_PATH;          ;//Paths to excitation cross sections
+extern string IZ_PATH               ;//Path ionization cross section
+extern string BS_PATH               ;//Path backscattering cross section
+extern string ISO_PATH              ;//Path isotropic cross section
+
+// Calculated parameters
 extern double DX;
 extern double DY;
 extern double VOLT_0_NORM;
 extern double VOLT_1_NORM;
-extern double N_FACTOR;
-extern double N_FACTOR_NEUTRAL;
-extern string EXPM_NEUTRAL;
 extern double GAMMA;
 extern double ALPHA;
-
+extern double N_INJ_N;
+extern double N_INJ_I;
+extern double N_INJ_EL;
+extern double VD_I;
 
 void load_config_file(string filename);
 #endif

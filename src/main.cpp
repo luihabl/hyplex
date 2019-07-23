@@ -113,10 +113,7 @@ int main(int argc, char* argv[])
     
     
     // ----------------------------- DSMC loop --------------------------------
-    int total_steps =   1000000;
-    int n_av = 1000;
-    double k_sub_n = 1;
-    cout << N_INJ_N << endl;
+
     fmatrix wmesh_n_av = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix fluxn_x = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix fluxn_y = fmatrix::zeros(N_MESH_X, N_MESH_Y);
@@ -127,31 +124,32 @@ int main(int argc, char* argv[])
     
     if (EXPM_NEUTRAL == "dsmc"){
         verbose_log(" ---- Starting DSMC loop ---- ");
-        for (int i = 0; i < total_steps; i++){
-            move_n(p_n, n_active_n, k_sub_n);
-            boundaries_n(p_n, n_active_n, lpos_n);
-            add_flux_particles(p_n, n_active_n, T_NEUTRAL, 0, M_I, N_INJ_N, k_sub_n);
-            print_dsmc_info(i, n_active_n, 1000, total_steps);
-            
-            if(i > total_steps - n_av){
+        for (int i = 0; i < N_STEPS_DSMC; i++){
+           
+            add_flux_particles(p_n, n_active_n, T_NEUTRAL, 0, M_I, N_INJ_N, K_SUB_DSMC);
+
+            if(i > N_STEPS_DSMC - N_AVERAGE_DSMC){
                 weight(p_n, n_active_n, wmesh_n, mesh_x, mesh_y, lpos_n);
                 flux_field(fluxn_x, fluxn_y, p_n, n_active_n, mesh_x, mesh_y, lpos_n);
-                average_field(wmesh_n_av, wmesh_n, i - (total_steps - n_av));
-                average_field(fluxn_x_av, fluxn_x, i - (total_steps - n_av));
-                average_field(fluxn_y_av, fluxn_y, i - (total_steps - n_av));
+                average_field(wmesh_n_av, wmesh_n, i - (N_STEPS_DSMC - N_AVERAGE_DSMC));
+                average_field(fluxn_x_av, fluxn_x, i - (N_STEPS_DSMC - N_AVERAGE_DSMC));
+                average_field(fluxn_y_av, fluxn_y, i - (N_STEPS_DSMC - N_AVERAGE_DSMC));
             }
             
+            move_n(p_n, n_active_n, K_SUB_DSMC);
+            boundaries_n(p_n, n_active_n, lpos_n);
+            print_dsmc_info(i, n_active_n, 1000, N_STEPS_DSMC);
         }
-//        weight(p_n, n_active_n, wmesh_n, mesh_x, mesh_y, lpos_n);
-        wmesh_n = (N_FACTOR_NEUTRAL / N_FACTOR) * wmesh_n_av;
+        wmesh_n = (N_FACTOR_DSMC / N_FACTOR) * wmesh_n_av;
     }
     else if (EXPM_NEUTRAL == "constant") {
         wmesh_n = (N_NEUTRAL / ((4 / pow(DX, 2)) *  N_FACTOR)) * vmesh;
     }
     
     
-    fmatrix fluxn_x_corrected = (4 / (DX * DT)) * N_FACTOR_NEUTRAL * fluxn_x_av / vmesh;
-    fmatrix fluxn_y_corrected = (4 / (DX * DT)) * N_FACTOR_NEUTRAL * fluxn_y_av / vmesh;
+    fmatrix fluxn_x_corrected = (4 / (DX * DT)) * N_FACTOR_DSMC * fluxn_x_av / vmesh;
+    fmatrix fluxn_y_corrected = (4 / (DX * DT)) * N_FACTOR_DSMC * fluxn_y_av / vmesh;
+    
     
 
     fmatrix dens_n_corrected = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_n / vmesh;
@@ -163,13 +161,6 @@ int main(int argc, char* argv[])
     save_to_csv(fluxn_x_corrected, "fluxn_x.csv");
     save_to_csv(fluxn_y_corrected, "fluxn_y.csv");
     
-    
-    
-    double k = 0;
-    for (int i = 0; i < n_active_n; i++) {
-        k += (2.0/3.0) * kinetic_energy_ev(p_n, i, M_I);
-    }
-    cout << "av temp: " << k / n_active_n << endl;
     
     
     return 0;

@@ -8,81 +8,93 @@
 
 using namespace std;
 
-// Project configuration
-string OUTPUT_PATH;
-string CROSS_SECTIONS_PATH;
+//[project]
+ string OUTPUT_PATH;
+ string CROSS_SECTIONS_PATH;
 
-// Physical constants
-double Q;
-double EPS_0;
-double PI;
-double K_BOLTZ;
+//; ----------------------------- Constants -------------------------------------
+//[physical]
+ double Q                      ;//Elementary charge [C]
+ double EPS_0                  ;//Vacuum permittivity [F * m^-1]
+ double PI                     ;//Pi []
+ double K_BOLTZ                ;//Boltzmann constant [J * K^-1]
 
-// Solver parameters
-int N_MESH_X;
-int N_MESH_Y;
-double A_X;
-double A_Y;
-int N_MAX_PARTICLES;
-int N_STEPS;
-int N_AVERAGE;
-int K_SUB;
+//; ----------------------------- Domain ----------------------------------------
+//[geometry]
+ double L_X                    ;//Lenght of simulation domain in x [m]
+ double L_Y                    ;//Lenght of simulation domain in y [m]
+ int N_MESH_X                  ;//Number of grid points in the x direction (n_benchmark + 1) []
+ int N_MESH_Y                  ;//Number of grid points in the y direction []
+ int N_THRUSTER                ;//Number of nodes that represent the thruster []
+ double A_X                    ;//Grid distorsion coefficient in the x direction []
+ double A_Y                    ;//Grid distorsion coefficient in the y direction []
 
-// Physical parameters
-double L_X;
-double L_Y;
-double FREQ;
-double VOLT_0;
-double VOLT_1;      
-double T_NEUTRAL;
-double N_NEUTRAL;
-double PLASMA_DENSITY;
-int N_THRUSTER;
+//[time]
+ double DT                     ;//Time step [s]
+ int N_STEPS                   ;//Number of simulation steps to be executed []
+ int N_STEPS_DSMC              ;//Number of DSMC simulation steps to be executed []
+ int N_AVERAGE                 ;//Number of average steps []
+ int N_AVERAGE_DSMC            ;//Number of DSMC average steps []
+ int K_SUB                  ;//Ion subcycling factor []
+ int K_SUB_DSMC             ;//DSMC subcycling factor []
 
-// Particle 1 - Electrons
-double M_EL;
-double Q_EL;
-double T_EL;
-double J_EL;
-double N_INJ_EL;
+//[boundary-conditions]
+ double VOLT_0                 ;//Voltage on the thruster [V]
+ double VOLT_1                 ;//Voltage on the chamber walls [V]
 
-// Particle 2 - Ions
-string GAS_NAME;
-double Q_I;
-double MACH_I;
-double VD_I;
-double T_I;
-double J_I;
-double N_INJ_I;
+//; ----------------------------- Species ---------------------------------------
 
-// Neutrals
-string EXPM_NEUTRAL;
-double MASS_FLOW_RATE;
-double ETA_PROPELLANT;
-double N_FACTOR_NEUTRAL;
-double N_INJ_N;
+//[thruster]
+ double PLASMA_DENSITY        ;//Reference plasma density [m^-3]
+ double MASS_FLOW_RATE        ;//Mass flow rate of thruster [sccm]
+ double ETA_PROPELLANT        ;//Propellant utilization efficiency []
 
-double M_I;
-int N_EXC;
-double E_IZ;
-double* E_EXC;
+//[particles]
+ double N_FACTOR              ;//Macro-particle weight factor (i.e. how many particles one macro-particle represents) []
+ double N_FACTOR_DSMC         ;//Macro-particle weight factor for neutrals []
+ int N_MAX_PARTICLES          ;//Maximum number of particles in the array []
 
-string ELS_PATH;
-string* E_EXC_PATH;
-string IZ_PATH;
-string BS_PATH;
-string ISO_PATH;
+//[neutral]
+ string EXPM_NEUTRAL          ;//Expansion model of neutral flow: 'dsmc' or 'constant'
+ double T_NEUTRAL             ;//Temperature of neutral gas [eV]
+ double N_NEUTRAL             ;//Density of neutral gas [m^-3]
 
-// Operational parameters
-double DT;
-double DX;
-double DY;
-double VOLT_0_NORM;
-double VOLT_1_NORM;
-double N_FACTOR;
-double GAMMA;
-double ALPHA;
-double SCCM_2_KGS;
+//[electrons]
+ double M_EL                  ;//Electron mass [kg]
+ double Q_EL                  ;//Electron charge [C]
+ double T_EL                  ;//Initial electron temperature [eV]
+ double J_EL                  ;//Electron injection current [A/m]
+
+//[ions]
+ string GAS_NAME              ;//Name of gas: 'helium' or 'xenon'
+ double Q_I                   ;//Ion charge [kg]
+ double T_I                   ;//Initial ion temperature [eV]
+ double J_I                   ;//Ion injection current [A/m]
+ double MACH_I                ;//Injection mach number []
+
+ double M_I                   ;//Ion mass [kg]
+ double* E_EXC                ;//First excitation energy [eV]
+ double E_IZ                  ;//Ionization energy [eV]
+ int N_EXC                    ;//Number of excited states considered (1 or 2)
+
+ string ELS_PATH;             ;//Path to elastic cross section
+ string* E_EXC_PATH;          ;//Paths to excitation cross sections
+ string IZ_PATH               ;//Path ionization cross section
+ string BS_PATH               ;//Path backscattering cross section
+ string ISO_PATH              ;//Path isotropic cross section
+
+// Calculated parameters
+ double DX;
+ double DY;
+ double VOLT_0_NORM;
+ double VOLT_1_NORM;
+ double GAMMA;
+ double ALPHA;
+ double N_INJ_N;
+ double N_INJ_I;
+ double N_INJ_EL;
+ double VD_I;
+
 
 void load_config_file(string filename){
 
@@ -113,6 +125,9 @@ void load_config_file(string filename){
     N_STEPS = (int) reader.GetReal("time", "N_STEPS", -1);
     N_AVERAGE = (int) reader.GetReal("time", "N_AVERAGE", -1);
     K_SUB =  (int) reader.GetReal("time", "K_SUB", -1);
+    N_STEPS_DSMC = (int) reader.GetReal("time", "N_STEPS_DSMC", -1);
+    N_AVERAGE_DSMC = (int) reader.GetReal("time", "N_AVERAGE_DSMC", -1);
+    K_SUB_DSMC =  (int) reader.GetReal("time", "K_SUB_DSMC", -1);
 
     // Boundary conditions
     VOLT_0 = reader.GetReal("boundary-conditions", "VOLT_0", -1);
@@ -132,7 +147,7 @@ void load_config_file(string filename){
     EXPM_NEUTRAL = reader.Get("neutral", "EXPM_NEUTRAL", "");
     MASS_FLOW_RATE = reader.GetReal("thruster", "MASS_FLOW_RATE", -1);
     ETA_PROPELLANT = reader.GetReal("thruster", "ETA_PROPELLANT", -1);
-    N_FACTOR_NEUTRAL = reader.GetReal("particles", "N_FACTOR_NEUTRAL", -1);
+    N_FACTOR_DSMC = reader.GetReal("particles", "N_FACTOR_DSMC", -1);
 
     // Particle 1 - Electrons
     M_EL = reader.GetReal("electrons", "M_EL", -1);
@@ -173,8 +188,7 @@ void load_config_file(string filename){
     N_INJ_EL = J_EL * DT / (Q * N_FACTOR);
     N_INJ_I  = J_I  * DT / (Q * N_FACTOR);
     
-//    SCCM_2_KGS = 4.477962e17; // Set this to 1/M_I if the MFR is given in kg/s
-    N_INJ_N  = (1 - ETA_PROPELLANT) * (4.477962e17 * MASS_FLOW_RATE) * DT / (N_FACTOR_NEUTRAL);
+    N_INJ_N  = (1 - ETA_PROPELLANT) * (4.477962e17 * MASS_FLOW_RATE) * DT / (N_FACTOR_DSMC);
     
     GAMMA = 2 * N_FACTOR * pow(Q, 2) * pow(DT, 2) / (M_EL * EPS_0 * pow(DX, 2));
     ALPHA = K_SUB * M_EL / M_I;

@@ -24,11 +24,11 @@ divider0 = make_axes_locatable(axes)
 cax0 = divider0.append_axes("right", size="1%", pad=0.1)
 
 axes.axis('image')
-axes.set(title='Neutral flux X')
+axes.set(title='Velocity field in x direction')
 axes.set_ylabel('y/$\lambda_{De}$')
 axes.set_xlabel('x/$\lambda_{De}$')
 #fig.colorbar(p, ax=axes,cax=cax0, label='$P$ [mTorr]')
-fig.colorbar(p, ax=axes,cax=cax0, label='$n$ [$m^{-3}$]')
+fig.colorbar(p, ax=axes,cax=cax0, label='$u_x$ [$m s^{-1}$]')
 
 plt.tight_layout()
 plt.show()
