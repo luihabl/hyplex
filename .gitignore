@@ -1,4 +1,5 @@
 /run
+/build/
 /lib/hypre-2.16.0/*
 /output/*.csv
 /output/*.mp4
