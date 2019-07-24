@@ -14,18 +14,21 @@ Before using the code it is necessary to install:
 - Open MPI - https://www.open-mpi.org/
 - HYPRE - https://github.com/hypre-space/hypre
 
-Download HYPRE and extract it in the `/lib/` folder, then build the library in this folder.  After building MPI and HYPRE it is necessary to modify `compile.sh` to include the version of HYRE. Finally, to build the code, just execute the command `./compile.sh`. 
+Download HYPRE and extract it in the `/lib/` folder, then build the library in this folder.  After building MPI and HYPRE it is necessary to modify the`Makefile` to include the version of HYRE, this is done modifying the variable `hypre_dr`  to the folder name that contains the library, e.g. , `hypre-2.16.0`. Finally, to build the code, just execute the command `make`. 
 
-Compile with the `-D VERBOSE` flag to print more information during execution.
+Compile with the `-D VERBOSE` flag in the variable `CXXFLAGS` to print more information during runtime.
 
 ## To do
 
-- Do colisionless DSMC to simulate expansion of neutrals
+- Do collisionless DSMC to simulate expansion of neutrals
+- Why the highest density is still too low, when compared to the theory?
+
+
 
 Backlog:
 
 - Correction of electric field in Dirichlet boundaries with Gauss law
-- Smooth the calculation of E_crit with moving average
+- Smooth the calculation of $E_{crit}$ with moving average
 - Add a time-varying electron injection to the simulation
 - Add an external circuit to the outer boundary when it is floating
 - Solving in cylindrical coordinates

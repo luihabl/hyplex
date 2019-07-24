@@ -2,8 +2,9 @@ CC = mpic++
 exe = run
 sdr = src
 bdr = build
-LDFLAGS = -Llib/hypre-2.16.0/src/hypre/lib -lHYPRE
-CXXFLAGS = -Ilib -Ilib/hypre-2.16.0/src/hypre/include -std=c++11 -O3 -march=native -Wall -D VERBOSE
+hypre_dir=hypre-2.16.0
+LDFLAGS = -Llib/$(hypre_dir)/src/hypre/lib -lHYPRE
+CXXFLAGS = -Ilib -Ilib/$(hypre_dir)/src/hypre/include -std=c++11 -O3 -march=native -Wall -D VERBOSE
 
 src = $(wildcard $(sdr)/*.cpp)
 srn = $(src:src/%=%)
