@@ -76,6 +76,7 @@ int main(int argc, char* argv[])
     fmatrix p_n             = fmatrix::zeros(N_MAX_PARTICLES, 6);
     imatrix lpos_n          = imatrix::zeros(N_MAX_PARTICLES, 2);
     fmatrix wmesh_n         = fmatrix::zeros(N_MESH_X, N_MESH_Y);
+    fmatrix wmesh_n_av      = fmatrix::zeros(N_MESH_X, N_MESH_Y);
 
     //initializing mesh
     verbose_log("Initializing mesh");
@@ -100,26 +101,15 @@ int main(int argc, char* argv[])
     
     voltages = {VOLT_0_NORM};
     solver.assemble();
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+      
     // ----------------------------- DSMC loop --------------------------------
 
-    fmatrix wmesh_n_av = fmatrix::zeros(N_MESH_X, N_MESH_Y);
-    fmatrix fluxn_x = fmatrix::zeros(N_MESH_X, N_MESH_Y);
-    fmatrix fluxn_y = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     
-    fmatrix fluxn_x_av = fmatrix::zeros(N_MESH_X, N_MESH_Y);
-    fmatrix fluxn_y_av = fmatrix::zeros(N_MESH_X, N_MESH_Y);
+    // fmatrix fluxn_x = fmatrix::zeros(N_MESH_X, N_MESH_Y);
+    // fmatrix fluxn_y = fmatrix::zeros(N_MESH_X, N_MESH_Y);
+    
+    // fmatrix fluxn_x_av = fmatrix::zeros(N_MESH_X, N_MESH_Y);
+    // fmatrix fluxn_y_av = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     
     
     if (EXPM_NEUTRAL == "dsmc"){
@@ -130,10 +120,10 @@ int main(int argc, char* argv[])
 
             if(i > N_STEPS_DSMC - N_AVERAGE_DSMC){
                 weight(p_n, n_active_n, wmesh_n, mesh_x, mesh_y, lpos_n);
-                flux_field(fluxn_x, fluxn_y, p_n, n_active_n, mesh_x, mesh_y, lpos_n);
                 average_field(wmesh_n_av, wmesh_n, i - (N_STEPS_DSMC - N_AVERAGE_DSMC));
-                average_field(fluxn_x_av, fluxn_x, i - (N_STEPS_DSMC - N_AVERAGE_DSMC));
-                average_field(fluxn_y_av, fluxn_y, i - (N_STEPS_DSMC - N_AVERAGE_DSMC));
+                // flux_field(fluxn_x, fluxn_y, p_n, n_active_n, mesh_x, mesh_y, lpos_n);
+                // average_field(fluxn_x_av, fluxn_x, i - (N_STEPS_DSMC - N_AVERAGE_DSMC));
+                // average_field(fluxn_y_av, fluxn_y, i - (N_STEPS_DSMC - N_AVERAGE_DSMC));
             }
             
             move_n(p_n, n_active_n, K_SUB_DSMC);
@@ -145,41 +135,19 @@ int main(int argc, char* argv[])
     else if (EXPM_NEUTRAL == "constant") {
         wmesh_n = (N_NEUTRAL / ((4 / pow(DX, 2)) *  N_FACTOR)) * vmesh;
     }
+    fmatrix dens_n = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_n / vmesh;
+    // fmatrix fluxn_x_corrected = (4 / (DX * DT)) * N_FACTOR_DSMC * fluxn_x_av / vmesh;
+    // fmatrix fluxn_y_corrected = (4 / (DX * DT)) * N_FACTOR_DSMC * fluxn_y_av / vmesh;
     
     
-    fmatrix fluxn_x_corrected = (4 / (DX * DT)) * N_FACTOR_DSMC * fluxn_x_av / vmesh;
-    fmatrix fluxn_y_corrected = (4 / (DX * DT)) * N_FACTOR_DSMC * fluxn_y_av / vmesh;
+    // cout << dens_n_corrected.max() << endl;
+    // save_to_csv(dens_n_corrected, "dens_n.csv");
+    // save_to_csv(wmesh_n, "wmesh_n.csv");
+    // save_to_csv(vmesh, "vmesh.csv");
+    // save_to_csv(fluxn_x_corrected, "fluxn_x.csv");
+    // save_to_csv(fluxn_y_corrected, "fluxn_y.csv");
     
-    
-
-    fmatrix dens_n_corrected = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_n / vmesh;
-    cout << dens_n_corrected.max() << endl;
-
-    save_to_csv(dens_n_corrected, "dens_n.csv");
-    save_to_csv(wmesh_n, "wmesh_n.csv");
-    save_to_csv(vmesh, "vmesh.csv");
-    save_to_csv(fluxn_x_corrected, "fluxn_x.csv");
-    save_to_csv(fluxn_y_corrected, "fluxn_y.csv");
-    
-    
-    
-    return 0;
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+    // return 0;
     
     // -----------------------------------------------------------------------
     
@@ -196,7 +164,12 @@ int main(int argc, char* argv[])
     verbose_log(" ---- Starting main loop ---- ");
     auto start = high_resolution_clock::now();
 	for (int i = 0; i < N_STEPS; i++)
-	{   
+	{ 
+        // Step 3: particles injection ??????
+        if(i % K_SUB == 0) add_flux_particles(p_i, n_active_i, T_I, VD_I, M_I, N_INJ_I, K_SUB);
+        n_inj_balanced_e = balanced_injection(n_inj_balanced_e, 0.01, wmesh_i, wmesh_e, 0, 0, 0, N_THRUSTER - 1);
+        add_flux_particles(p_e, n_active_e, T_EL, 0, M_EL, n_inj_balanced_e);
+
 		// Step 1.0: particle weighting
         if(i % K_SUB == 0) weight(p_i, n_active_i, wmesh_i, mesh_x, mesh_y, lpos_i);
         weight(p_e, n_active_e, wmesh_e, mesh_x, mesh_y, lpos_e);
@@ -211,12 +184,6 @@ int main(int argc, char* argv[])
         if(i % K_SUB == 0) electric_field_at_particles(efield_x_at_p_i, efield_y_at_p_i, efield_x, efield_y, p_i, n_active_i, mesh_x, mesh_y, lpos_i);
         electric_field_at_particles(efield_x_at_p_e, efield_y_at_p_e, efield_x, efield_y, p_e, n_active_e, mesh_x, mesh_y, lpos_e);
 
-        
-        // Step 3: particles injection
-        if(i % K_SUB == 0) add_flux_particles(p_i, n_active_i, T_I, VD_I, M_I, N_INJ_I, K_SUB);
-        n_inj_balanced_e = balanced_injection(n_inj_balanced_e, 0.01, wmesh_i, wmesh_e, 0, 0, 0, N_THRUSTER - 1);
-        add_flux_particles(p_e, n_active_e, T_EL, 0, M_EL, n_inj_balanced_e);
-        
         // Step 4: integration of equations of motion
         if(i % K_SUB == 0) move_i(p_i, n_active_i, efield_x_at_p_i, efield_y_at_p_i);
         move_e(p_e, n_active_e, efield_x_at_p_e, efield_y_at_p_e);
@@ -227,12 +194,11 @@ int main(int argc, char* argv[])
         boundaries_e(p_e, n_active_e, lpos_e, n_out_i);
 
         // Step 6: Monte-Carlo collisions
-        collisions_e(p_e, n_active_e, lpos_e, p_i, n_active_i, lpos_i, M_I, N_NEUTRAL, p_null_e, nu_prime_e);
-        if(i % K_SUB == 0) collisions_i(p_i, n_active_i, M_I, N_NEUTRAL, p_null_i, nu_prime_i);
+        collisions_e(p_e, n_active_e, lpos_e, p_i, n_active_i, lpos_i, mesh_x, mesh_y, dens_n, M_I, p_null_e, nu_prime_e);
+        if(i % K_SUB == 0) collisions_i(p_i, n_active_i, lpos_i, mesh_x, mesh_y, dens_n, M_I, p_null_i, nu_prime_i);
         
         print_info(i, p_e, n_active_e, p_i, n_active_i, 100);
-        
-        
+
         // save anination of the last 30k steps
 //        if(i >= 200000 && (i % 100 == 0)){
 //            fmatrix dens_i_corrected = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_i / vmesh;

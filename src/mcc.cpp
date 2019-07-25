@@ -10,7 +10,7 @@
 #include "fields.h"
 #include "particles.h"
 #include "random-numbers.h"
-
+#include "particles-in-mesh.h"
 #include "cross-sections.h"
 
 
@@ -113,10 +113,11 @@ double kinetic_energy_ev(const fmatrix & p, const int & i, double const & mass)
 
 // ------------------------------ Electron collisions ------------------------------------
 
-void collisions_e(fmatrix & p, int & n_active, imatrix & lpos, fmatrix & p_i, int & n_active_i, imatrix & lpos_i, double ion_mass, double neutral_density, double p_null, double nu_prime)
+void collisions_e(fmatrix & p, int & n_active, imatrix & lpos, fmatrix & p_i, int & n_active_i, imatrix & lpos_i, fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & dens_n, double ion_mass, double p_null, double nu_prime)
 {
 	imatrix particle_samples;
 	double kinetic_energy = 0.0;
+    double neutral_density = 0.0;
     
     int n_null = (int) floor(p_null * n_active);
     n_null = p_null * n_active - n_null > r_unif() ? n_null + 1 : n_null;
@@ -137,6 +138,7 @@ void collisions_e(fmatrix & p, int & n_active, imatrix & lpos, fmatrix & p_i, in
 	{
 		i = particle_samples.val[k];
 		kinetic_energy = kinetic_energy_ev(p, i, M_EL);
+        neutral_density = field_at_position(dens_n, mesh_x, mesh_y, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0], lpos.val[i * 2 + 1]);
 		random_number_1 = r_unif();
 
 		// Elastic collision:
@@ -214,12 +216,13 @@ void electron_ionization_collision(fmatrix & p, const int & i, const double kine
 
 // ------------------------------ Ion collisions ------------------------------------
 
-void collisions_i(fmatrix & p, int & n_active, double ion_mass, double neutral_density, double p_null, double nu_prime)
+void collisions_i(fmatrix & p, int & n_active, imatrix & lpos, fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & dens_n, double ion_mass, double p_null, double nu_prime)
 {
 
 	imatrix particle_samples;
     fmatrix v_neutral = fmatrix::zeros(3);
     double kinetic_energy_relative = 0.0;
+    double neutral_density = 0.0;
 	
 	int n_null = (int) floor(p_null * n_active);
     n_null = p_null * n_active - n_null > r_unif() ? n_null + 1 : n_null;
@@ -234,6 +237,7 @@ void collisions_i(fmatrix & p, int & n_active, double ion_mass, double neutral_d
 	for (int k = 0; k < n_null; k++)
 	{
 		i = particle_samples.val[k];
+        neutral_density = field_at_position(dens_n, mesh_x, mesh_y, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0], lpos.val[i * 2 + 1]);
         
         v_neutral = {r_norm() * (DT / DX) * sqrt(Q * T_NEUTRAL / M_I),
                      r_norm() * (DT / DX) * sqrt(Q * T_NEUTRAL / M_I),

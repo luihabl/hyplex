@@ -111,20 +111,37 @@ void electric_field_at_particles(fmatrix & efield_at_particles_x, fmatrix & efie
 		area_4 = (x_1_mesh - x_p) * (y_p - y_0_mesh);
 		cell_area = area_1 + area_2 + area_3 + area_4;
 		
-		e_p_x = efield_x.val[left_index_x * mesh_n2 + left_index_y] 				* area_1;
+		e_p_x =  efield_x.val[left_index_x * mesh_n2 + left_index_y] 				* area_1;
 		e_p_x += efield_x.val[(left_index_x + 1) * mesh_n2 + left_index_y] 			* area_2;
 		e_p_x += efield_x.val[(left_index_x + 1) * mesh_n2 + (left_index_y + 1)] 	* area_3;
 		e_p_x += efield_x.val[left_index_x * mesh_n2 + (left_index_y + 1)] 			* area_4;
 
 		efield_at_particles_x.val[i] = e_p_x / cell_area;
 
-		e_p_y = efield_y.val[left_index_x * mesh_n2 + left_index_y] 				* area_1;
+		e_p_y =  efield_y.val[left_index_x * mesh_n2 + left_index_y] 				* area_1;
 		e_p_y += efield_y.val[(left_index_x + 1) * mesh_n2 + left_index_y] 			* area_2;
 		e_p_y += efield_y.val[(left_index_x + 1) * mesh_n2 + (left_index_y + 1)] 	* area_3;
 		e_p_y += efield_y.val[left_index_x * mesh_n2 + (left_index_y + 1)] 			* area_4;
 
 		efield_at_particles_y.val[i] = e_p_y / cell_area;
 	}
+}
+
+double field_at_position(fmatrix & field, fmatrix & mesh_x, fmatrix & mesh_y, double x, double y, int lpos_x, int lpos_y){
+
+    const int mesh_n2 = (int) mesh_x.n2;
+
+    double x_0_mesh = mesh_x.val[lpos_x * mesh_n2 + lpos_y];
+	double x_1_mesh = mesh_x.val[(lpos_x + 1) * mesh_n2 + lpos_y];
+	double y_0_mesh = mesh_y.val[lpos_x * mesh_n2 + lpos_y];
+	double y_1_mesh = mesh_y.val[lpos_x * mesh_n2 + (lpos_y + 1)];
+
+    double field_val = field.val[lpos_x * mesh_n2 + lpos_y]             * (x_1_mesh - x) * (y_1_mesh - y);
+    field_val       += field.val[(lpos_x + 1) * mesh_n2 + lpos_y]       * (x - x_0_mesh) * (y_1_mesh - y);
+    field_val       += field.val[(lpos_x + 1) * mesh_n2 + (lpos_y + 1)] * (x - x_0_mesh) * (y - y_0_mesh);
+    field_val       += field.val[lpos_x * mesh_n2 + (lpos_y + 1)]       * (x_1_mesh - x) * (y - y_0_mesh);
+
+    return field_val / ((x_1_mesh - x_0_mesh) * (y_1_mesh - y_0_mesh));
 }
 
 
