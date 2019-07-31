@@ -16,7 +16,7 @@ using namespace std;
 
 double interp(const fmatrix & data, double x);
 fmatrix interp(const fmatrix & data, fmatrix & x);
-fmatrix load_csv(string file_path, char delim = ';');
+fmatrix load_csv(string file_path, char delim = ';', int cols = 2);
 imatrix sample_from_sequence_shuffle(int sample_size, int range);
 imatrix sample_from_sequence_naive(int sample_size, int range);
 // imatrix sample_from_sequence_swap(int sample_size, int range);
@@ -26,6 +26,7 @@ void print_dsmc_info(int i, int n_active_n, int step_interval, int n_steps);
 void average_field(fmatrix & av_field, const fmatrix & field, int step);
 int clamp(int low, int hi, int val);
 void verbose_log(string message);
+void save_state(fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i, fmatrix & phi,  fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vmesh, string suffix);
 
 inline
 void swap(double& a, double& b) {

@@ -76,6 +76,7 @@ int main(int argc, char* argv[])
     fmatrix p_n             = fmatrix::zeros(N_MAX_PARTICLES, 6);
     imatrix lpos_n          = imatrix::zeros(N_MAX_PARTICLES, 2);
     fmatrix wmesh_n         = fmatrix::zeros(N_MESH_X, N_MESH_Y);
+    fmatrix dens_n          = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix wmesh_n_av      = fmatrix::zeros(N_MESH_X, N_MESH_Y);
 
     //initializing mesh
@@ -103,73 +104,50 @@ int main(int argc, char* argv[])
     solver.assemble();
       
     // ----------------------------- DSMC loop --------------------------------
-
-    
-    // fmatrix fluxn_x = fmatrix::zeros(N_MESH_X, N_MESH_Y);
-    // fmatrix fluxn_y = fmatrix::zeros(N_MESH_X, N_MESH_Y);
-    
-    // fmatrix fluxn_x_av = fmatrix::zeros(N_MESH_X, N_MESH_Y);
-    // fmatrix fluxn_y_av = fmatrix::zeros(N_MESH_X, N_MESH_Y);
-    
-    
     if (EXPM_NEUTRAL == "dsmc"){
         verbose_log(" ---- Starting DSMC loop ---- ");
         for (int i = 0; i < N_STEPS_DSMC; i++){
-           
             add_flux_particles(p_n, n_active_n, T_NEUTRAL, 0, M_I, N_INJ_N, K_SUB_DSMC);
 
             if(i > N_STEPS_DSMC - N_AVERAGE_DSMC){
                 weight(p_n, n_active_n, wmesh_n, mesh_x, mesh_y, lpos_n);
                 average_field(wmesh_n_av, wmesh_n, i - (N_STEPS_DSMC - N_AVERAGE_DSMC));
-                // flux_field(fluxn_x, fluxn_y, p_n, n_active_n, mesh_x, mesh_y, lpos_n);
-                // average_field(fluxn_x_av, fluxn_x, i - (N_STEPS_DSMC - N_AVERAGE_DSMC));
-                // average_field(fluxn_y_av, fluxn_y, i - (N_STEPS_DSMC - N_AVERAGE_DSMC));
             }
             
             move_n(p_n, n_active_n, K_SUB_DSMC);
             boundaries_n(p_n, n_active_n, lpos_n);
-            print_dsmc_info(i, n_active_n, 1000, N_STEPS_DSMC);
+            print_dsmc_info(i, n_active_n, 1000, N_STEPS_DSMC);    
         }
         wmesh_n = (N_FACTOR_DSMC / N_FACTOR) * wmesh_n_av;
+        dens_n = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_n / vmesh;
+        save_to_csv(dens_n, "dens_n.csv");
     }
     else if (EXPM_NEUTRAL == "constant") {
-        wmesh_n = (N_NEUTRAL / ((4 / pow(DX, 2)) *  N_FACTOR)) * vmesh;
+        verbose_log(" ---- Setting constant neutral density ---- ");
+        dens_n.set_all(N_NEUTRAL);
+    } 
+    else if (EXPM_NEUTRAL == "load") {
+        verbose_log(" ---- Loading neutral density field ---- ");
+        dens_n = load_csv("output/dens_n.csv",',', N_MESH_Y);
     }
-    fmatrix dens_n = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_n / vmesh;
-    // fmatrix fluxn_x_corrected = (4 / (DX * DT)) * N_FACTOR_DSMC * fluxn_x_av / vmesh;
-    // fmatrix fluxn_y_corrected = (4 / (DX * DT)) * N_FACTOR_DSMC * fluxn_y_av / vmesh;
-    
-    
-    // cout << dens_n_corrected.max() << endl;
-    // save_to_csv(dens_n_corrected, "dens_n.csv");
-    // save_to_csv(wmesh_n, "wmesh_n.csv");
-    // save_to_csv(vmesh, "vmesh.csv");
-    // save_to_csv(fluxn_x_corrected, "fluxn_x.csv");
-    // save_to_csv(fluxn_y_corrected, "fluxn_y.csv");
-    
-    // return 0;
-    
+      
     // -----------------------------------------------------------------------
     
     // Initial MCC parameters
-    double nu_prime_e       = find_nu_prime_e(wmesh_n, vmesh);
+    double nu_prime_e       = find_nu_prime_e(dens_n, vmesh);
     double p_null_e         = p_null(nu_prime_e, DT);
-    double nu_prime_i       = find_nu_prime_i(wmesh_n, vmesh);
+    double nu_prime_i       = find_nu_prime_i(dens_n, vmesh);
     double p_null_i         = p_null(nu_prime_i, DT * K_SUB);
     
+     
     // Printing initial information
     print_initial_info(p_null_e, p_null_i);
-    
+
 	// ----------------------------- Main loop --------------------------------
     verbose_log(" ---- Starting main loop ---- ");
     auto start = high_resolution_clock::now();
 	for (int i = 0; i < N_STEPS; i++)
 	{ 
-        // Step 3: particles injection ??????
-        if(i % K_SUB == 0) add_flux_particles(p_i, n_active_i, T_I, VD_I, M_I, N_INJ_I, K_SUB);
-        n_inj_balanced_e = balanced_injection(n_inj_balanced_e, 0.01, wmesh_i, wmesh_e, 0, 0, 0, N_THRUSTER - 1);
-        add_flux_particles(p_e, n_active_e, T_EL, 0, M_EL, n_inj_balanced_e);
-
 		// Step 1.0: particle weighting
         if(i % K_SUB == 0) weight(p_i, n_active_i, wmesh_i, mesh_x, mesh_y, lpos_i);
         weight(p_e, n_active_e, wmesh_e, mesh_x, mesh_y, lpos_e);
@@ -184,20 +162,29 @@ int main(int argc, char* argv[])
         if(i % K_SUB == 0) electric_field_at_particles(efield_x_at_p_i, efield_y_at_p_i, efield_x, efield_y, p_i, n_active_i, mesh_x, mesh_y, lpos_i);
         electric_field_at_particles(efield_x_at_p_e, efield_y_at_p_e, efield_x, efield_y, p_e, n_active_e, mesh_x, mesh_y, lpos_e);
 
-        // Step 4: integration of equations of motion
+        // Step 3: integration of equations of motion
         if(i % K_SUB == 0) move_i(p_i, n_active_i, efield_x_at_p_i, efield_y_at_p_i);
         move_e(p_e, n_active_e, efield_x_at_p_e, efield_y_at_p_e);
         
-        // Step 5: particle loss at boundaries
+        // Step 4: particle loss at boundaries
         // boundaries(p_e, n_active_e, lpos_e);
         if(i % K_SUB == 0) boundaries_i(p_i, n_active_i, lpos_i, n_out_i);
         boundaries_e(p_e, n_active_e, lpos_e, n_out_i);
+
+        // Step 5: particles injection
+        if(i % K_SUB == 0) add_flux_particles(p_i, n_active_i, T_I, VD_I, M_I, N_INJ_I, K_SUB);
+        n_inj_balanced_e = balanced_injection(n_inj_balanced_e, 0.01, wmesh_i, wmesh_e, 0, 0, 0, N_THRUSTER - 1);
+        add_flux_particles(p_e, n_active_e, T_EL, 0, M_EL, n_inj_balanced_e);
 
         // Step 6: Monte-Carlo collisions
         collisions_e(p_e, n_active_e, lpos_e, p_i, n_active_i, lpos_i, mesh_x, mesh_y, dens_n, M_I, p_null_e, nu_prime_e);
         if(i % K_SUB == 0) collisions_i(p_i, n_active_i, lpos_i, mesh_x, mesh_y, dens_n, M_I, p_null_i, nu_prime_i);
         
         print_info(i, p_e, n_active_e, p_i, n_active_i, 100);
+
+        if(i % 10000 == 0){
+            save_state(p_e, n_active_e, p_i, n_active_i, phi, wmesh_e, wmesh_i, vmesh, "_state");
+        }
 
         // save anination of the last 30k steps
 //        if(i >= 200000 && (i % 100 == 0)){

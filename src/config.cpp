@@ -45,7 +45,6 @@ using namespace std;
 //; ----------------------------- Species ---------------------------------------
 
 //[thruster]
- double PLASMA_DENSITY        ;//Reference plasma density [m^-3]
  double MASS_FLOW_RATE        ;//Mass flow rate of thruster [sccm]
  double ETA_PROPELLANT        ;//Propellant utilization efficiency []
 
@@ -134,7 +133,6 @@ void load_config_file(string filename){
     VOLT_1 = reader.GetReal("boundary-conditions", "VOLT_1", -1);   
     
     // Plasma
-    PLASMA_DENSITY = reader.GetReal("plasma", "PLASMA_DENSITY", -1);
     N_FACTOR = reader.GetReal("particles", "N_FACTOR", -1);
     N_MAX_PARTICLES = (int) reader.GetReal("particles", "N_MAX_PARTICLES", -1);
 

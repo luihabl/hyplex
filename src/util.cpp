@@ -50,27 +50,6 @@ fmatrix interp(const fmatrix & data, fmatrix & x)
 }
 
 
-// Identify what is going wrong here?
-// imatrix sample_from_sequence_swap(int sample_size, int range){
-
-//     imatrix sequence(range);
-// 	sequence.set_sequence();
-//     imatrix samples(sample_size);
-
-//     int n_storage = range;
-//     int num = 0;
-
-//     for (int i = 0; i < sample_size; i++)
-//     {
-//         num = r_unif() * n_storage;
-//         samples.val[i] = sequence.val[num];
-//         sequence.val[num] = sequence.val[range - i - 1];
-//         n_storage -= 1;
-//     }
-
-//     return samples;
-// }
-
 imatrix sample_from_sequence_shuffle(int sample_size, int range)
 {
 	imatrix shuffled_sequence(range);
@@ -106,7 +85,7 @@ imatrix sample_from_sequence_naive(int sample_size, int range)
 	return samples;
 }
 
-fmatrix load_csv(string file_path, char delim)
+fmatrix load_csv(string file_path, char delim, int cols)
 {
     string line;
     ifstream file(file_path);
@@ -116,21 +95,20 @@ fmatrix load_csv(string file_path, char delim)
     file.clear();
     file.seekg(0, ios::beg);
     
-    fmatrix data(line_count, 2); //line_count - 1 because the first row it's assumed to be a header.
-    size_t i = 0;
+    fmatrix data(line_count, cols); //line_count - 1 because the first row it's assumed to be a header.
+    int i = 0;
     while (getline(file, line))
     {
         istringstream s(line);
         string field;
-        size_t j = 0;
+        int j = 0;
         while (getline(s, field, delim))
         {
-            if (j > 1) {
+            if (j > cols - 1) {
                 cout << "csv exceed j limit!" << endl;
                 break;
             }
-            
-            data.val[i * 2 + j] = atof(field.c_str());
+            data.val[i * cols + j] = atof(field.c_str());
             j++;
         }
         i++;
@@ -139,7 +117,6 @@ fmatrix load_csv(string file_path, char delim)
     if (!file.eof()) {
         cout << "Could not read file " << endl;
     }
-    
     return data;
 }
 
@@ -178,6 +155,7 @@ void print_initial_info(double p_null_e, double p_null_i)
     verbose_log("\n ---- Simulation parameters ----");
     printf("Grid size:\t\t (%d, %d)\n", N_MESH_X, N_MESH_Y);
     printf("Number of steps:\t %d\n", N_STEPS);
+    printf("Gas:\t\t\t %s\n", GAS_NAME.c_str());
     printf("P Null (e):\t\t %.4e\n", p_null_e);
     printf("P Null (I):\t\t %.4e\n\n", p_null_i);
 }
@@ -192,6 +170,38 @@ void average_field(fmatrix & av_field, const fmatrix & field, int step)
     }
 }
 
+void save_state(fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i, fmatrix & phi,  fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vmesh, string suffix){
+    
+    
+    fmatrix p_e_corrected = DX * p_e;
+    for(int i = 0; i < n_active_e; i++){
+        p_e_corrected.val[i * 6 + 3] = p_e_corrected.val[i * 6 + 3] / DT;
+        p_e_corrected.val[i * 6 + 4] = p_e_corrected.val[i * 6 + 4] / DT;
+        p_e_corrected.val[i * 6 + 5] = p_e_corrected.val[i * 6 + 5] / DT;
+    }
+    save_to_csv(p_e_corrected, "p_e" + suffix + ".csv", n_active_e);
+
+    fmatrix p_i_corrected = DX * p_i;
+    for(int i = 0; i < n_active_i; i++){
+        p_i_corrected.val[i * 6 + 3] = p_i_corrected.val[i * 6 + 3] / DT;
+        p_i_corrected.val[i * 6 + 4] = p_i_corrected.val[i * 6 + 4] / DT;
+        p_i_corrected.val[i * 6 + 5] = p_i_corrected.val[i * 6 + 5] / DT;
+    }
+    save_to_csv(p_i_corrected, "p_i" + suffix + ".csv", n_active_i);
+    
+    
+    fmatrix phi_corrected = phi * (M_EL * pow(DX, 2))/(Q * pow(DT, 2)) ;
+    save_to_csv(phi_corrected, "phi" + suffix + ".csv");
+
+    fmatrix dens_e = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_e / vmesh;
+    save_to_csv(dens_e, "dens_e" + suffix + ".csv");
+
+    fmatrix dens_i = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_i / vmesh;
+    save_to_csv(dens_i, "dens_i" + suffix + ".csv");
+    
+    verbose_log("State saved");
+}
+
 
 int clamp(int low, int hi, int val){
     if (val < low) {return low;}
@@ -204,3 +214,25 @@ void verbose_log(string message){
     cout << message << endl;
     #endif
 }
+
+
+// Identify what is going wrong here?
+// imatrix sample_from_sequence_swap(int sample_size, int range){
+
+//     imatrix sequence(range);
+// 	sequence.set_sequence();
+//     imatrix samples(sample_size);
+
+//     int n_storage = range;
+//     int num = 0;
+
+//     for (int i = 0; i < sample_size; i++)
+//     {
+//         num = r_unif() * n_storage;
+//         samples.val[i] = sequence.val[num];
+//         sequence.val[num] = sequence.val[range - i - 1];
+//         n_storage -= 1;
+//     }
+
+//     return samples;
+// }

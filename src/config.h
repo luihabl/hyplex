@@ -45,7 +45,6 @@ extern double VOLT_1                 ;//Voltage on the chamber walls [V]
 //; ----------------------------- Species ---------------------------------------
 
 //[thruster]
-extern double PLASMA_DENSITY        ;//Reference plasma density [m^-3]
 extern double MASS_FLOW_RATE        ;//Mass flow rate of thruster [sccm]
 extern double ETA_PROPELLANT        ;//Propellant utilization efficiency []
 

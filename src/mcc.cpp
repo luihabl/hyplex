@@ -28,11 +28,10 @@ double calc_total_cs(double energy){
     return total_cs;
 }
 
-double find_nu_prime_e(fmatrix & wmesh_n, fmatrix & vmesh)
+double find_nu_prime_e(fmatrix & dens_n, fmatrix & vmesh)
 {
 	double nu_prime = 0.0;
-    fmatrix dens_n_mesh = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_n / vmesh;
-    double neutral_density = dens_n_mesh.max();
+    double neutral_density = dens_n.max();
     
 	double total_cs;
 	double velocity;
@@ -73,11 +72,10 @@ double find_nu_prime_e(fmatrix & wmesh_n, fmatrix & vmesh)
 	return nu_prime;
 }
 
-double find_nu_prime_i(fmatrix & wmesh_n, fmatrix & vmesh)
+double find_nu_prime_i(fmatrix & dens_n, fmatrix & vmesh)
 {
 	double nu_prime = 0.0;
-    fmatrix dens_n_mesh = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_n / vmesh;
-    double neutral_density = dens_n_mesh.max();
+    double neutral_density = dens_n.max();
 
 	double total_cs;
 	double velocity;
@@ -257,7 +255,6 @@ void collisions_i(fmatrix & p, int & n_active, imatrix & lpos, fmatrix & mesh_x,
 		if (random_number_1 <= freq_ratio_1)
 		{
             ion_isotropic_collision(p, i, kinetic_energy_relative, M_I);
-
             p.val[i * 6 + 3] = p.val[i * 6 + 3] + v_neutral.val[0];
             p.val[i * 6 + 4] = p.val[i * 6 + 4] + v_neutral.val[1];
             p.val[i * 6 + 5] = p.val[i * 6 + 5] + v_neutral.val[2];

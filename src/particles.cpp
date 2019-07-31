@@ -39,19 +39,30 @@ void add_flux_particles(fmatrix & p, int & n_active, const double temperature, c
 	
 	double f_n_add = floor(k_sub * n_add);
 	int n_new = (r_unif() < (k_sub * n_add - f_n_add) ?  f_n_add + 1 : f_n_add);
-//    cout << n_add << " " << n_new << endl;
+	// static double g = 1;
+	// static double v_av_x = 0.0;
+	// static double v_av_y = 0.0;
+	// static double v_av_z = 0.0;
 	
 	double v_temperature = sqrt(Q * temperature / mass);
 
-	for (size_t i = n_active; i < n_active + n_new; i++)
+	for (int i = n_active; i < n_active + n_new; i++)
 	{	
-		p.val[i * 6 + 3] = (DT / DX) * (v_temperature * sqrt(- 2 * log(r_unif())) + v_drift);
+		p.val[i * 6 + 3] = (DT / DX) * (v_temperature * sqrt(- 2 *log(r_unif())) + v_drift);
 		p.val[i * 6 + 4] = (DT / DX) * r_norm(0.0, v_temperature);
 		p.val[i * 6 + 5] = (DT / DX) * r_norm(0.0, v_temperature);
 
 		p.val[i * 6 + 0] = k_sub * p.val[i * 6 + 3] * r_unif(); // maybe necessary to multiply K_SUB here!
 		p.val[i * 6 + 1] = (DY / DX) * ((double) N_THRUSTER - 1.0) * r_unif();
 		p.val[i * 6 + 2] = 0.0;
+
+		// v_av_x = v_av_x * ((g - 1) / g) +  p.val[i * 6 + 3] * (DX / DT) * p.val[i * 6 + 3] * (DX / DT) / g;
+		// v_av_y = v_av_y * ((g - 1) / g) +  p.val[i * 6 + 4] * p.val[i * 6 + 4] * (DX / DT) * (DX / DT) / g;
+		// v_av_z = v_av_z * ((g - 1) / g) +  p.val[i * 6 + 5] * p.val[i * 6 + 5] * (DX / DT) * (DX / DT) / g;
+		// cout << sqrt(v_av_x)  << endl;
+		// cout << sqrt(v_av_y)  << endl;
+		// cout << sqrt(v_av_z)  << endl << endl;
+		// g += 1;
 	}
 	n_active += n_new;
 }
@@ -64,7 +75,7 @@ void add_maxwellian_flux_particles(fmatrix & p, int & n_active, const double tem
 	
 	double v_temperature = sqrt(Q * temperature / mass);
 
-	for (size_t i = n_active; i < n_active + n_new; i++)
+	for (int i = n_active; i < n_active + n_new; i++)
 	{	
 		do {
 			p.val[i * 6 + 3] = abs((DT / DX) * r_norm(0.0, v_temperature));
