@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+import matplotlib as mpl
 import matplotlib
 
 import pandas as pd
@@ -45,3 +46,26 @@ def plot_field(field):
 
     plt.tight_layout()
     plt.show()
+    
+def plot_scatter(x, y, color='white', background='dark'):
+    if(background == 'dark'):
+        with plt.style.context('dark_background'):
+            fig, axes = plt.subplots(nrows=1, figsize=(12, 3)) 
+            axes.plot(x, y,color=color,marker=',',lw=0, linestyle="")
+    else:
+        fig, axes = plt.subplots(nrows=1, figsize=(12, 3)) 
+        axes.plot(x, y,color=color,marker=',',lw=0, linestyle="")
+    plt.tight_layout()
+    plt.show()
+    #ax = plt.gca()
+    #ax.set_facecolor('xkcd:' + background)
+    
+    
+def plot_distribution(v, bins='auto'):
+    plt.hist(v, bins=bins, histtype='step', color='r')
+    
+    plt.show()
+    
+    
+    
+    

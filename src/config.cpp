@@ -158,6 +158,7 @@ void load_config_file(string filename){
     Q_I = reader.GetReal("ions", "Q_I", -1);
     T_I = reader.GetReal("ions", "T_I", -1);
     J_I = reader.GetReal("ions", "J_I", -1);
+    // J_I = ETA_PROPELLANT * 4.477962e17 * MASS_FLOW_RATE * Q;
     MACH_I = reader.GetReal("ions", "MACH_I", -1);
     
     M_I = reader.GetReal(GAS_NAME, "M_I", -1);

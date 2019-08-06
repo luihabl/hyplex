@@ -173,12 +173,12 @@ int main(int argc, char* argv[])
 
         // Step 5: particles injection
         if(i % K_SUB == 0) add_flux_particles(p_i, n_active_i, T_I, VD_I, M_I, N_INJ_I, K_SUB);
-        n_inj_balanced_e = balanced_injection(n_inj_balanced_e, 0.01, wmesh_i, wmesh_e, 0, 0, 0, N_THRUSTER - 1);
-        add_flux_particles(p_e, n_active_e, T_EL, 0, M_EL, n_inj_balanced_e);
+        // n_inj_balanced_e = balanced_injection(n_inj_balanced_e, 0.01, wmesh_i, wmesh_e, 0, 0, 0, N_THRUSTER - 1);
+        add_flux_particles(p_e, n_active_e, T_EL, 0, M_EL, N_INJ_EL);
 
         // Step 6: Monte-Carlo collisions
-        collisions_e(p_e, n_active_e, lpos_e, p_i, n_active_i, lpos_i, mesh_x, mesh_y, dens_n, M_I, p_null_e, nu_prime_e);
-        if(i % K_SUB == 0) collisions_i(p_i, n_active_i, lpos_i, mesh_x, mesh_y, dens_n, M_I, p_null_i, nu_prime_i);
+        // collisions_e(p_e, n_active_e, lpos_e, p_i, n_active_i, lpos_i, mesh_x, mesh_y, dens_n, M_I, p_null_e, nu_prime_e);
+        // if(i % K_SUB == 0) collisions_i(p_i, n_active_i, lpos_i, mesh_x, mesh_y, dens_n, M_I, p_null_i, nu_prime_i);
         
         print_info(i, p_e, n_active_e, p_i, n_active_i, 100);
 
@@ -206,21 +206,16 @@ int main(int argc, char* argv[])
     std::cout << "Total execution duration: " << (double) duration.count() / (1.0e6 * 60) << " min" << endl;
 
     // ----------------------------- Saving outputs ---------------------------
+    
+    save_state(p_e, n_active_e, p_i, n_active_i, phi, wmesh_e, wmesh_i, vmesh, "");
 
-    fmatrix dens_e_corrected = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_e / vmesh;
-    fmatrix dens_i_corrected = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_i / vmesh;
-    fmatrix phi_corrected    = phi * (M_EL * pow(DX, 2))/(Q * pow(DT, 2));
+    // weight(p_i, n_active_i, wmesh_i, mesh_x, mesh_y, lpos_i);
+    // weight(p_e, n_active_e, wmesh_e, mesh_x, mesh_y, lpos_e);
+    // energy_field(kefield_e, p_e, n_active_e, mesh_x, mesh_y, wmesh_e, lpos_e, M_EL);
+    // energy_field(kefield_i, p_i, n_active_i, mesh_x, mesh_y, wmesh_i, lpos_i, M_I);
     
-    weight(p_i, n_active_i, wmesh_i, mesh_x, mesh_y, lpos_i);
-    weight(p_e, n_active_e, wmesh_e, mesh_x, mesh_y, lpos_e);
-    energy_field(kefield_e, p_e, n_active_e, mesh_x, mesh_y, wmesh_e, lpos_e, M_EL);
-    energy_field(kefield_i, p_i, n_active_i, mesh_x, mesh_y, wmesh_i, lpos_i, M_I);
-    
-    save_to_csv(dens_e_corrected, "dens_e.csv");
-    save_to_csv(dens_i_corrected, "dens_i.csv");
-    save_to_csv(kefield_e, "ke_e.csv");
-    save_to_csv(kefield_i, "ke_i.csv");
-	save_to_csv(phi_corrected, "phi.csv");
+    // save_to_csv(kefield_e, "ke_e.csv");
+    // save_to_csv(kefield_i, "ke_i.csv");
     
     // ----------------------------- Finalizing -------------------------------
     delete_cross_sections_arrays();

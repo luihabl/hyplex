@@ -39,11 +39,10 @@ void add_flux_particles(fmatrix & p, int & n_active, const double temperature, c
 	
 	double f_n_add = floor(k_sub * n_add);
 	int n_new = (r_unif() < (k_sub * n_add - f_n_add) ?  f_n_add + 1 : f_n_add);
-	// static double g = 1;
-	// static double v_av_x = 0.0;
-	// static double v_av_y = 0.0;
-	// static double v_av_z = 0.0;
-	
+
+	// double f_n_add = floor(n_add); <=================== Maybe this change to ^^^^^^ caused the waves to appear?
+    // size_t n_new = k_sub * (r_unif() < (n_add - f_n_add) ?  (size_t) f_n_add + 1 : (size_t) f_n_add);
+
 	double v_temperature = sqrt(Q * temperature / mass);
 
 	for (int i = n_active; i < n_active + n_new; i++)
@@ -55,14 +54,6 @@ void add_flux_particles(fmatrix & p, int & n_active, const double temperature, c
 		p.val[i * 6 + 0] = k_sub * p.val[i * 6 + 3] * r_unif(); // maybe necessary to multiply K_SUB here!
 		p.val[i * 6 + 1] = (DY / DX) * ((double) N_THRUSTER - 1.0) * r_unif();
 		p.val[i * 6 + 2] = 0.0;
-
-		// v_av_x = v_av_x * ((g - 1) / g) +  p.val[i * 6 + 3] * (DX / DT) * p.val[i * 6 + 3] * (DX / DT) / g;
-		// v_av_y = v_av_y * ((g - 1) / g) +  p.val[i * 6 + 4] * p.val[i * 6 + 4] * (DX / DT) * (DX / DT) / g;
-		// v_av_z = v_av_z * ((g - 1) / g) +  p.val[i * 6 + 5] * p.val[i * 6 + 5] * (DX / DT) * (DX / DT) / g;
-		// cout << sqrt(v_av_x)  << endl;
-		// cout << sqrt(v_av_y)  << endl;
-		// cout << sqrt(v_av_z)  << endl << endl;
-		// g += 1;
 	}
 	n_active += n_new;
 }
@@ -71,7 +62,6 @@ void add_maxwellian_flux_particles(fmatrix & p, int & n_active, const double tem
 	
 	double f_n_add = floor(k_sub * n_add);
 	int n_new = (r_unif() < (k_sub * n_add - f_n_add) ?  f_n_add + 1 : f_n_add);
-//    cout << n_add << " " << n_new << endl;
 	
 	double v_temperature = sqrt(Q * temperature / mass);
 
