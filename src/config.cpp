@@ -62,13 +62,13 @@ using namespace std;
  double M_EL                  ;//Electron mass [kg]
  double Q_EL                  ;//Electron charge [C]
  double T_EL                  ;//Initial electron temperature [eV]
- double J_EL                  ;//Electron injection current [A/m]
+ double I_EL                  ;//Electron injection current [A/m]
 
 //[ions]
  string GAS_NAME              ;//Name of gas: 'helium' or 'xenon'
  double Q_I                   ;//Ion charge [kg]
  double T_I                   ;//Initial ion temperature [eV]
- double J_I                   ;//Ion injection current [A/m]
+ double I_I                   ;//Ion injection current [A/m]
  double MACH_I                ;//Injection mach number []
 
  double M_I                   ;//Ion mass [kg]
@@ -151,13 +151,13 @@ void load_config_file(string filename){
     M_EL = reader.GetReal("electrons", "M_EL", -1);
     Q_EL = reader.GetReal("electrons", "Q_EL", -1);
     T_EL = reader.GetReal("electrons", "T_EL", -1);
-    J_EL = reader.GetReal("electrons", "J_EL", -1);
+    I_EL = reader.GetReal("electrons", "I_EL", -1);
 
     // Particle 2 - Ions
     GAS_NAME = reader.Get("ions", "GAS_NAME", "");
     Q_I = reader.GetReal("ions", "Q_I", -1);
     T_I = reader.GetReal("ions", "T_I", -1);
-    J_I = reader.GetReal("ions", "J_I", -1);
+    I_I = reader.GetReal("ions", "I_I", -1);
     // J_I = ETA_PROPELLANT * 4.477962e17 * MASS_FLOW_RATE * Q;
     MACH_I = reader.GetReal("ions", "MACH_I", -1);
     
@@ -184,8 +184,8 @@ void load_config_file(string filename){
     VOLT_1_NORM = VOLT_1 * Q * pow(DT, 2) / (M_EL * pow(DX, 2));
     
     VD_I = MACH_I * sqrt(T_EL * Q / M_I);
-    N_INJ_EL = J_EL * DT / (Q * N_FACTOR);
-    N_INJ_I  = J_I  * DT / (Q * N_FACTOR);
+    N_INJ_EL = I_EL * DT / (Q * N_FACTOR);
+    N_INJ_I  = I_I  * DT / (Q * N_FACTOR);
     
     N_INJ_N  = (1 - ETA_PROPELLANT) * (4.477962e17 * MASS_FLOW_RATE) * DT / (N_FACTOR_DSMC);
     

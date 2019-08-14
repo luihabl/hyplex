@@ -10,23 +10,6 @@ from scipy.constants import m_e, e, epsilon_0, k
 m_i = 2.17e-25
 at_sccm = 4.477962e17
 
-dens_e = np.transpose(pd.read_csv('dens_e_state.csv', header=None).values)
-dens_i = np.transpose(pd.read_csv('dens_i_state.csv', header=None).values)
-p_e = np.transpose(pd.read_csv('p_e_state.csv', header=None).values)
-p_i = np.transpose(pd.read_csv('p_i_state.csv', header=None).values)
-phi = np.transpose(pd.read_csv('phi_state.csv', header=None).values)
-
-v_e = p_e[3:6, :]
-v_i = p_i[3:6, :]
-
-k_e = 0.5 * m_e * (v_e[0] ** 2 + v_e[1] ** 2 + v_e[2] ** 2)
-k_i = 0.5 * m_i * (v_i[0] ** 2 + v_i[1] ** 2 + v_i[2] ** 2)
-
-
-x = np.arange(phi.shape[1]) * 0.166e-3
-y = np.arange(phi.shape[0]) * 0.166e-3
-X, Y = np.meshgrid(x, y)
-
 def plot_field(field):
     fig, axes = plt.subplots(nrows=1, figsize=(10, 4))
 
@@ -66,6 +49,24 @@ def plot_distribution(v, bins='auto'):
     
     plt.show()
     
+def load():
+    global dens_e, dens_i, p_e, p_i, phi, v_e, v_i, k_e, k_i
     
-    
-    
+    dens_e = np.transpose(pd.read_csv('dens_e_state.csv', header=None).values)
+    dens_i = np.transpose(pd.read_csv('dens_i_state.csv', header=None).values)
+    p_e = np.transpose(pd.read_csv('p_e_state.csv', header=None).values)
+    p_i = np.transpose(pd.read_csv('p_i_state.csv', header=None).values)
+    phi = np.transpose(pd.read_csv('phi_state.csv', header=None).values)
+
+    v_e = p_e[3:6, :]
+    v_i = p_i[3:6, :]
+
+    k_e = 0.5 * m_e * (v_e[0] ** 2 + v_e[1] ** 2 + v_e[2] ** 2)
+    k_i = 0.5 * m_i * (v_i[0] ** 2 + v_i[1] ** 2 + v_i[2] ** 2)
+
+if __name__=='__main__':
+    load()
+    x = np.arange(phi.shape[1]) * 0.166e-3
+    y = np.arange(phi.shape[0]) * 0.166e-3
+    X, Y = np.meshgrid(x, y)
+

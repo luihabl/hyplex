@@ -62,13 +62,13 @@ extern double N_NEUTRAL             ;//Density of neutral gas [m^-3]
 extern double M_EL                  ;//Electron mass [kg]
 extern double Q_EL                  ;//Electron charge [C]
 extern double T_EL                  ;//Initial electron temperature [eV]
-extern double J_EL                  ;//Electron injection current [A/m]
+extern double I_EL                  ;//Electron injection current [A/m]
 
 //[ions]
 extern string GAS_NAME              ;//Name of gas: 'helium' or 'xenon'
 extern double Q_I                   ;//Ion charge [kg]
 extern double T_I                   ;//Initial ion temperature [eV]
-extern double J_I                   ;//Ion injection current [A/m]
+extern double I_I                   ;//Ion injection current [A/m]
 extern double MACH_I                ;//Injection mach number []
 
 extern double M_I                   ;//Ion mass [kg]
