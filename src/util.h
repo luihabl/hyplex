@@ -24,9 +24,15 @@ void print_info(int i, fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_activ
 void print_initial_info(double p_null_e, double p_null_i);
 void print_dsmc_info(int i, int n_active_n, int step_interval, int n_steps);
 void average_field(fmatrix & av_field, const fmatrix & field, int step);
-int clamp(int low, int hi, int val);
 void verbose_log(string message);
 void save_state(fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i, fmatrix & phi,  fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vmesh, string suffix);
+
+template <class T>
+T clamp(T low, T hi, T val){
+    if (val < low) {return low;}
+    else if (val > hi) {return hi;}
+    else {return val;}
+}
 
 inline
 void swap(double& a, double& b) {

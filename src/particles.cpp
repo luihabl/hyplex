@@ -13,6 +13,7 @@
 #include "util.h"
 #include "config.h"
 #include "random-numbers.h"
+#include "particles-in-mesh.h"
 
 
 using namespace std;
@@ -131,6 +132,10 @@ double balanced_injection(double old_n_inj, double rate_constant, fmatrix & wmes
 	double new_n_inj = old_n_inj + rate_constant * dw;
 
 	return new_n_inj > 0 ? new_n_inj : 0;
+}
+
+double e_pulses_current(double j_i, double v_sb, double v_rf, double temp_e, double omega, int i){
+	return j_i * sqrt(M_I / (2 * PI * M_EL)) * exp(- (v_sb + v_rf * sin(omega * DT * (double) i)) / temp_e);
 }
 
 //  ----------------------------- Boundaries ----------------------------------
@@ -262,6 +267,89 @@ void boundaries_e(fmatrix & p, int & n_active, imatrix & lpos, int n_out_i)
 			remove_particle(p, n_active, out.val[n], lpos);
 		} 
 	}
+}
+
+void boundaries_e_cap(fmatrix & p, int & n_active, imatrix & lpos, int & n_out_e, double v_cap, fmatrix & phi, fmatrix & mesh_x, fmatrix & mesh_y){
+	n_out_e = 0;
+	
+	int n_out = 0;
+	static imatrix out(100000); 
+
+	int n_out_ob = 0;
+	static imatrix out_ob(100000); 
+
+	static fmatrix phi_at_p(100000);
+
+	bool in_thr, in_sym, is_crt;
+	double energy, x, y, vx, vy, vz;
+	const double x_max = ((double) N_MESH_X - 1);
+	const double y_max = ((double) N_MESH_Y - 1) * (DY / DX);
+	const double y_thr = ((double) N_THRUSTER - 1) * (DY / DX);
+
+	for (int i = 0; i < n_active; i++)
+	{
+		x = p.val[i * 6 + 0];
+		y = p.val[i * 6 + 1];
+
+		if(x <= 0 || x >= x_max || y >= y_max || y <= 0){
+			out.val[n_out] = i;
+			n_out += 1;
+
+			in_thr = (y <= y_thr) && (y > 0) && (x <= 0);
+			in_sym = y <= 0;
+
+			if(!in_thr && !in_sym){
+				out_ob.val[n_out_ob] = i;
+				n_out_ob += 1;
+			}
+		}
+	}
+
+	find_phi_at_particles(phi_at_p, phi, mesh_x, mesh_y, out_ob, n_out_ob, p, n_active, lpos);
+	for (int n = n_out - 1; n >= 0; n--){
+		
+		x = p.val[out.val[n] * 6 + 0];
+		y = p.val[out.val[n] * 6 + 1];
+		vx= p.val[out.val[n] * 6 + 3];
+		vy= p.val[out.val[n] * 6 + 4];
+		vz= p.val[out.val[n] * 6 + 5];
+		
+		energy = (vx * vx) + (vy * vy) + (vz * vz);
+
+		is_crt = energy >= phi_at_p.val[n] - v_cap;
+		in_thr = (y <= y_thr) && (y > 0) && (x <= 0);
+		in_sym = (y <= 0) && (x >= 0) && (x <= x_max);
+
+		if(in_sym || (!is_crt && !in_thr)){
+			reflect_particle(p, n_active, out.val[n], x, y, vx, vy);
+		} else {
+			remove_particle(p, n_active, out.val[n], lpos);
+			if(!in_thr) n_out_e += 1;
+		} 
+	}
+}
+
+void find_phi_at_particles(fmatrix & phi_at_patricles, fmatrix & phi, fmatrix & mesh_x, fmatrix & mesh_y, imatrix & out, int n_out, fmatrix & p, int n_active, imatrix & lpos){
+	
+	const double x_max = ((double) N_MESH_X - 1);
+	const double y_max = ((double) N_MESH_Y - 1) * (DY / DX);
+	
+	double x, y;
+	int lx, ly;
+
+	for (int n = 0; n < n_out; n++)
+	{	
+		x = clamp(0.0, x_max, p.val[out.val[n] * 6 + 0]);
+		y = clamp(0.0, y_max, p.val[out.val[n] * 6 + 1]);
+		lx = lpos.val[out.val[n] * 2 + 0];
+		ly = lpos.val[out.val[n] * 2 + 1];
+
+		phi_at_patricles.val[n] = field_at_position(phi, mesh_x, mesh_y, x, y, lx, ly) * (M_EL * pow(DX, 2))/(Q * pow(DT, 2));
+	}
+}
+
+double cap_voltage(double voltage, int n_out_e, int n_out_i){
+	return voltage + (N_FACTOR * Q / C_CAP) * (n_out_i - n_out_e);
 }
 
 

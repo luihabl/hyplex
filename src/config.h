@@ -41,6 +41,7 @@ extern int K_SUB_DSMC                ;//DSMC subcycling factor []
 //[boundary-conditions]
 extern double VOLT_0                 ;//Voltage on the thruster [V]
 extern double VOLT_1                 ;//Voltage on the chamber walls [V]
+extern double C_CAP					 ;//Capacitance of thruster connection [F]
 
 //; ----------------------------- Species ---------------------------------------
 

@@ -133,8 +133,21 @@ double field_at_position(fmatrix & field, fmatrix & mesh_x, fmatrix & mesh_y, do
 
     double x_0_mesh = mesh_x.val[lpos_x * mesh_n2 + lpos_y];
 	double x_1_mesh = mesh_x.val[(lpos_x + 1) * mesh_n2 + lpos_y];
-	double y_0_mesh = mesh_y.val[lpos_x * mesh_n2 + lpos_y];
+    if(x < x_0_mesh || x > x_1_mesh)
+	{
+		lpos_x = logical_space(x, A_X, 1, N_MESH_X);
+		x_0_mesh = mesh_x.val[lpos_x * mesh_n2 + lpos_y];
+		x_1_mesh = mesh_x.val[(lpos_x + 1) * mesh_n2 + lpos_y];
+	}
+	
+    double y_0_mesh = mesh_y.val[lpos_x * mesh_n2 + lpos_y];
 	double y_1_mesh = mesh_y.val[lpos_x * mesh_n2 + (lpos_y + 1)];
+	if(y < y_0_mesh || y > y_1_mesh)
+	{
+		lpos_y = logical_space(y, A_Y, DY/DX, N_MESH_Y);
+		y_0_mesh = mesh_y.val[lpos_x * mesh_n2 + lpos_y];
+		y_1_mesh = mesh_y.val[lpos_x * mesh_n2 + (lpos_y + 1)];
+	}
 
     double field_val = field.val[lpos_x * mesh_n2 + lpos_y]             * (x_1_mesh - x) * (y_1_mesh - y);
     field_val       += field.val[(lpos_x + 1) * mesh_n2 + lpos_y]       * (x - x_0_mesh) * (y_1_mesh - y);

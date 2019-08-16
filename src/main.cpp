@@ -39,6 +39,7 @@ int main(int argc, char* argv[])
     fmatrix mesh_y          = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix vmesh           = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix voltages        = fmatrix::zeros(3);
+    double v_cap            = 0;
     
     // Average field variablesd
     verbose_log("Initializing average field variables");
@@ -59,6 +60,7 @@ int main(int argc, char* argv[])
     fmatrix efield_x_at_p_e = fmatrix::zeros(N_MAX_PARTICLES);
     fmatrix efield_y_at_p_e = fmatrix::zeros(N_MAX_PARTICLES);
     double n_inj_balanced_e = N_INJ_EL;
+    int n_out_e             = 0;
 	
 	// Particle 2 - Ions
     verbose_log("Initializing ions variables");
@@ -169,12 +171,14 @@ int main(int argc, char* argv[])
         // Step 4: particle loss at boundaries
         // boundaries(p_e, n_active_e, lpos_e);
         if(i % K_SUB == 0) boundaries_i(p_i, n_active_i, lpos_i, n_out_i);
-        boundaries_e(p_e, n_active_e, lpos_e, n_out_i);
+        // boundaries_e(p_e, n_active_e, lpos_e, n_out_i);
+        boundaries_e_cap(p_e, n_active_e, lpos_e, n_out_e, v_cap, phi, mesh_x, mesh_y);
+        v_cap = cap_voltage(v_cap, n_out_e, n_out_i);
 
         // Step 5: particles injection
         if(i % K_SUB == 0) add_flux_particles(p_i, n_active_i, T_I, VD_I, M_I, N_INJ_I, K_SUB);
-        n_inj_balanced_e = balanced_injection(n_inj_balanced_e, 0.01, wmesh_i, wmesh_e, 0, 0, 0, N_THRUSTER - 1);
-        add_flux_particles(p_e, n_active_e, T_EL, 0, M_EL, n_inj_balanced_e);
+        // n_inj_balanced_e = balanced_injection(n_inj_balanced_e, 0.01, wmesh_i, wmesh_e, 0, 0, 0, N_THRUSTER - 1);
+        add_flux_particles(p_e, n_active_e, T_EL, 0, M_EL, N_INJ_EL);
 
         // Step 6: Monte-Carlo collisions
         // collisions_e(p_e, n_active_e, lpos_e, p_i, n_active_i, lpos_i, mesh_x, mesh_y, dens_n, M_I, p_null_e, nu_prime_e);

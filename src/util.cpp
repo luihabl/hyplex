@@ -190,7 +190,7 @@ void save_state(fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i, fm
     save_to_csv(p_i_corrected, "p_i" + suffix + ".csv", n_active_i);
     
     
-    fmatrix phi_corrected = phi * (M_EL * pow(DX, 2))/(Q * pow(DT, 2)) ;
+    fmatrix phi_corrected = phi * (M_EL * pow(DX, 2))/(Q * pow(DT, 2));
     save_to_csv(phi_corrected, "phi" + suffix + ".csv");
 
     fmatrix dens_e = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_e / vmesh;
@@ -200,13 +200,6 @@ void save_state(fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i, fm
     save_to_csv(dens_i, "dens_i" + suffix + ".csv");
     
     verbose_log("State saved");
-}
-
-
-int clamp(int low, int hi, int val){
-    if (val < low) {return low;}
-    else if (val > hi) {return hi;}
-    else {return val;}
 }
 
 void verbose_log(string message){

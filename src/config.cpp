@@ -35,12 +35,13 @@ using namespace std;
  int N_STEPS_DSMC              ;//Number of DSMC simulation steps to be executed []
  int N_AVERAGE                 ;//Number of average steps []
  int N_AVERAGE_DSMC            ;//Number of DSMC average steps []
- int K_SUB                  ;//Ion subcycling factor []
- int K_SUB_DSMC             ;//DSMC subcycling factor []
+ int K_SUB                     ;//Ion subcycling factor []
+ int K_SUB_DSMC                ;//DSMC subcycling factor []
 
 //[boundary-conditions]
  double VOLT_0                 ;//Voltage on the thruster [V]
  double VOLT_1                 ;//Voltage on the chamber walls [V]
+ double C_CAP				   ;//Capacitance of thruster connection [F]
 
 //; ----------------------------- Species ---------------------------------------
 
@@ -131,6 +132,7 @@ void load_config_file(string filename){
     // Boundary conditions
     VOLT_0 = reader.GetReal("boundary-conditions", "VOLT_0", -1);
     VOLT_1 = reader.GetReal("boundary-conditions", "VOLT_1", -1);   
+    C_CAP = reader.GetReal("boundary-conditions", "C_CAP", -1);  
     
     // Plasma
     N_FACTOR = reader.GetReal("particles", "N_FACTOR", -1);

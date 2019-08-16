@@ -12,10 +12,13 @@ double balanced_injection(double old_n_inj, double rate_constant, fmatrix & wmes
 
 void boundaries_i(fmatrix & p, int & n_active, imatrix & lpos, int & n_removed);
 void boundaries_e(fmatrix & p, int & n_active, imatrix & lpos, int n_out_i);
+void boundaries_e_cap(fmatrix & p, int & n_active, imatrix & lpos, int & n_out_e, double v_cap, fmatrix & phi, fmatrix & mesh_x, fmatrix & mesh_y);
 void boundaries_n(fmatrix & p, int & n_active, imatrix & lpos);
+double cap_voltage(double voltage, int n_out_e, int n_out_i);
 void remove_particle(fmatrix & p, int & n_active, int i, imatrix & lpos);
 void reflect_particle(fmatrix & p, int & n_active, int i, double x, double y, double vx, double vy);
 double find_e_crit(int n_out_i, imatrix & out, int n_out, fmatrix & p, int n_active);
+void find_phi_at_particles(fmatrix & phi_at_patricles, fmatrix & phi, fmatrix & mesh_x, fmatrix & mesh_y, imatrix & out, int n_out, fmatrix & p, int n_active, imatrix & lpos);
 
 void move_e(fmatrix & p, int & n_active, fmatrix & electric_field_at_particles_x, fmatrix & electric_field_at_particles_y);
 void move_i(fmatrix & p, int & n_active, fmatrix & electric_field_at_particles_x, fmatrix & electric_field_at_particles_y);
