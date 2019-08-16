@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
     double v_cap            = 0;
     
     // Average field variablesd
-    verbose_log("Initializing average field variables");
+    verbose_log("Initializing diagnostics variables");
     fmatrix phi_av          = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix efield_av_x     = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix efield_av_y     = fmatrix::zeros(N_MESH_X, N_MESH_Y);
@@ -50,6 +50,9 @@ int main(int argc, char* argv[])
     fmatrix dens_i_av       = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix kefield_i       = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix kefield_e       = fmatrix::zeros(N_MESH_X, N_MESH_Y);
+    fmatrix v_cap_diag      = fmatrix::zeros(N_STEPS);
+    fmatrix n_active_e_diag = fmatrix::zeros(N_STEPS);
+    fmatrix n_active_i_diag = fmatrix::zeros(N_STEPS);
     
 	// Particle 1 - Electrons
     verbose_log("Initializing electrons variables");
@@ -174,10 +177,13 @@ int main(int argc, char* argv[])
         // boundaries_e(p_e, n_active_e, lpos_e, n_out_i);
         boundaries_e_cap(p_e, n_active_e, lpos_e, n_out_e, v_cap, phi, mesh_x, mesh_y);
         v_cap = cap_voltage(v_cap, n_out_e, n_out_i);
+        
 
         // Step 5: particles injection
         if(i % K_SUB == 0) add_flux_particles(p_i, n_active_i, T_I, VD_I, M_I, N_INJ_I, K_SUB);
         // n_inj_balanced_e = balanced_injection(n_inj_balanced_e, 0.01, wmesh_i, wmesh_e, 0, 0, 0, N_THRUSTER - 1);
+        // n_inj_balanced_e = pulse_injection(K_INJ_EL, V_SB, V_RF, T_EL, OMEGA_I, i);
+        // add_flux_particles(p_e, n_active_e, T_EL, 0, M_EL, n_inj_balanced_e);
         add_flux_particles(p_e, n_active_e, T_EL, 0, M_EL, N_INJ_EL);
 
         // Step 6: Monte-Carlo collisions
@@ -185,6 +191,9 @@ int main(int argc, char* argv[])
         // if(i % K_SUB == 0) collisions_i(p_i, n_active_i, lpos_i, mesh_x, mesh_y, dens_n, M_I, p_null_i, nu_prime_i);
         
         print_info(i, p_e, n_active_e, p_i, n_active_i, 100);
+        v_cap_diag.val[i] = v_cap;
+        n_active_e_diag.val[i] = n_active_e;
+        n_active_i_diag.val[i] = n_active_i;
 
         if(i % 10000 == 0){
             save_state(p_e, n_active_e, p_i, n_active_i, phi, wmesh_e, wmesh_i, vmesh, "_state");
@@ -212,6 +221,9 @@ int main(int argc, char* argv[])
     // ----------------------------- Saving outputs ---------------------------
     
     save_state(p_e, n_active_e, p_i, n_active_i, phi, wmesh_e, wmesh_i, vmesh, "_state");
+    save_to_csv(v_cap_diag, "v_cap.csv");
+    save_to_csv(n_active_e_diag, "n_active_e.csv");
+    save_to_csv(n_active_i_diag, "n_active_i.csv");
 
     // weight(p_i, n_active_i, wmesh_i, mesh_x, mesh_y, lpos_i);
     // weight(p_e, n_active_e, wmesh_e, mesh_x, mesh_y, lpos_e);

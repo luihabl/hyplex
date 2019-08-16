@@ -31,6 +31,7 @@ using namespace std;
 
 //[time]
  double DT                     ;//Time step [s]
+ double FREQ				   ;//Frequency of the signal [Hz]
  int N_STEPS                   ;//Number of simulation steps to be executed []
  int N_STEPS_DSMC              ;//Number of DSMC simulation steps to be executed []
  int N_AVERAGE                 ;//Number of average steps []
@@ -41,6 +42,8 @@ using namespace std;
 //[boundary-conditions]
  double VOLT_0                 ;//Voltage on the thruster [V]
  double VOLT_1                 ;//Voltage on the chamber walls [V]
+ double V_SB 				   ;//Self-bias voltage [V]
+ double V_RF 				   ;//Amplitude of the RF signal [V]
  double C_CAP				   ;//Capacitance of thruster connection [F]
 
 //; ----------------------------- Species ---------------------------------------
@@ -86,6 +89,7 @@ using namespace std;
 // Calculated parameters
  double DX;
  double DY;
+ double OMEGA_I;
  double VOLT_0_NORM;
  double VOLT_1_NORM;
  double GAMMA;
@@ -93,6 +97,7 @@ using namespace std;
  double N_INJ_N;
  double N_INJ_I;
  double N_INJ_EL;
+ double K_INJ_EL;
  double VD_I;
 
 
@@ -121,7 +126,8 @@ void load_config_file(string filename){
     A_Y = reader.GetReal("geometry", "A_Y", -1);
 
     // Time
-    DT = reader.GetReal("time", "DT", -1); 
+    DT = reader.GetReal("time", "DT", -1);
+    FREQ =  reader.GetReal("time", "FREQ", -1);
     N_STEPS = (int) reader.GetReal("time", "N_STEPS", -1);
     N_AVERAGE = (int) reader.GetReal("time", "N_AVERAGE", -1);
     K_SUB =  (int) reader.GetReal("time", "K_SUB", -1);
@@ -132,6 +138,8 @@ void load_config_file(string filename){
     // Boundary conditions
     VOLT_0 = reader.GetReal("boundary-conditions", "VOLT_0", -1);
     VOLT_1 = reader.GetReal("boundary-conditions", "VOLT_1", -1);   
+    V_SB = reader.GetReal("boundary-conditions", "V_SB", -1);   
+    V_RF = reader.GetReal("boundary-conditions", "V_RF", -1);   
     C_CAP = reader.GetReal("boundary-conditions", "C_CAP", -1);  
     
     // Plasma
@@ -194,4 +202,6 @@ void load_config_file(string filename){
     GAMMA = 2 * N_FACTOR * pow(Q, 2) * pow(DT, 2) / (M_EL * EPS_0 * pow(DX, 2));
     ALPHA = K_SUB * M_EL / M_I;
 
+    OMEGA_I = 2 * PI * FREQ * DT;
+    K_INJ_EL = N_INJ_I * sqrt(M_I / (2 * PI * M_EL));
 }

@@ -134,8 +134,8 @@ double balanced_injection(double old_n_inj, double rate_constant, fmatrix & wmes
 	return new_n_inj > 0 ? new_n_inj : 0;
 }
 
-double e_pulses_current(double j_i, double v_sb, double v_rf, double temp_e, double omega, int i){
-	return j_i * sqrt(M_I / (2 * PI * M_EL)) * exp(- (v_sb + v_rf * sin(omega * DT * (double) i)) / temp_e);
+double pulse_injection(double k_inj, double v_sb, double v_rf, double temp_e, double omega_i, int i){
+	return k_inj *  exp(- (v_sb + v_rf * sin(omega_i * (double) i)) / temp_e);
 }
 
 //  ----------------------------- Boundaries ----------------------------------

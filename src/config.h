@@ -31,6 +31,7 @@ extern double A_Y                    ;//Grid distorsion coefficient in the y dir
 
 //[time]
 extern double DT                     ;//Time step [s]
+extern double FREQ					 ;//Frequency of the signal [Hz]
 extern int N_STEPS                   ;//Number of simulation steps to be executed []
 extern int N_STEPS_DSMC              ;//Number of DSMC simulation steps to be executed []
 extern int N_AVERAGE                 ;//Number of average steps []
@@ -41,6 +42,8 @@ extern int K_SUB_DSMC                ;//DSMC subcycling factor []
 //[boundary-conditions]
 extern double VOLT_0                 ;//Voltage on the thruster [V]
 extern double VOLT_1                 ;//Voltage on the chamber walls [V]
+extern double V_SB 				     ;//Self-bias voltage [V]
+extern double V_RF 					 ;//Amplitude of the RF signal [V]
 extern double C_CAP					 ;//Capacitance of thruster connection [F]
 
 //; ----------------------------- Species ---------------------------------------
@@ -86,6 +89,7 @@ extern string ISO_PATH              ;//Path isotropic cross section
 // Calculated parameters
 extern double DX;
 extern double DY;
+extern double OMEGA_I;
 extern double VOLT_0_NORM;
 extern double VOLT_1_NORM;
 extern double GAMMA;
@@ -93,6 +97,7 @@ extern double ALPHA;
 extern double N_INJ_N;
 extern double N_INJ_I;
 extern double N_INJ_EL;
+extern double K_INJ_EL;
 extern double VD_I;
 
 void load_config_file(string filename);
