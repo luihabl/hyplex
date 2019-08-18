@@ -44,6 +44,7 @@ extern double VOLT_0                 ;//Voltage on the thruster [V]
 extern double VOLT_1                 ;//Voltage on the chamber walls [V]
 extern double V_SB 				     ;//Self-bias voltage [V]
 extern double V_RF 					 ;//Amplitude of the RF signal [V]
+extern double V_ACC_E                ;//Electron acceleration voltage [V]
 extern double C_CAP					 ;//Capacitance of thruster connection [F]
 
 //; ----------------------------- Species ---------------------------------------

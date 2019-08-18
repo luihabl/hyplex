@@ -135,7 +135,7 @@ double balanced_injection(double old_n_inj, double rate_constant, fmatrix & wmes
 }
 
 double pulse_injection(double k_inj, double v_sb, double v_rf, double temp_e, double omega_i, int i){
-	return k_inj *  exp(- (v_sb + v_rf * sin(omega_i * (double) i)) / temp_e);
+	return k_inj *  exp(- (v_sb + v_rf * sin(omega_i * (double) i) + PI) / temp_e);
 }
 
 //  ----------------------------- Boundaries ----------------------------------

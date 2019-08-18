@@ -44,6 +44,7 @@ using namespace std;
  double VOLT_1                 ;//Voltage on the chamber walls [V]
  double V_SB 				   ;//Self-bias voltage [V]
  double V_RF 				   ;//Amplitude of the RF signal [V]
+ double V_ACC_E                ;//Electron acceleration voltage [V]
  double C_CAP				   ;//Capacitance of thruster connection [F]
 
 //; ----------------------------- Species ---------------------------------------
@@ -139,7 +140,8 @@ void load_config_file(string filename){
     VOLT_0 = reader.GetReal("boundary-conditions", "VOLT_0", -1);
     VOLT_1 = reader.GetReal("boundary-conditions", "VOLT_1", -1);   
     V_SB = reader.GetReal("boundary-conditions", "V_SB", -1);   
-    V_RF = reader.GetReal("boundary-conditions", "V_RF", -1);   
+    V_RF = reader.GetReal("boundary-conditions", "V_RF", -1);
+    V_ACC_E = reader.GetReal("boundary-conditions", "V_ACC_E", -1);
     C_CAP = reader.GetReal("boundary-conditions", "C_CAP", -1);  
     
     // Plasma
