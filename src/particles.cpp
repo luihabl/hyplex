@@ -134,8 +134,8 @@ double balanced_injection(double old_n_inj, double rate_constant, fmatrix & wmes
 	return new_n_inj > 0 ? new_n_inj : 0;
 }
 
-double pulse_injection(double k_inj, double v_sb, double v_rf, double temp_e, double omega_i, int i){
-	return k_inj *  exp(- (v_sb + v_rf * sin(omega_i * (double) i) + PI) / temp_e);
+double pulsed_injection(double k_inj, double v_sb, double v_rf, double temp_e, double omega_i, int i){
+	return k_inj *  exp(- (v_sb + v_rf * sin(omega_i * (double) i)) / temp_e);
 }
 
 //  ----------------------------- Boundaries ----------------------------------
@@ -279,6 +279,7 @@ void boundaries_e_cap(fmatrix & p, int & n_active, imatrix & lpos, int & n_out_e
 	static imatrix out_ob(100000); 
 
 	static fmatrix phi_at_p(100000);
+	double e_factor = 0.5 * M_EL * DX * DX / (DT * DT * Q);
 
 	bool in_thr, in_sym, is_crt;
 	double energy, x, y, vx, vy, vz;
@@ -314,7 +315,7 @@ void boundaries_e_cap(fmatrix & p, int & n_active, imatrix & lpos, int & n_out_e
 		vy= p.val[out.val[n] * 6 + 4];
 		vz= p.val[out.val[n] * 6 + 5];
 		
-		energy = (vx * vx) + (vy * vy) + (vz * vz);
+		energy =  e_factor * ((vx * vx) + (vy * vy) + (vz * vz));
 
 		is_crt = energy >= phi_at_p.val[n] - v_cap;
 		in_thr = (y <= y_thr) && (y > 0) && (x <= 0);

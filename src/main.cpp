@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
     fmatrix mesh_y          = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix vmesh           = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix voltages        = fmatrix::zeros(3);
-    double v_cap            = 0;
+    double v_cap            = 0.0;
     
     // Average field variablesd
     verbose_log("Initializing diagnostics variables");
@@ -62,7 +62,7 @@ int main(int argc, char* argv[])
 	fmatrix wmesh_e         = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix efield_x_at_p_e = fmatrix::zeros(N_MAX_PARTICLES);
     fmatrix efield_y_at_p_e = fmatrix::zeros(N_MAX_PARTICLES);
-    double n_inj_e_calc = N_INJ_EL;
+    double n_inj_e          = N_INJ_EL;
     int n_out_e             = 0;
 	
 	// Particle 2 - Ions
@@ -178,40 +178,27 @@ int main(int argc, char* argv[])
         boundaries_e_cap(p_e, n_active_e, lpos_e, n_out_e, v_cap, phi, mesh_x, mesh_y);
         v_cap = cap_voltage(v_cap, n_out_e, n_out_i);
         
-
         // Step 5: particles injection
-        if(i % K_SUB == 0) add_flux_particles(p_i, n_active_i, T_I, VD_I, M_I, N_INJ_I, K_SUB);
-        // n_inj_balanced_e = balanced_injection(n_inj_balanced_e, 0.01, wmesh_i, wmesh_e, 0, 0, 0, N_THRUSTER - 1);
-         n_inj_e_calc = pulse_injection(K_INJ_EL, V_SB, V_RF, T_EL, OMEGA_I, i);
-         add_flux_particles(p_e, n_active_e, T_EL, sqrt(2 * Q * V_ACC_E / M_EL), M_EL, n_inj_e_calc);
-//        add_flux_particles(p_e, n_active_e, T_EL, 0, M_EL, N_INJ_EL);
+        if(i % K_SUB == 0) add_flux_particles(p_i, n_active_i, T_I, V_DRIFT_I, M_I, N_INJ_I, K_SUB);
+        if(INJ_MODEL == "constant")       n_inj_e = N_INJ_EL;
+        else if(INJ_MODEL == "balanced")  n_inj_e = balanced_injection(n_inj_e, 0.01, wmesh_i, wmesh_e, 0, 0, 0, N_THRUSTER - 1);
+        else if(INJ_MODEL == "pulsed")    n_inj_e = pulsed_injection(K_INJ_EL, V_SB, V_RF, T_EL, OMEGA_I, i);
+        add_flux_particles(p_e, n_active_e, T_EL, V_DRIFT_EL, M_EL, n_inj_e);
+        
 
         // Step 6: Monte-Carlo collisions
-        // collisions_e(p_e, n_active_e, lpos_e, p_i, n_active_i, lpos_i, mesh_x, mesh_y, dens_n, M_I, p_null_e, nu_prime_e);
-        // if(i % K_SUB == 0) collisions_i(p_i, n_active_i, lpos_i, mesh_x, mesh_y, dens_n, M_I, p_null_i, nu_prime_i);
+        if(i % K_SUB == 0) collisions_i(p_i, n_active_i, lpos_i, mesh_x, mesh_y, dens_n, M_I, p_null_i, nu_prime_i);
+        collisions_e(p_e, n_active_e, lpos_e, p_i, n_active_i, lpos_i, mesh_x, mesh_y, dens_n, M_I, p_null_e, nu_prime_e);
         
-        print_info(i, p_e, n_active_e, p_i, n_active_i, 100);
+        //  ----------------------------- Diagnostics -------------------------
+
+        print_info(i, p_e, n_active_e, p_i, n_active_i, v_cap, 100);
         v_cap_diag.val[i] = v_cap;
         n_active_e_diag.val[i] = n_active_e;
         n_active_i_diag.val[i] = n_active_i;
 
-        if(i % 10000 == 0){
-            save_state(p_e, n_active_e, p_i, n_active_i, phi, wmesh_e, wmesh_i, vmesh, "_state");
-        }
-
-        // save anination of the last 30k steps
-//        if(i >= 200000 && (i % 100 == 0)){
-//            fmatrix dens_i_corrected = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_i / vmesh;
-//
-//            stringstream file_name;
-//            file_name << "dens_i" << i << ".csv";
-//            save_to_csv(dens_i_corrected, file_name.str());
-//        }
-//
-        // average_field(phi_av, phi, i);
-        // average_field(efield_av_x, efield_x, i);
-        // average_field(dens_e_av, wmesh_e, i);
-        // average_field(dens_i_av, wmesh_i, i);
+        if(i % 10000 == 0) save_state(p_e, n_active_e, p_i, n_active_i, phi, wmesh_e, wmesh_i, vmesh, "_state");
+        
 
 	}
     auto stop = high_resolution_clock::now();
@@ -225,14 +212,7 @@ int main(int argc, char* argv[])
     save_to_csv(n_active_e_diag, "n_active_e.csv");
     save_to_csv(n_active_i_diag, "n_active_i.csv");
 
-    // weight(p_i, n_active_i, wmesh_i, mesh_x, mesh_y, lpos_i);
-    // weight(p_e, n_active_e, wmesh_e, mesh_x, mesh_y, lpos_e);
-    // energy_field(kefield_e, p_e, n_active_e, mesh_x, mesh_y, wmesh_e, lpos_e, M_EL);
-    // energy_field(kefield_i, p_i, n_active_i, mesh_x, mesh_y, wmesh_i, lpos_i, M_I);
-    
-    // save_to_csv(kefield_e, "ke_e.csv");
-    // save_to_csv(kefield_i, "ke_i.csv");
-    
+   
     // ----------------------------- Finalizing -------------------------------
     delete_cross_sections_arrays();
 	return 0;

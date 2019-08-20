@@ -134,7 +134,7 @@ void print_dsmc_info(int i, int n_active_n, int step_interval, int n_steps){
     }
 }
 
-void print_info(int i, fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i,  int step_interval)
+void print_info(int i, fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i, double v_cap, int step_interval)
 {
     static high_resolution_clock::time_point t0;
     if(i==0) t0 = high_resolution_clock::now();
@@ -144,6 +144,7 @@ void print_info(int i, fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_activ
         printf("Step: %-8d ", i + 1);
         printf("Active electrons: %-8d ", n_active_e);
         printf("Active ions: %-8d ", n_active_i);
+        printf("Cap. voltage: %.4f V   ", v_cap);
         printf("Loop time: %.2f ms ", (double) duration_cast<microseconds>(high_resolution_clock::now() - t0).count() / (1e3 * step_interval));
         printf("\n");
         t0 = high_resolution_clock::now();

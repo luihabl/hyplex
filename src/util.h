@@ -20,7 +20,7 @@ fmatrix load_csv(string file_path, char delim = ';', int cols = 2);
 imatrix sample_from_sequence_shuffle(int sample_size, int range);
 imatrix sample_from_sequence_naive(int sample_size, int range);
 // imatrix sample_from_sequence_swap(int sample_size, int range);
-void print_info(int i, fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i,  int step_interval = 1000);
+void print_info(int i, fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i, double v_cap, int step_interval);
 void print_initial_info(double p_null_e, double p_null_i);
 void print_dsmc_info(int i, int n_active_n, int step_interval, int n_steps);
 void average_field(fmatrix & av_field, const fmatrix & field, int step);

@@ -44,7 +44,6 @@ extern double VOLT_0                 ;//Voltage on the thruster [V]
 extern double VOLT_1                 ;//Voltage on the chamber walls [V]
 extern double V_SB 				     ;//Self-bias voltage [V]
 extern double V_RF 					 ;//Amplitude of the RF signal [V]
-extern double V_ACC_E                ;//Electron acceleration voltage [V]
 extern double C_CAP					 ;//Capacitance of thruster connection [F]
 
 //; ----------------------------- Species ---------------------------------------
@@ -64,17 +63,19 @@ extern double T_NEUTRAL             ;//Temperature of neutral gas [eV]
 extern double N_NEUTRAL             ;//Density of neutral gas [m^-3]
 
 //[electrons]
+extern string INJ_MODEL             ;//Electron injection model: 'constant', 'pulsed' or 'balanced'
 extern double M_EL                  ;//Electron mass [kg]
 extern double Q_EL                  ;//Electron charge [C]
 extern double T_EL                  ;//Initial electron temperature [eV]
 extern double I_EL                  ;//Electron injection current [A/m]
+extern double V_DRIFT_EL             ;//Electron injection drift velocity [m/s]
 
 //[ions]
 extern string GAS_NAME              ;//Name of gas: 'helium' or 'xenon'
 extern double Q_I                   ;//Ion charge [kg]
 extern double T_I                   ;//Initial ion temperature [eV]
 extern double I_I                   ;//Ion injection current [A/m]
-extern double MACH_I                ;//Injection mach number []
+extern double V_DRIFT_I             ;//Ion injection drift velocity [m/s]
 
 extern double M_I                   ;//Ion mass [kg]
 extern double* E_EXC                ;//First excitation energy [eV]
@@ -99,7 +100,6 @@ extern double N_INJ_N;
 extern double N_INJ_I;
 extern double N_INJ_EL;
 extern double K_INJ_EL;
-extern double VD_I;
 
 void load_config_file(string filename);
 #endif

@@ -4,5 +4,6 @@
 /output/*.csv
 /output/*.mp4
 /output/*.png
+/output/*.zip
 /.vscode/
 *.DS_Store

@@ -31,7 +31,6 @@ using namespace std;
 
 //[time]
  double DT                     ;//Time step [s]
- double FREQ				   ;//Frequency of the signal [Hz]
  int N_STEPS                   ;//Number of simulation steps to be executed []
  int N_STEPS_DSMC              ;//Number of DSMC simulation steps to be executed []
  int N_AVERAGE                 ;//Number of average steps []
@@ -42,9 +41,6 @@ using namespace std;
 //[boundary-conditions]
  double VOLT_0                 ;//Voltage on the thruster [V]
  double VOLT_1                 ;//Voltage on the chamber walls [V]
- double V_SB 				   ;//Self-bias voltage [V]
- double V_RF 				   ;//Amplitude of the RF signal [V]
- double V_ACC_E                ;//Electron acceleration voltage [V]
  double C_CAP				   ;//Capacitance of thruster connection [F]
 
 //; ----------------------------- Species ---------------------------------------
@@ -52,6 +48,9 @@ using namespace std;
 //[thruster]
  double MASS_FLOW_RATE        ;//Mass flow rate of thruster [sccm]
  double ETA_PROPELLANT        ;//Propellant utilization efficiency []
+ double FREQ				   ;//Frequency of the signal [Hz]
+ double V_SB 				   ;//Self-bias voltage [V]
+ double V_RF 				   ;//Amplitude of the RF signal [V]
 
 //[particles]
  double N_FACTOR              ;//Macro-particle weight factor (i.e. how many particles one macro-particle represents) []
@@ -64,17 +63,19 @@ using namespace std;
  double N_NEUTRAL             ;//Density of neutral gas [m^-3]
 
 //[electrons]
+ string INJ_MODEL             ;//Electron injection model: 'constant', 'pulsed' or 'balanced'
  double M_EL                  ;//Electron mass [kg]
  double Q_EL                  ;//Electron charge [C]
  double T_EL                  ;//Initial electron temperature [eV]
  double I_EL                  ;//Electron injection current [A/m]
+ double V_DRIFT_EL             ;//Electron injection drift velocity [m/s]
 
 //[ions]
  string GAS_NAME              ;//Name of gas: 'helium' or 'xenon'
  double Q_I                   ;//Ion charge [kg]
  double T_I                   ;//Initial ion temperature [eV]
  double I_I                   ;//Ion injection current [A/m]
- double MACH_I                ;//Injection mach number []
+ double V_DRIFT_I             ;//Ion injection drift velocity [m/s]
 
  double M_I                   ;//Ion mass [kg]
  double* E_EXC                ;//First excitation energy [eV]
@@ -99,8 +100,6 @@ using namespace std;
  double N_INJ_I;
  double N_INJ_EL;
  double K_INJ_EL;
- double VD_I;
-
 
 void load_config_file(string filename){
 
@@ -128,7 +127,7 @@ void load_config_file(string filename){
 
     // Time
     DT = reader.GetReal("time", "DT", -1);
-    FREQ =  reader.GetReal("time", "FREQ", -1);
+    FREQ =  reader.GetReal("thruster", "FREQ", -1);
     N_STEPS = (int) reader.GetReal("time", "N_STEPS", -1);
     N_AVERAGE = (int) reader.GetReal("time", "N_AVERAGE", -1);
     K_SUB =  (int) reader.GetReal("time", "K_SUB", -1);
@@ -139,9 +138,8 @@ void load_config_file(string filename){
     // Boundary conditions
     VOLT_0 = reader.GetReal("boundary-conditions", "VOLT_0", -1);
     VOLT_1 = reader.GetReal("boundary-conditions", "VOLT_1", -1);   
-    V_SB = reader.GetReal("boundary-conditions", "V_SB", -1);   
-    V_RF = reader.GetReal("boundary-conditions", "V_RF", -1);
-    V_ACC_E = reader.GetReal("boundary-conditions", "V_ACC_E", -1);
+    V_SB = reader.GetReal("thruster", "V_SB", -1);   
+    V_RF = reader.GetReal("thruster", "V_RF", -1);
     C_CAP = reader.GetReal("boundary-conditions", "C_CAP", -1);  
     
     // Plasma
@@ -160,18 +158,20 @@ void load_config_file(string filename){
     N_FACTOR_DSMC = reader.GetReal("particles", "N_FACTOR_DSMC", -1);
 
     // Particle 1 - Electrons
+    INJ_MODEL = reader.Get("electrons", "INJ_MODEL", "");
     M_EL = reader.GetReal("electrons", "M_EL", -1);
     Q_EL = reader.GetReal("electrons", "Q_EL", -1);
     T_EL = reader.GetReal("electrons", "T_EL", -1);
     I_EL = reader.GetReal("electrons", "I_EL", -1);
+    V_DRIFT_EL = reader.GetReal("electrons", "V_DRIFT_EL", -1);
 
     // Particle 2 - Ions
     GAS_NAME = reader.Get("ions", "GAS_NAME", "");
     Q_I = reader.GetReal("ions", "Q_I", -1);
     T_I = reader.GetReal("ions", "T_I", -1);
     I_I = reader.GetReal("ions", "I_I", -1);
-    // J_I = ETA_PROPELLANT * 4.477962e17 * MASS_FLOW_RATE * Q;
-    MACH_I = reader.GetReal("ions", "MACH_I", -1);
+    // I_I = ETA_PROPELLANT * 4.477962e17 * MASS_FLOW_RATE * Q;
+    V_DRIFT_I = reader.GetReal("ions", "V_DRIFT_I", -1);
     
     M_I = reader.GetReal(GAS_NAME, "M_I", -1);
     N_EXC = (int) reader.GetReal(GAS_NAME, "N_EXC", -1);
@@ -194,8 +194,7 @@ void load_config_file(string filename){
     DY = L_Y / ((double) N_MESH_Y - 1);
     VOLT_0_NORM = VOLT_0 * Q * pow(DT, 2) / (M_EL * pow(DX, 2));
     VOLT_1_NORM = VOLT_1 * Q * pow(DT, 2) / (M_EL * pow(DX, 2));
-    
-    VD_I = MACH_I * sqrt(T_EL * Q / M_I);
+
     N_INJ_EL = I_EL * DT / (Q * N_FACTOR);
     N_INJ_I  = I_I  * DT / (Q * N_FACTOR);
     
