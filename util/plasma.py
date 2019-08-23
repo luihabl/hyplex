@@ -7,12 +7,23 @@ m_xe = 2.17e-25
 m_he = 6.67e-27
 at_sccm = 4.477962e17
 
-def voltage_self_bias(t_ev, v_rf, m_i, alpha):
-    l1 = np.log(iv(0, v_rf / t_ev))
+def voltage_self_bias(t_e_ev, v_rf, m_i, alpha):
+    l1 = np.log(iv(0, v_rf / t_e_ev))
     l2 = 0.5 * np.log(m_i / (2 * pi * m_e))
     l3 = - np.log(alpha)
-    return t_ev * (l1 + l2 + l3) 
+    return t_e_ev * (l1 + l2 + l3) 
 
-def debye_length(t_ev, n_0):
-    return np.sqrt(epsilon_0 * e * t_ev / (e**2 * n_0))
+def debye_length(t_e_ev, n_0):
+    return np.sqrt(epsilon_0 * e * t_e_ev / (e**2 * n_0))
 
+def plasma_freq_e(n_0):
+    return np.sqrt(n_0 * e**2 / (m_e * epsilon_0))
+
+def v_bohm(t_e_ev, m_i):
+    return np.sqrt(e * t_e_ev / m_i)
+
+
+def balanced_currents(n_0, t_e_ev, area, m_i, mach):
+    j_i = e * n_0 * mach *v_bohm(t_e_ev, m_i)
+    j_e = j_i * np.sqrt(m_i / (2 * pi * m_e)) / mach
+    return (j_i* area, j_e * area)

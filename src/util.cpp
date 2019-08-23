@@ -174,21 +174,21 @@ void average_field(fmatrix & av_field, const fmatrix & field, int step)
 void save_state(fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i, fmatrix & phi,  fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vmesh, string suffix){
     
     
-    fmatrix p_e_corrected = DX * p_e;
-    for(int i = 0; i < n_active_e; i++){
-        p_e_corrected.val[i * 6 + 3] = p_e_corrected.val[i * 6 + 3] / DT;
-        p_e_corrected.val[i * 6 + 4] = p_e_corrected.val[i * 6 + 4] / DT;
-        p_e_corrected.val[i * 6 + 5] = p_e_corrected.val[i * 6 + 5] / DT;
-    }
-    save_to_csv(p_e_corrected, "p_e" + suffix + ".csv", n_active_e);
+    // fmatrix p_e_corrected = DX * p_e;
+    // for(int i = 0; i < n_active_e; i++){
+    //     p_e_corrected.val[i * 6 + 3] = p_e_corrected.val[i * 6 + 3] / DT;
+    //     p_e_corrected.val[i * 6 + 4] = p_e_corrected.val[i * 6 + 4] / DT;
+    //     p_e_corrected.val[i * 6 + 5] = p_e_corrected.val[i * 6 + 5] / DT;
+    // }
+    // save_to_csv(p_e_corrected, "p_e" + suffix + ".csv", n_active_e);
 
-    fmatrix p_i_corrected = DX * p_i;
-    for(int i = 0; i < n_active_i; i++){
-        p_i_corrected.val[i * 6 + 3] = p_i_corrected.val[i * 6 + 3] / DT;
-        p_i_corrected.val[i * 6 + 4] = p_i_corrected.val[i * 6 + 4] / DT;
-        p_i_corrected.val[i * 6 + 5] = p_i_corrected.val[i * 6 + 5] / DT;
-    }
-    save_to_csv(p_i_corrected, "p_i" + suffix + ".csv", n_active_i);
+    // fmatrix p_i_corrected = DX * p_i;
+    // for(int i = 0; i < n_active_i; i++){
+    //     p_i_corrected.val[i * 6 + 3] = p_i_corrected.val[i * 6 + 3] / DT;
+    //     p_i_corrected.val[i * 6 + 4] = p_i_corrected.val[i * 6 + 4] / DT;
+    //     p_i_corrected.val[i * 6 + 5] = p_i_corrected.val[i * 6 + 5] / DT;
+    // }
+    // save_to_csv(p_i_corrected, "p_i" + suffix + ".csv", n_active_i);
     
     
     fmatrix phi_corrected = phi * (M_EL * pow(DX, 2))/(Q * pow(DT, 2));

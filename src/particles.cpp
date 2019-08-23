@@ -195,7 +195,7 @@ void boundaries_i(fmatrix & p, int & n_active, imatrix & lpos, int & n_removed_o
 			in_thr = (y <= y_thr) && (y > 0) && (x <= 0);
 			in_sym = y <= 0;
 
-			if(!in_thr && !in_sym){
+			if(!in_thr && !in_sym && x > 0){
 				n_removed_ob += 1;
 			}
 
@@ -325,7 +325,7 @@ void boundaries_e_cap(fmatrix & p, int & n_active, imatrix & lpos, int & n_out_e
 			reflect_particle(p, n_active, out.val[n], x, y, vx, vy);
 		} else {
 			remove_particle(p, n_active, out.val[n], lpos);
-			if(!in_thr) n_out_e += 1;
+			if(!in_thr && x > 0) n_out_e += 1;
 		} 
 	}
 }

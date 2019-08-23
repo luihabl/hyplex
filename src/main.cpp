@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
     fmatrix mesh_y          = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix vmesh           = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix voltages        = fmatrix::zeros(3);
-    double v_cap            = 0.0;
+    double v_cap            = -20.0;
     
     // Average field variablesd
     verbose_log("Initializing diagnostics variables");
@@ -187,8 +187,8 @@ int main(int argc, char* argv[])
         
 
         // Step 6: Monte-Carlo collisions
-        if(i % K_SUB == 0) collisions_i(p_i, n_active_i, lpos_i, mesh_x, mesh_y, dens_n, M_I, p_null_i, nu_prime_i);
-        collisions_e(p_e, n_active_e, lpos_e, p_i, n_active_i, lpos_i, mesh_x, mesh_y, dens_n, M_I, p_null_e, nu_prime_e);
+        // if(i % K_SUB == 0) collisions_i(p_i, n_active_i, lpos_i, mesh_x, mesh_y, dens_n, M_I, p_null_i, nu_prime_i);
+        // collisions_e(p_e, n_active_e, lpos_e, p_i, n_active_i, lpos_i, mesh_x, mesh_y, dens_n, M_I, p_null_e, nu_prime_e);
         
         //  ----------------------------- Diagnostics -------------------------
 
@@ -197,7 +197,7 @@ int main(int argc, char* argv[])
         n_active_e_diag.val[i] = n_active_e;
         n_active_i_diag.val[i] = n_active_i;
 
-        if(i % 10000 == 0) save_state(p_e, n_active_e, p_i, n_active_i, phi, wmesh_e, wmesh_i, vmesh, "_state");
+        // if(i % 10000 == 0) save_state(p_e, n_active_e, p_i, n_active_i, phi, wmesh_e, wmesh_i, vmesh, "_state");
         
 
 	}
