@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
     fmatrix mesh_y          = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix vmesh           = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix voltages        = fmatrix::zeros(3);
-    double v_cap            = -20.0;
+    double v_cap            = -10000.0;
     
     // Average field variablesd
     verbose_log("Initializing diagnostics variables");
@@ -183,12 +183,14 @@ int main(int argc, char* argv[])
         if(INJ_MODEL == "constant")       n_inj_e = N_INJ_EL;
         else if(INJ_MODEL == "balanced")  n_inj_e = balanced_injection(n_inj_e, 0.01, wmesh_i, wmesh_e, 0, 0, 0, N_THRUSTER - 1);
         else if(INJ_MODEL == "pulsed")    n_inj_e = pulsed_injection(K_INJ_EL, V_SB, V_RF, T_EL, OMEGA_I, i);
-        add_flux_particles(p_e, n_active_e, T_EL, V_DRIFT_EL, M_EL, n_inj_e);
+        double v_drift_e = (1 - 0.85) * (V_SB + V_RF * sin(2 * PI * FREQ * DT * i)) + 50;
+        v_drift_e = v_drift_e > 0 ? v_drift_e : 0;
+        add_flux_particles(p_e, n_active_e, T_EL, v_drift_e, M_EL, n_inj_e);
         
 
         // Step 6: Monte-Carlo collisions
-        // if(i % K_SUB == 0) collisions_i(p_i, n_active_i, lpos_i, mesh_x, mesh_y, dens_n, M_I, p_null_i, nu_prime_i);
-        // collisions_e(p_e, n_active_e, lpos_e, p_i, n_active_i, lpos_i, mesh_x, mesh_y, dens_n, M_I, p_null_e, nu_prime_e);
+        if(i % K_SUB == 0) collisions_i(p_i, n_active_i, lpos_i, mesh_x, mesh_y, dens_n, M_I, p_null_i, nu_prime_i);
+        collisions_e(p_e, n_active_e, lpos_e, p_i, n_active_i, lpos_i, mesh_x, mesh_y, dens_n, M_I, p_null_e, nu_prime_e);
         
         //  ----------------------------- Diagnostics -------------------------
 
@@ -197,7 +199,7 @@ int main(int argc, char* argv[])
         n_active_e_diag.val[i] = n_active_e;
         n_active_i_diag.val[i] = n_active_i;
 
-        // if(i % 10000 == 0) save_state(p_e, n_active_e, p_i, n_active_i, phi, wmesh_e, wmesh_i, vmesh, "_state");
+        if(i % 10000 == 0) save_state(p_e, n_active_e, p_i, n_active_i, phi, wmesh_e, wmesh_i, vmesh, "_state");
         
 
 	}

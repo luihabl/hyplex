@@ -20,7 +20,6 @@ Compile with the `-D VERBOSE` flag in the variable `CXXFLAGS` to print more info
 
 ## To do
 
-- Remove the capacitive behavior from the OB on the top of the thruster
 - Inject electron in pulses. The magnitudes must always obey $\bar{I}_e \geq I_i$. Electron pulse shape obeys Boltzmann electron relation with $\phi = V_0\sin(\omega t) + V_{bias}$. Here $n_0$ is calculated from the maxwellian flux from the ion current and $V_{bias}$ should make the voltage to be always above zero and guarantee that the average electron current is higher than the ion current. Beyond that, electrons should have a drift velocity which is a parameter in the code
     - Why are we losing all electrons? 
     - Understand better the injection of the electrons, maybe there is a better way?
