@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
     fmatrix mesh_y          = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix vmesh           = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix voltages        = fmatrix::zeros(3);
-    double v_cap            = -10000.0;
+    double v_cap            = -100.0;
     
     // Average field variablesd
     verbose_log("Initializing diagnostics variables");
@@ -185,6 +185,7 @@ int main(int argc, char* argv[])
         else if(INJ_MODEL == "pulsed")    n_inj_e = pulsed_injection(K_INJ_EL, V_SB, V_RF, T_EL, OMEGA_I, i);
         double v_drift_e = (1 - 0.85) * (V_SB + V_RF * sin(2 * PI * FREQ * DT * i)) + 50;
         v_drift_e = v_drift_e > 0 ? v_drift_e : 0;
+        v_drift_e = sqrt(2 * Q * v_drift_e / M_EL);
         add_flux_particles(p_e, n_active_e, T_EL, v_drift_e, M_EL, n_inj_e);
         
 

@@ -51,7 +51,7 @@ def plot_distribution(v, bins='auto'):
 #     plt.show()
     
 def load():
-    global dens_e, dens_i, p_e, p_i, phi, v_e, v_i, k_e, k_i, ne, ni, v_cap
+    global dens_e, dens_i, dens_n, p_e, p_i, phi, v_e, v_i, k_e, k_i, ne, ni, v_cap
     
     try:
         dens_e = np.transpose(pd.read_csv('dens_e_state.csv', header=None).values)
@@ -90,18 +90,17 @@ def load():
     try:
         ne = pd.read_csv('n_active_e.csv', header=None).values
     except:
-        print('failed to load phi')
+        print('failed to load n_active_e.csv')
     
     try:
         ni = pd.read_csv('n_active_i.csv', header=None).values
     except:
-        print('failed to load phi')
+        print('failed to load n_active_i.csv')
         
     try:
         v_cap = pd.read_csv('v_cap.csv', header=None).values
     except:
-        print('failed to load phi')
-
+        print('failed to load v_cap.csv')
     
 
 if __name__=='__main__':
