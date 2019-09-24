@@ -179,13 +179,16 @@ int main(int argc, char* argv[])
         v_cap = cap_voltage(v_cap, n_out_e, n_out_i);
         
         // Step 5: particles injection
+        double v_drift_e = 0;
         if(i % K_SUB == 0) add_flux_particles(p_i, n_active_i, T_I, V_DRIFT_I, M_I, N_INJ_I, K_SUB);
         if(INJ_MODEL == "constant")       n_inj_e = N_INJ_EL;
         else if(INJ_MODEL == "balanced")  n_inj_e = balanced_injection(n_inj_e, 0.01, wmesh_i, wmesh_e, 0, 0, 0, N_THRUSTER - 1);
-        else if(INJ_MODEL == "pulsed")    n_inj_e = pulsed_injection(K_INJ_EL, V_SB, V_RF, T_EL, OMEGA_I, i);
-        double v_drift_e = (1 - 0.85) * (V_SB + V_RF * sin(2 * PI * FREQ * DT * i)) + 50;
-        v_drift_e = v_drift_e > 0 ? v_drift_e : 0;
-        v_drift_e = sqrt(2 * Q * v_drift_e / M_EL);
+        else if(INJ_MODEL == "pulsed"){
+            n_inj_e = pulsed_injection(K_INJ_EL, V_SB, V_RF, T_EL, OMEGA_I, i);
+            double voltage_drift_e = (0.85 - 1) * (V_SB + V_RF * sin(2 * PI * FREQ * DT * i)) + 50;
+            voltage_drift_e = voltage_drift_e > 0 ? voltage_drift_e : 0;
+            v_drift_e = sqrt(2 * Q * voltage_drift_e / M_EL);
+        }
         add_flux_particles(p_e, n_active_e, T_EL, v_drift_e, M_EL, n_inj_e);
         
 
