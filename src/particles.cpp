@@ -275,9 +275,6 @@ void boundaries_e_cap(fmatrix & p, int & n_active, imatrix & lpos, int & n_out_e
 	int n_out = 0;
 	static imatrix out(100000); 
 
-	int n_out_ob = 0;
-	static imatrix out_ob(100000); 
-
 	static fmatrix phi_at_p(100000);
 	double e_factor = 0.5 * M_EL * DX * DX / (DT * DT * Q);
 
@@ -295,18 +292,10 @@ void boundaries_e_cap(fmatrix & p, int & n_active, imatrix & lpos, int & n_out_e
 		if(x <= 0 || x >= x_max || y >= y_max || y <= 0){
 			out.val[n_out] = i;
 			n_out += 1;
-
-			in_thr = (y <= y_thr) && (y > 0) && (x <= 0);
-			in_sym = y <= 0;
-
-			if(!in_thr && !in_sym){
-				out_ob.val[n_out_ob] = i;
-				n_out_ob += 1;
-			}
 		}
 	}
 
-	find_phi_at_particles(phi_at_p, phi, mesh_x, mesh_y, out_ob, n_out_ob, p, n_active, lpos);
+	find_phi_at_particles(phi_at_p, phi, mesh_x, mesh_y, out, n_out, p, n_active, lpos);
 	for (int n = n_out - 1; n >= 0; n--){
 		
 		x = p.val[out.val[n] * 6 + 0];
@@ -325,7 +314,7 @@ void boundaries_e_cap(fmatrix & p, int & n_active, imatrix & lpos, int & n_out_e
 			reflect_particle(p, n_active, out.val[n], x, y, vx, vy);
 		} else {
 			remove_particle(p, n_active, out.val[n], lpos);
-			if(!in_thr && x > 0) n_out_e += 1;
+			if(!in_thr) n_out_e += 1;
 		} 
 	}
 }
