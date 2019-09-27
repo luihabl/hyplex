@@ -78,7 +78,7 @@ for d in data:
     if vmax < d.max().max(): vmax = d.max()
     if vmin > d.min().min(): vmin = d.min() 
 
-image = axes.imshow(data[0], cmap='plasma', origin='lower', vmin=100*vmin, vmax=vmax*0.01)
+image = axes.imshow(data[0], cmap='plasma', origin='lower', vmin=vmin, vmax=vmax)
 
 divider0 = make_axes_locatable(axes)
 cax0 = divider0.append_axes("right", size="1%", pad=0.1)

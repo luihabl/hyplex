@@ -158,7 +158,9 @@ int main(int argc, char* argv[])
         weight(p_e, n_active_e, wmesh_e, mesh_x, mesh_y, lpos_e);
         
         // Step 2.0 integration of Poisson's equation
+        double alpha = 2e-4;
         solver.solve(phi, voltages, wmesh_i, wmesh_e);
+        phi_av = (1 - alpha) * phi_av + alpha * phi;
 
         // Step 2.1: calculation of electric field
         calculate_efield(efield_x, efield_y, phi, wmesh_i, wmesh_e, mesh_x, mesh_y, vmesh);
@@ -175,7 +177,7 @@ int main(int argc, char* argv[])
         // boundaries(p_e, n_active_e, lpos_e);
         if(i % K_SUB == 0) boundaries_i(p_i, n_active_i, lpos_i, n_out_i);
         // boundaries_e(p_e, n_active_e, lpos_e, n_out_i);
-        boundaries_e_cap(p_e, n_active_e, lpos_e, n_out_e, v_cap, phi, mesh_x, mesh_y);
+        boundaries_e_cap(p_e, n_active_e, lpos_e, n_out_e, v_cap, phi_av, mesh_x, mesh_y);
         v_cap = cap_voltage(v_cap, n_out_e, n_out_i);
         
         // Step 5: particles injection
@@ -206,7 +208,7 @@ int main(int argc, char* argv[])
 
 
         if(i % 10000 == 0) save_state(p_e, n_active_e, p_i, n_active_i, phi, wmesh_e, wmesh_i, vmesh, "_state");
-        if((i % 100 == 0) && i >= 595000) save_state(p_e, n_active_e, p_i, n_active_i, phi, wmesh_e, wmesh_i, vmesh, "_state_" + to_string(i));
+        // if((i % 100 == 0) && i >= 595000) save_state(p_e, n_active_e, p_i, n_active_i, phi, wmesh_e, wmesh_i, vmesh, "_state_" + to_string(i));
         
 
 	}
