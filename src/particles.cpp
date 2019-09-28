@@ -305,7 +305,6 @@ void boundaries_e_cap(fmatrix & p, int & n_active, imatrix & lpos, int & n_out_e
 		vz= p.val[out.val[n] * 6 + 5];
 		
 		energy =  e_factor * ((vx * vx) + (vy * vy) + (vz * vz));
-		cout<<energy<<endl;
 		is_crt = energy >= phi_at_p.val[n] - v_cap;
 		in_thr = (y <= y_thr) && (y > 0) && (x <= 0);
 		in_sym = (y <= 0) && (x >= 0) && (x <= x_max);

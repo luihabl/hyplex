@@ -158,7 +158,7 @@ int main(int argc, char* argv[])
         weight(p_e, n_active_e, wmesh_e, mesh_x, mesh_y, lpos_e);
         
         // Step 2.0 integration of Poisson's equation
-        double alpha = 2e-4;
+        double alpha = 1;
         solver.solve(phi, voltages, wmesh_i, wmesh_e);
         phi_av = (1 - alpha) * phi_av + alpha * phi;
 
