@@ -78,7 +78,7 @@ for d in data:
     if vmax < d.max().max(): vmax = d.max()
     if vmin > d.min().min(): vmin = d.min() 
 
-image = axes.imshow(data[0], cmap='plasma', origin='lower', vmin=vmin, vmax=vmax)
+image = axes.imshow(data[0], cmap='plasma', origin='lower', vmin=vmin*5, vmax=vmax*0.5)
 
 divider0 = make_axes_locatable(axes)
 cax0 = divider0.append_axes("right", size="1%", pad=0.1)
@@ -91,11 +91,11 @@ animation = FuncAnimation(
     # The function that does the updating of the Figure
     animate,
     # Frame information (here just frame number)
-    np.arange(25,50),
+    np.arange(758),
     # Extra arguments to the animate function
     fargs=[],
     # Frame-time in ms; i.e. for a given frame-rate x, 1000/x
-    interval=1000 / 10
+    interval=1000 / 30
 )
 
 animation.save("anim.mp4", dpi=300)

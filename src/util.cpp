@@ -95,7 +95,7 @@ fmatrix load_csv(string file_path, char delim, int cols)
     file.clear();
     file.seekg(0, ios::beg);
     
-    fmatrix data(line_count, cols); //line_count - 1 because the first row it's assumed to be a header.
+    fmatrix data(line_count, cols); 
     int i = 0;
     while (getline(file, line))
     {
@@ -134,13 +134,13 @@ void print_dsmc_info(int i, int n_active_n, int step_interval, int n_steps){
     }
 }
 
-void print_info(int i, fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i, double v_cap, int step_interval)
+void print_info(int i, int step_offset, fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i, double v_cap, int step_interval)
 {
     static high_resolution_clock::time_point t0;
     if(i==0) t0 = high_resolution_clock::now();
     if ((i + 1) % step_interval == 0 || i == 0)
     {
-        printf("[%05.2f%%] ", (double) (100.0 * (i + 1) / N_STEPS));
+        printf("[%05.2f%%] ", (double) (100.0 * (i + 1 - step_offset) / N_STEPS));
         printf("Step: %-8d ", i + 1);
         printf("Active electrons: %-8d ", n_active_e);
         printf("Active ions: %-8d ", n_active_i);
@@ -161,8 +161,6 @@ void print_initial_info(double p_null_e, double p_null_i)
     printf("P Null (I):\t\t %.4e\n\n", p_null_i);
 }
 
-
-
 void average_field(fmatrix & av_field, const fmatrix & field, int step)
 {
     // step is actually step = i - (N_STEPS - N_AVERAGE);
@@ -171,7 +169,7 @@ void average_field(fmatrix & av_field, const fmatrix & field, int step)
     }
 }
 
-void save_state(fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i, fmatrix & phi,  fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vmesh, string suffix){
+void save_state(fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i, fmatrix & phi,  fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vmesh, int i, double v_cap, string suffix){
     
     
     fmatrix p_e_corrected = DX * p_e;
@@ -199,9 +197,48 @@ void save_state(fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i, fm
 
     fmatrix dens_i = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_i / vmesh;
     save_to_csv(dens_i, "dens_i" + suffix + ".csv");
+
+    fmatrix sim_state = {(double) i, v_cap};
+    save_to_csv(sim_state, "sim" + suffix + ".csv");
     
     verbose_log("State saved");
 }
+
+void load_state(fmatrix & p_e, int & n_active_e, fmatrix & p_i, int & n_active_i, int & step_offset, double & v_cap, string suffix){
+
+    fmatrix p_i_load = load_csv("output/p_i" + suffix + ".csv",',', 6);
+    fmatrix p_e_load = load_csv("output/p_e" + suffix + ".csv",',', 6);
+
+    n_active_i = p_i_load.n1;
+    n_active_e = p_e_load.n1;
+
+    p_e_load = p_e_load / DX;
+    for(int i = 0; i < n_active_e; i++){
+        p_e_load.val[i * 6 + 3] = p_e_load.val[i * 6 + 3] * DT;
+        p_e_load.val[i * 6 + 4] = p_e_load.val[i * 6 + 4] * DT;
+        p_e_load.val[i * 6 + 5] = p_e_load.val[i * 6 + 5] * DT;
+    }
+
+    p_i_load = p_i_load / DX;
+    for(int i = 0; i < n_active_i; i++){
+        p_i_load.val[i * 6 + 3] = p_i_load.val[i * 6 + 3] * DT;
+        p_i_load.val[i * 6 + 4] = p_i_load.val[i * 6 + 4] * DT;
+        p_i_load.val[i * 6 + 5] = p_i_load.val[i * 6 + 5] * DT;
+    }
+
+    for(int i=0; i < n_active_i * 6; i++) p_i.val[i] = p_i_load.val[i];
+    for(int i=0; i < n_active_e * 6; i++) p_e.val[i] = p_e_load.val[i];
+
+    fmatrix sim_state = load_csv("output/sim" + suffix + ".csv",',', 1);
+    step_offset = sim_state.val[0];
+    v_cap = sim_state.val[1];
+
+
+    
+    verbose_log("State loaded: i: " + to_string(step_offset) + " Cap. voltage: " + to_string(v_cap) + " Active electrons: " + to_string(n_active_e) + " Active ions: " + to_string(n_active_i));
+}
+
+
 
 void verbose_log(string message){
     #ifdef VERBOSE

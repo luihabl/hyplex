@@ -20,12 +20,13 @@ fmatrix load_csv(string file_path, char delim = ';', int cols = 2);
 imatrix sample_from_sequence_shuffle(int sample_size, int range);
 imatrix sample_from_sequence_naive(int sample_size, int range);
 // imatrix sample_from_sequence_swap(int sample_size, int range);
-void print_info(int i, fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i, double v_cap, int step_interval);
+void print_info(int i, int step_offset, fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i, double v_cap, int step_interval);
 void print_initial_info(double p_null_e, double p_null_i);
 void print_dsmc_info(int i, int n_active_n, int step_interval, int n_steps);
 void average_field(fmatrix & av_field, const fmatrix & field, int step);
 void verbose_log(string message);
-void save_state(fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i, fmatrix & phi,  fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vmesh, string suffix);
+void save_state(fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i, fmatrix & phi,  fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vmesh, int i, double v_cap, string suffix);
+void load_state(fmatrix & p_e, int & n_active_e, fmatrix & p_i, int & n_active_i, int & step_offset, double & v_cap, string suffix);
 
 template <class T>
 T clamp(T low, T hi, T val){

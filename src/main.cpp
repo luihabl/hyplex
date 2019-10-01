@@ -40,6 +40,7 @@ int main(int argc, char* argv[])
     fmatrix vmesh           = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix voltages        = fmatrix::zeros(3);
     double v_cap            = -100.0;
+    int step_offset         = 0;
     
     // Average field variablesd
     verbose_log("Initializing diagnostics variables");
@@ -143,24 +144,27 @@ int main(int argc, char* argv[])
     double p_null_e         = p_null(nu_prime_e, DT);
     double nu_prime_i       = find_nu_prime_i(dens_n, vmesh);
     double p_null_i         = p_null(nu_prime_i, DT * K_SUB);
-    
      
     // Printing initial information
     print_initial_info(p_null_e, p_null_i);
+    
+    // ----------------------------- Loading sim ------------------------------
+
+    if(false) load_state(p_e, n_active_e, p_i, n_active_i, step_offset, v_cap, "_state_input");
 
 	// ----------------------------- Main loop --------------------------------
     verbose_log(" ---- Starting main loop ---- ");
     auto start = high_resolution_clock::now();
-	for (int i = 0; i < N_STEPS; i++)
+
+    int i;
+	for (i = step_offset; i < N_STEPS + step_offset; i++)
 	{ 
 		// Step 1.0: particle weighting
         if(i % K_SUB == 0) weight(p_i, n_active_i, wmesh_i, mesh_x, mesh_y, lpos_i);
         weight(p_e, n_active_e, wmesh_e, mesh_x, mesh_y, lpos_e);
-        
+
         // Step 2.0 integration of Poisson's equation
-        double alpha = 1;
         solver.solve(phi, voltages, wmesh_i, wmesh_e);
-        phi_av = (1 - alpha) * phi_av + alpha * phi;
 
         // Step 2.1: calculation of electric field
         calculate_efield(efield_x, efield_y, phi, wmesh_i, wmesh_e, mesh_x, mesh_y, vmesh);
@@ -172,12 +176,10 @@ int main(int argc, char* argv[])
         // Step 3: integration of equations of motion
         if(i % K_SUB == 0) move_i(p_i, n_active_i, efield_x_at_p_i, efield_y_at_p_i);
         move_e(p_e, n_active_e, efield_x_at_p_e, efield_y_at_p_e);
-        
+
         // Step 4: particle loss at boundaries
-        // boundaries(p_e, n_active_e, lpos_e);
         if(i % K_SUB == 0) boundaries_i(p_i, n_active_i, lpos_i, n_out_i);
-        // boundaries_e(p_e, n_active_e, lpos_e, n_out_i);
-        boundaries_e_cap(p_e, n_active_e, lpos_e, n_out_e, v_cap, phi_av, mesh_x, mesh_y);
+        boundaries_e_cap(p_e, n_active_e, lpos_e, n_out_e, v_cap, phi, mesh_x, mesh_y);
         v_cap = cap_voltage(v_cap, n_out_e, n_out_i);
         
         // Step 5: particles injection
@@ -187,30 +189,33 @@ int main(int argc, char* argv[])
         else if(INJ_MODEL == "balanced")  n_inj_e = balanced_injection(n_inj_e, 0.01, wmesh_i, wmesh_e, 0, 0, 0, N_THRUSTER - 1);
         else if(INJ_MODEL == "pulsed"){
             n_inj_e = pulsed_injection(K_INJ_EL, V_SB, V_RF, T_EL, OMEGA_I, i);
-            // double voltage_drift_e = (0.95 - 1) * (V_SB + V_RF * sin(2 * PI * FREQ * DT * i)) + 50;
-            // voltage_drift_e = voltage_drift_e > 0 ? voltage_drift_e : 0;
-            double voltage_drift_e = 20;
-            v_drift_e = sqrt(2 * Q * voltage_drift_e / M_EL);
+            v_drift_e = sqrt(2 * Q * 20 / M_EL);
         }
         add_flux_particles(p_e, n_active_e, T_EL, v_drift_e, M_EL, n_inj_e);
         
-
         // Step 6: Monte-Carlo collisions
         if(i % K_SUB == 0) collisions_i(p_i, n_active_i, lpos_i, mesh_x, mesh_y, dens_n, M_I, p_null_i, nu_prime_i);
         collisions_e(p_e, n_active_e, lpos_e, p_i, n_active_i, lpos_i, mesh_x, mesh_y, dens_n, M_I, p_null_e, nu_prime_e);
         
         //  ----------------------------- Diagnostics -------------------------
 
-        print_info(i, p_e, n_active_e, p_i, n_active_i, v_cap, 100);
-        v_cap_diag.val[i] = v_cap;
-        n_active_e_diag.val[i] = n_active_e;
-        n_active_i_diag.val[i] = n_active_i;
+        print_info(i, step_offset, p_e, n_active_e, p_i, n_active_i, v_cap, 100);
 
+        if(i % 10000 == 0) {
+            save_state(p_e, n_active_e, p_i, n_active_i, phi, wmesh_e, wmesh_i, vmesh, i, v_cap, "_state");
+        }
 
-        if(i % 10000 == 0) save_state(p_e, n_active_e, p_i, n_active_i, phi, wmesh_e, wmesh_i, vmesh, "_state");
-        // if((i % 100 == 0) && i >= 595000) save_state(p_e, n_active_e, p_i, n_active_i, phi, wmesh_e, wmesh_i, vmesh, "_state_" + to_string(i));
-        
+        v_cap_diag.val[i - step_offset] = v_cap;
+        n_active_e_diag.val[i - step_offset] = n_active_e;
+        n_active_i_diag.val[i - step_offset] = n_active_i;
 
+        if(i % 50000 == 0) {
+            save_to_csv(v_cap_diag, "v_cap.csv", i - step_offset, 1);
+            save_to_csv(n_active_e_diag, "n_active_e.csv", i - step_offset, 1);
+            save_to_csv(n_active_i_diag, "n_active_i.csv", i - step_offset, 1);
+        }
+
+        // if(i % 10 == 0) save_state(p_e, n_active_e, p_i, n_active_i, phi, wmesh_e, wmesh_i, vmesh, i, v_cap, "_state_" + to_string(i));
 	}
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>(stop - start);
@@ -218,7 +223,7 @@ int main(int argc, char* argv[])
 
     // ----------------------------- Saving outputs ---------------------------
     
-    save_state(p_e, n_active_e, p_i, n_active_i, phi, wmesh_e, wmesh_i, vmesh, "_state");
+    save_state(p_e, n_active_e, p_i, n_active_i, phi, wmesh_e, wmesh_i, vmesh, i, v_cap, "_state");
     save_to_csv(v_cap_diag, "v_cap.csv");
     save_to_csv(n_active_e_diag, "n_active_e.csv");
     save_to_csv(n_active_i_diag, "n_active_i.csv");
