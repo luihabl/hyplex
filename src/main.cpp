@@ -33,6 +33,8 @@ int main(int argc, char* argv[])
 	// General field variables
     verbose_log("Initializing general variables");
 	fmatrix phi             = fmatrix::zeros(N_MESH_X, N_MESH_Y);
+    fmatrix phi_laplace     = fmatrix::zeros(N_MESH_X, N_MESH_Y);
+    fmatrix phi_poisson     = fmatrix::zeros(N_MESH_X, N_MESH_Y);
 	fmatrix efield_x        = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix efield_y        = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix mesh_x          = fmatrix::zeros(N_MESH_X, N_MESH_Y);
@@ -92,22 +94,50 @@ int main(int argc, char* argv[])
 
     // Initializing solver 
     verbose_log("Initializing solver");
-    rsolver solver(mesh_x, mesh_y, vmesh, 4, 1);
 
-    imatrix box_thruster = {0, 0, 0, N_THRUSTER - 1};
-    solver.set_dirichlet_box(box_thruster, 0);
-    
-    imatrix box_1 = {0, N_THRUSTER, 0, N_MESH_Y - 2};
-    imatrix box_2 = {0, N_MESH_Y - 1, N_MESH_X - 2, N_MESH_Y - 1};
-    imatrix box_3 = {N_MESH_X - 1, 0, N_MESH_X - 1, N_MESH_Y - 1};
-    imatrix box_4 = {1, 0, N_MESH_X - 2, 0};
-    solver.set_neumann_box(box_1, 0);
-    solver.set_neumann_box(box_2, 1);
-    solver.set_neumann_box(box_3, 2);
-    solver.set_neumann_box(box_4, 3);
-    
-    voltages = {VOLT_0_NORM};
+    int n_dirichlet, n_neumann;
+    imatrix box_thruster        = {0, 0, 0, N_THRUSTER - 1};
+    imatrix box_top_thruster    = {0, N_THRUSTER, 0, N_MESH_Y - 2};
+    imatrix box_ob_top          = {0, N_MESH_Y - 1, N_MESH_X - 2, N_MESH_Y - 1};
+    imatrix box_ob_right        = {N_MESH_X - 1, 0, N_MESH_X - 1, N_MESH_Y - 1};
+    imatrix box_sym             = {1, 0, N_MESH_X - 2, 0};
+
+    if(OB_TYPE == "dirichlet"){
+        n_dirichlet = 3;
+        n_neumann   = 2;
+    }
+    if(OB_TYPE == "neumann"){
+        n_dirichlet = 1;
+        n_neumann   = 4;
+    }
+
+    rsolver solver(mesh_x, mesh_y, vmesh, n_neumann, n_dirichlet);
+
+    if(OB_TYPE == "neumann"){
+        solver.set_dirichlet_box(box_thruster, 0);
+        solver.set_neumann_box(box_top_thruster, 0);
+        solver.set_neumann_box(box_ob_top, 1);
+        solver.set_neumann_box(box_ob_right, 2);
+        solver.set_neumann_box(box_sym, 3);
+    }
+
+    if(OB_TYPE == "dirichlet"){
+        solver.set_dirichlet_box(box_thruster, 0);
+        solver.set_dirichlet_box(box_ob_top, 1);
+        solver.set_dirichlet_box(box_ob_right, 2);
+        solver.set_neumann_box(box_sym, 0);
+        solver.set_neumann_box(box_top_thruster, 1);
+    }
+
     solver.assemble();
+
+    voltages = {0, 1, 1};
+    // solver.solve(phi_laplace, voltages, wmesh_i, wmesh_e);
+
+    // voltages = {0, 0, 0};
+    // solver.solve(phi_poisson, voltages, wmesh_i, wmesh_e);
+    
+    // phi = phi_poisson + VOLT_1_NORM * phi_laplace;
       
     // ----------------------------- DSMC loop --------------------------------
     if (EXPM_NEUTRAL == "dsmc"){
@@ -148,9 +178,9 @@ int main(int argc, char* argv[])
     // Printing initial information
     print_initial_info(p_null_e, p_null_i);
     
-    // ----------------------------- Loading sim ------------------------------
+    // ----------------------------- Loading initial state -------------------
 
-    if(false) load_state(p_e, n_active_e, p_i, n_active_i, step_offset, v_cap, "_state_input");
+    if(INITIAL_STATE == "load") load_state(p_e, n_active_e, p_i, n_active_i, step_offset, v_cap, "_state_input");
 
 	// ----------------------------- Main loop --------------------------------
     verbose_log(" ---- Starting main loop ---- ");

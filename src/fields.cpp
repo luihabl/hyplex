@@ -93,6 +93,29 @@ void calculate_efield(fmatrix & efield_x, fmatrix & efield_y, fmatrix & phi, fma
 
 }
 
+
+double calculate_phi_zero(double sigma_old, double n_in, double cap_charge, fmatrix & phi_laplace, fmatrix & phi_poisson, fmatrix & mesh_x, fmatrix & mesh_y){
+	
+	// Add here calculation for phi_zero
+	
+
+
+	return 0;
+}
+
+double calculate_sigma(double sigma_old, double phi_zero, double n_in, double cap_charge){
+	return sigma_old - phi_zero - cap_charge + n_in * (Q * K_PHI / C_CAP);
+}
+
+double calculate_cap_charge(double sigma_new, double sigma_old, double cap_charge_old, double n_in){
+	return (sigma_new - sigma_old) + cap_charge_old - n_in * (Q * K_PHI / C_CAP);
+
+	// n_in is ni - ne or ne - ni??
+}
+
+
+
+
 void init_mesh(fmatrix & mesh_x, fmatrix & mesh_y, double a_x, double a_y, int n_mesh_x, int n_mesh_y)
 {
 	for (size_t i = 0; i < mesh_x.n1; i++) {

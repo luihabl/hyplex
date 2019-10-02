@@ -8,9 +8,13 @@
 #include <string>
 using namespace std;
 
+//; ----------------------------- General ---------------------------------------
 //[project]
 extern string OUTPUT_PATH;
 extern string CROSS_SECTIONS_PATH;
+
+//[simulation]
+extern string INITIAL_STATE;
 
 //; ----------------------------- Constants -------------------------------------
 //[physical]
@@ -45,6 +49,7 @@ extern double VOLT_1                 ;//Voltage on the chamber walls [V]
 extern double V_SB 				     ;//Self-bias voltage [V]
 extern double V_RF 					 ;//Amplitude of the RF signal [V]
 extern double C_CAP					 ;//Capacitance of thruster connection [F]
+extern string OB_TYPE                ;//Type of outer boundary condition: neumann, dirichlet
 
 //; ----------------------------- Species ---------------------------------------
 
@@ -96,6 +101,7 @@ extern double VOLT_0_NORM;
 extern double VOLT_1_NORM;
 extern double GAMMA;
 extern double ALPHA;
+extern double K_PHI;
 extern double N_INJ_N;
 extern double N_INJ_I;
 extern double N_INJ_EL;

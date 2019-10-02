@@ -8,9 +8,13 @@
 
 using namespace std;
 
+//; ----------------------------- General ---------------------------------------
 //[project]
  string OUTPUT_PATH;
  string CROSS_SECTIONS_PATH;
+
+ //[simulation]
+ string INITIAL_STATE          ;//Load input for simulation state or start again: 'load' or 'new'
 
 //; ----------------------------- Constants -------------------------------------
 //[physical]
@@ -42,6 +46,7 @@ using namespace std;
  double VOLT_0                 ;//Voltage on the thruster [V]
  double VOLT_1                 ;//Voltage on the chamber walls [V]
  double C_CAP				   ;//Capacitance of thruster connection [F]
+ string OB_TYPE                ;//Type of outer boundary condition: neumann, dirichlet
 
 //; ----------------------------- Species ---------------------------------------
 
@@ -94,6 +99,7 @@ using namespace std;
  double OMEGA_I;
  double VOLT_0_NORM;
  double VOLT_1_NORM;
+ double K_PHI;
  double GAMMA;
  double ALPHA;
  double N_INJ_N;
@@ -109,6 +115,9 @@ void load_config_file(string filename){
     // Project configuration
     OUTPUT_PATH = reader.Get("project", "OUTPUT_PATH", "");
     CROSS_SECTIONS_PATH = reader.Get("project", "CROSS_SECTIONS_PATH", "");
+
+    //Simulation
+    INITIAL_STATE = reader.Get("simulation", "INITIAL_STATE", "");
 
     // Physical constants
     Q = reader.GetReal("physical", "Q", -1);
@@ -141,6 +150,7 @@ void load_config_file(string filename){
     V_SB = reader.GetReal("thruster", "V_SB", -1);   
     V_RF = reader.GetReal("thruster", "V_RF", -1);
     C_CAP = reader.GetReal("boundary-conditions", "C_CAP", -1);  
+    OB_TYPE = reader.Get("boundary-conditions", "OB_TYPE", "");
     
     // Plasma
     N_FACTOR = reader.GetReal("particles", "N_FACTOR", -1);
@@ -200,6 +210,7 @@ void load_config_file(string filename){
     
     N_INJ_N  = (1 - ETA_PROPELLANT) * (4.477962e17 * MASS_FLOW_RATE) * DT / (N_FACTOR_DSMC);
     
+    K_PHI = Q * DT * DT / (M_EL * DX * DX);
     GAMMA = 2 * N_FACTOR * pow(Q, 2) * pow(DT, 2) / (M_EL * EPS_0 * pow(DX, 2));
     ALPHA = K_SUB * M_EL / M_I;
 
