@@ -94,9 +94,54 @@ void calculate_efield(fmatrix & efield_x, fmatrix & efield_y, fmatrix & phi, fma
 }
 
 
-double calculate_phi_zero(double sigma_old, double n_in, double cap_charge, fmatrix & phi_laplace, fmatrix & phi_poisson, fmatrix & mesh_x, fmatrix & mesh_y){
+double calculate_phi_zero(double sigma_old, double n_in, double cap_charge, fmatrix & phi_laplace, fmatrix & phi_poisson, fmatrix & mesh_x, fmatrix & mesh_y, imatrix & electrode_mask){
 	
 	// Add here calculation for phi_zero
+	double sigma_laplace = 0;
+	double area, volume, phi_laplace_xx, phi_laplace_yy, phi_poisson_xx, phi_poisson_yy;
+	double dx1, dx2, dy1, dy2;
+	
+	int ip, im, jp, jm;
+	int n_mesh_x =  mesh_x.n1, n_mesh_y =  mesh_y.n2;
+	for(int i = 0; i < n_mesh_x; i++){
+		for(int j = 0; j < n_mesh_y; j++){
+			if(electrode_mask.val[i * n_mesh_y + j] == 1){
+
+
+				ip = clamp(0, n_mesh_x - 1, i + 1);
+				im = clamp(0, n_mesh_x - 1, i - 1);
+				jp = clamp(0, n_mesh_y - 1, j + 1);
+				jm = clamp(0, n_mesh_y - 1, j - 1);
+
+				dx1 = mesh_x.val[i * n_mesh_y + j] - mesh_x.val[im * n_mesh_y + j];
+				dx2 = mesh_x.val[ip * n_mesh_y + j] - mesh_x.val[i * n_mesh_y + j];
+				if (dx1 <= 0 || dx2 <= 0) dx1 = dx2 = dx1 + dx2;
+
+				dy1 = mesh_y.val[i * n_mesh_y + j] - mesh_y.val[i * n_mesh_y + jm];
+				dy2 = mesh_y.val[i * n_mesh_y + jp] - mesh_y.val[i * n_mesh_y + j];
+				if (dy1 <=  0 || dy2 <= 0) dy1 = dy2 = dy1 + dy2;
+				
+				area =    (mesh_x.val[ip * n_mesh_y + j] - mesh_x.val[im * n_mesh_y + j]) + (mesh_y.val[i * n_mesh_y + jp] - mesh_y.val[i * n_mesh_y + jm]);
+				volume =  (mesh_x.val[ip * n_mesh_y + j] - mesh_x.val[im * n_mesh_y + j]) * (mesh_y.val[i * n_mesh_y + jp] - mesh_y.val[i * n_mesh_y + jm]);
+
+				phi_laplace_xx = phi_laplace.val[ip * n_mesh_y + j]/((dx1 + dx2)*dx2) + phi_laplace.val[i * n_mesh_y + j]/(dx1*dx2) + phi_laplace.val[im * n_mesh_y + j]/((dx1 + dx2)*dx1);
+				phi_laplace_yy = phi_laplace.val[i * n_mesh_y + jp]/((dy1 + dy2)*dy2) + phi_laplace.val[i * n_mesh_y + j]/(dy1*dy2) + phi_laplace.val[i * n_mesh_y + jm]/((dy1 + dy2)*dy1);
+
+				phi_poisson_xx = phi_poisson.val[ip * n_mesh_y + j]/((dx1 + dx2)*dx2) + phi_poisson.val[i * n_mesh_y + j]/(dx1*dx2) + phi_poisson.val[im * n_mesh_y + j]/((dx1 + dx2)*dx1);
+				phi_poisson_yy = phi_poisson.val[i * n_mesh_y + jp]/((dy1 + dy2)*dy2) + phi_poisson.val[i * n_mesh_y + j]/(dy1*dy2) + phi_poisson.val[i * n_mesh_y + jm]/((dy1 + dy2)*dy1);
+
+
+
+
+
+
+			}
+		}
+	}
+
+	
+
+
 	
 
 
