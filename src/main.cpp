@@ -42,6 +42,8 @@ int main(int argc, char* argv[])
     fmatrix vmesh           = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix voltages        = fmatrix::zeros(3);
     double v_cap            = -100.0;
+    double q_cap            = 0;
+    double sigma            = 0;
     int step_offset         = 0;
     
     // Average field variablesd
