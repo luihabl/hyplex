@@ -143,16 +143,10 @@ double calculate_phi_zero(double sigma_old, double n_in, double q_cap, fmatrix &
                 sigma_poisson += (EPS_0 / DX) * (volume/area) * (phi_poisson_xx + phi_poisson_yy + GAMMA * dw / volume);
     
                 
-                total_area += area; // take this out as well
+                total_area += (DX / 2) * area; // take this out as well
 			}
 		}
 	}
-
-
-	// cout << "n_in * (N_FACTOR * Q  / C_CAP): " << n_in * (N_FACTOR * Q  / C_CAP) << endl;
-	// cout << "sigma_laplace:                  " << sigma_laplace << endl;
-	cout << "ratio 1: " << n_in * (N_FACTOR * Q) / (C_CAP / ((DX / 2) * total_area) - sigma_laplace) << endl;
-	cout << "ratio:   " << (C_CAP / (total_area * K_PHI)) * (sigma_old + (total_area / C_CAP) * sigma_poisson - q_cap + n_in * (N_FACTOR * Q * K_PHI / C_CAP)) / (1 - total_area * sigma_laplace / C_CAP) << endl;
 
 	return (sigma_old + (total_area / C_CAP) * sigma_poisson - q_cap + n_in * (N_FACTOR * Q * K_PHI / C_CAP)) / (1 - total_area * sigma_laplace / C_CAP);
 }

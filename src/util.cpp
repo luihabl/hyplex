@@ -209,8 +209,8 @@ void load_state(fmatrix & p_e, int & n_active_e, fmatrix & p_i, int & n_active_i
     fmatrix p_i_load = load_csv("output/p_i" + suffix + ".csv",',', 6);
     fmatrix p_e_load = load_csv("output/p_e" + suffix + ".csv",',', 6);
 
-    n_active_i = p_i_load.n1;
-    n_active_e = p_e_load.n1;
+    n_active_i = (int) p_i_load.n1;
+    n_active_e = (int) p_e_load.n1;
 
     p_e_load = p_e_load / DX;
     for(int i = 0; i < n_active_e; i++){
