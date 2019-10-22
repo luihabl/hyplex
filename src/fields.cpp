@@ -95,15 +95,19 @@ void calculate_efield(fmatrix & efield_x, fmatrix & efield_y, fmatrix & phi, fma
 }
 
 
-double calculate_phi_zero(double sigma_old, double n_in, double q_cap, fmatrix & phi_laplace, fmatrix & phi_poisson, fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & vmesh, fmatrix & wmesh_e, fmatrix & wmesh_i, imatrix & electrode_mask){
+double calculate_phi_zero(double sigma_old, double n_in, double q_cap, double sigma_laplace, fmatrix & phi_poisson, fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vmesh, imatrix & electrode_mask){
+
+	double sigma_poisson = sigma_from_phi(phi_poisson, mesh_x, mesh_y, wmesh_e, wmesh_i, vmesh, electrode_mask);	
+	return (sigma_old + sigma_poisson - q_cap + K_Q * n_in) / (1 - sigma_laplace);
+}
+
+double sigma_from_phi(fmatrix & phi, fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vmesh, imatrix & electrode_mask){
 	
-	// Add here calculation for phi_zero
-	double sigma_laplace = 0, sigma_poisson = 0;
-	double area, total_area = 0, volume, dw, phi_laplace_xx, phi_laplace_yy, phi_poisson_xx, phi_poisson_yy;
+	double sigma = 0, area, volume, dw, phi_xx, phi_yy;
 	double dx1, dx2, dy1, dy2;
-	
 	int ip, im, jp, jm;
 	int n_mesh_x =  (int) mesh_x.n1, n_mesh_y =  (int) mesh_y.n2;
+	
 	for(int i = 0; i < n_mesh_x; i++){
 		for(int j = 0; j < n_mesh_y; j++){
 			if(electrode_mask.val[i * n_mesh_y + j] == 1){
@@ -113,53 +117,36 @@ double calculate_phi_zero(double sigma_old, double n_in, double q_cap, fmatrix &
 				jp = clamp(0, n_mesh_y - 1, j + 1);
 				jm = clamp(0, n_mesh_y - 1, j - 1);
 
-				dx1 = electrode_mask.val[im * n_mesh_y + j] * (mesh_x.val[i * n_mesh_y + j] - mesh_x.val[im * n_mesh_y + j]);
-				dx2 = electrode_mask.val[ip * n_mesh_y + j] * (mesh_x.val[ip * n_mesh_y + j] - mesh_x.val[i * n_mesh_y + j]);
-				dy1 = electrode_mask.val[i * n_mesh_y + jm] * (mesh_y.val[i * n_mesh_y + j] - mesh_y.val[i * n_mesh_y + jm]);
-				dy2 = electrode_mask.val[i * n_mesh_y + jp] * (mesh_y.val[i * n_mesh_y + jp] - mesh_y.val[i * n_mesh_y + j]);
-				
-				area =    dx1 + dx2 + dy1 + dy2;
-
-				volume =  vmesh.val[i * n_mesh_y + j];
                 dw = wmesh_i.val[i * n_mesh_y + j] - wmesh_e.val[i * n_mesh_y + j];
 
 				dx1 = mesh_x.val[i * n_mesh_y + j] - mesh_x.val[im * n_mesh_y + j];
 				dx2 = mesh_x.val[ip * n_mesh_y + j] - mesh_x.val[i * n_mesh_y + j];
-				if (dx1 <= 0 || dx2 <= 0) dx1 = dx2 = dx1 + dx2;
+				if (im == i || ip == i) dx1 = dx2 = dx1 + dx2;
 
 				dy1 = mesh_y.val[i * n_mesh_y + j] - mesh_y.val[i * n_mesh_y + jm];
 				dy2 = mesh_y.val[i * n_mesh_y + jp] - mesh_y.val[i * n_mesh_y + j];
-				if (dy1 <=  0 || dy2 <= 0) dy1 = dy2 = dy1 + dy2;
+				if (jm ==  j || jp == j) dy1 = dy2 = dy1 + dy2;
 
+				phi_xx = phi.val[ip * n_mesh_y + j]/((dx1 + dx2)*dx2) - phi.val[i * n_mesh_y + j]/(dx1*dx2) + phi.val[im * n_mesh_y + j]/((dx1 + dx2)*dx1);
+				phi_yy = phi.val[i * n_mesh_y + jp]/((dy1 + dy2)*dy2) - phi.val[i * n_mesh_y + j]/(dy1*dy2) + phi.val[i * n_mesh_y + jm]/((dy1 + dy2)*dy1);
 
-                
-				phi_laplace_xx = phi_laplace.val[ip * n_mesh_y + j]/((dx1 + dx2)*dx2) - phi_laplace.val[i * n_mesh_y + j]/(dx1*dx2) + phi_laplace.val[im * n_mesh_y + j]/((dx1 + dx2)*dx1);
-				phi_laplace_yy = phi_laplace.val[i * n_mesh_y + jp]/((dy1 + dy2)*dy2) - phi_laplace.val[i * n_mesh_y + j]/(dy1*dy2) + phi_laplace.val[i * n_mesh_y + jm]/((dy1 + dy2)*dy1);
+				volume = vmesh.val[i * n_mesh_y + j];
 
-				phi_poisson_xx = phi_poisson.val[ip * n_mesh_y + j]/((dx1 + dx2)*dx2) - phi_poisson.val[i * n_mesh_y + j]/(dx1*dx2) + phi_poisson.val[im * n_mesh_y + j]/((dx1 + dx2)*dx1);
-				phi_poisson_yy = phi_poisson.val[i * n_mesh_y + jp]/((dy1 + dy2)*dy2) - phi_poisson.val[i * n_mesh_y + j]/(dy1*dy2) + phi_poisson.val[i * n_mesh_y + jm]/((dy1 + dy2)*dy1);
-                
-                sigma_laplace += (EPS_0 / DX) * (volume/area) * (phi_laplace_xx + phi_laplace_yy); // take this out, since it has to be calculated just once
-                sigma_poisson += (EPS_0 / DX) * (volume/area) * (phi_poisson_xx + phi_poisson_yy + GAMMA * dw / volume);
-    
-                
-                total_area += (DX / 2) * area; // take this out as well
+                sigma += (EPS_0 / C_CAP) * volume * (phi_xx + phi_yy + GAMMA * dw / volume);
 			}
 		}
 	}
 
-	return (sigma_old + (total_area / C_CAP) * sigma_poisson - q_cap + n_in * (N_FACTOR * Q * K_PHI / C_CAP)) / (1 - total_area * sigma_laplace / C_CAP);
+	return sigma;
 }
 
 double calculate_sigma(double sigma_old, double phi_zero, double n_in, double cap_charge){
-	return sigma_old - phi_zero - cap_charge + n_in * (N_FACTOR * Q * K_PHI / C_CAP);
+	return sigma_old - phi_zero - cap_charge + K_Q * n_in;
 }
 
 double calculate_cap_charge(double sigma_new, double sigma_old, double cap_charge_old, double n_in){
-	return (sigma_new - sigma_old) + cap_charge_old - n_in * (N_FACTOR * Q * K_PHI / C_CAP);
+	return sigma_new - sigma_old + cap_charge_old - K_Q * n_in;
 }
-
-
 
 
 void init_mesh(fmatrix & mesh_x, fmatrix & mesh_y, double a_x, double a_y, int n_mesh_x, int n_mesh_y)

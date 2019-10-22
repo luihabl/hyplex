@@ -138,12 +138,33 @@ int main(int argc, char* argv[])
         electrode_mask.setbox_value(1, box_ob_right.val[0], box_ob_right.val[1], box_ob_right.val[2], box_ob_right.val[3]);
     }
 
+
+    // imatrix box_thruster        = {0, 0, 0, N_MESH_Y - 1};
+    // imatrix box_ob_top          = {1, N_MESH_Y - 1, N_MESH_X - 2, N_MESH_Y - 1};
+    // imatrix box_ob_right        = {N_MESH_X - 1, 0, N_MESH_X - 1, N_MESH_Y - 1};
+    // imatrix box_sym             = {1, 0, N_MESH_X - 2, 0};
+
+    // n_dirichlet = 2;
+    // n_neumann   = 2;
+
+    // rsolver solver(mesh_x, mesh_y, vmesh, n_neumann, n_dirichlet);
+
+    // solver.set_dirichlet_box(box_thruster, 0);
+    // solver.set_dirichlet_box(box_ob_right, 1);
+
+    // solver.set_neumann_box(box_sym, 0);
+    // solver.set_neumann_box(box_ob_top, 1);
+
+    // electrode_mask.setbox_value(1, box_ob_right.val[0], box_ob_right.val[1], box_ob_right.val[2], box_ob_right.val[3]);
+
+
     solver.assemble();
 
     voltages = {0, 1, 1};
     solver.solve(phi_laplace, voltages, wmesh_i, wmesh_e);
+    double sigma_laplace = sigma_from_phi(phi_laplace, mesh_x, mesh_y, wmesh_e, wmesh_e, vmesh, electrode_mask);
 
-    voltages = {0, 0, 0};
+    voltages = {VOLT_0_NORM, 0, 0};
 
     // ----------------------------- DSMC loop --------------------------------
     if (EXPM_NEUTRAL == "dsmc"){
@@ -202,7 +223,7 @@ int main(int argc, char* argv[])
         solver.solve(phi_poisson, voltages, wmesh_i, wmesh_e);
         
         sigma_0 = sigma_1;
-        phi_zero = calculate_phi_zero(sigma_1, n_out_i -  n_out_e, q_cap, phi_laplace, phi_poisson, mesh_x, mesh_y, vmesh, wmesh_e, wmesh_i, electrode_mask);
+        phi_zero = calculate_phi_zero(sigma_1, n_out_i -  n_out_e, q_cap, sigma_laplace, phi_poisson, mesh_x, mesh_y, wmesh_e, wmesh_i, vmesh, electrode_mask);
         
         sigma_1 = calculate_sigma(sigma_0, phi_zero, n_out_i -  n_out_e, q_cap);
         q_cap = calculate_cap_charge(sigma_1, sigma_0, q_cap, n_out_i -  n_out_e);
@@ -221,15 +242,15 @@ int main(int argc, char* argv[])
         if(i % K_SUB == 0) move_i(p_i, n_active_i, efield_x_at_p_i, efield_y_at_p_i);
         move_e(p_e, n_active_e, efield_x_at_p_e, efield_y_at_p_e);
 
-        // Step 4: particle loss at boundaries
+        // // Step 4: particle loss at boundaries
         if(i % K_SUB == 0) boundaries_i(p_i, n_active_i, lpos_i, n_out_i);
         boundaries_i(p_e, n_active_e, lpos_e, n_out_e);
-        // boundaries_e_cap(p_e, n_active_e, lpos_e, n_out_e, v_cap, phi, mesh_x, mesh_y);
-        // v_cap = cap_voltage(v_cap, n_out_e, n_out_i);
+        // // boundaries_e_cap(p_e, n_active_e, lpos_e, n_out_e, v_cap, phi, mesh_x, mesh_y);
+        // // v_cap = cap_voltage(v_cap, n_out_e, n_out_i);
 
         // Step 5: particles injection
         double v_drift_e = 0;
-         if(i % K_SUB == 0) add_flux_particles(p_i, n_active_i, T_I, V_DRIFT_I, M_I, N_INJ_I, K_SUB);
+        if(i % K_SUB == 0) add_flux_particles(p_i, n_active_i, T_I, V_DRIFT_I, M_I, N_INJ_I, K_SUB);
         if(INJ_MODEL == "constant")       n_inj_e = N_INJ_EL;
         else if(INJ_MODEL == "balanced")  n_inj_e = balanced_injection(n_inj_e, 0.01, wmesh_i, wmesh_e, 0, 0, 0, N_THRUSTER - 1);
         else if(INJ_MODEL == "pulsed"){
@@ -274,7 +295,6 @@ int main(int argc, char* argv[])
     save_to_csv(n_active_e_diag, "n_active_e.csv");
     save_to_csv(n_active_i_diag, "n_active_i.csv");
 
-   
     // ----------------------------- Finalizing -------------------------------
     delete_cross_sections_arrays();
 	return 0;

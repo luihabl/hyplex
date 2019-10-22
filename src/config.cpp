@@ -100,6 +100,7 @@ using namespace std;
  double VOLT_0_NORM;
  double VOLT_1_NORM;
  double K_PHI;
+ double K_Q;
  double GAMMA;
  double ALPHA;
  double N_INJ_N;
@@ -211,6 +212,7 @@ void load_config_file(string filename){
     N_INJ_N  = (1 - ETA_PROPELLANT) * (4.477962e17 * MASS_FLOW_RATE) * DT / (N_FACTOR_DSMC);
     
     K_PHI = Q * DT * DT / (M_EL * DX * DX);
+    K_Q = K_PHI * Q * N_FACTOR / C_CAP;
     GAMMA = 2 * N_FACTOR * pow(Q, 2) * pow(DT, 2) / (M_EL * EPS_0 * pow(DX, 2));
     ALPHA = K_SUB * M_EL / M_I;
 

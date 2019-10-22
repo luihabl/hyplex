@@ -102,6 +102,7 @@ extern double VOLT_1_NORM;
 extern double GAMMA;
 extern double ALPHA;
 extern double K_PHI;
+extern double K_Q;
 extern double N_INJ_N;
 extern double N_INJ_I;
 extern double N_INJ_EL;
