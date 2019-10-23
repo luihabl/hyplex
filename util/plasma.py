@@ -25,6 +25,8 @@ def v_bohm(t_e_ev, m_i):
 def v_volt(voltage, m):
     return np.sqrt(2 * e * voltage / m)
 
+def mach_from_energy(energy, t_e_ev):
+    return np.sqrt(2 * energy / t_e_ev)
 
 def balanced_currents(n_0, t_e_ev, area, m_i, mach):
     j_i = e * n_0 * mach *v_bohm(t_e_ev, m_i)

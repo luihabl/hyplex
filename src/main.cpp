@@ -138,6 +138,8 @@ int main(int argc, char* argv[])
         electrode_mask.setbox_value(1, box_ob_right.val[0], box_ob_right.val[1], box_ob_right.val[2], box_ob_right.val[3]);
     }
 
+    electrode_mask.setbox_value(2, box_thruster.val[0], box_thruster.val[1], box_thruster.val[2], box_thruster.val[3]);
+
 
     // imatrix box_thruster        = {0, 0, 0, N_MESH_Y - 1};
     // imatrix box_ob_top          = {1, N_MESH_Y - 1, N_MESH_X - 2, N_MESH_Y - 1};
@@ -156,7 +158,7 @@ int main(int argc, char* argv[])
     // solver.set_neumann_box(box_ob_top, 1);
 
     // electrode_mask.setbox_value(1, box_ob_right.val[0], box_ob_right.val[1], box_ob_right.val[2], box_ob_right.val[3]);
-
+    
 
     solver.assemble();
 
@@ -232,7 +234,7 @@ int main(int argc, char* argv[])
         v_cap = phi_zero / K_PHI; 
 
         // Step 2.1: calculation of electric field
-        calculate_efield(efield_x, efield_y, phi, wmesh_i, wmesh_e, mesh_x, mesh_y, vmesh);
+        calculate_efield(efield_x, efield_y, phi, wmesh_i, wmesh_e, mesh_x, mesh_y, vmesh, electrode_mask);
 
         // Step 2.2: field weighting
         if(i % K_SUB == 0) electric_field_at_particles(efield_x_at_p_i, efield_y_at_p_i, efield_x, efield_y, p_i, n_active_i, mesh_x, mesh_y, lpos_i);
@@ -257,8 +259,9 @@ int main(int argc, char* argv[])
             n_inj_e = pulsed_injection(K_INJ_EL, V_SB, V_RF, T_EL, OMEGA_I, i);
             v_drift_e = sqrt(2 * Q * 20 / M_EL);
         }
-         add_flux_particles(p_e, n_active_e, T_EL, v_drift_e, M_EL, n_inj_e);
+        add_flux_particles(p_e, n_active_e, T_EL, v_drift_e, M_EL, n_inj_e);
         
+
         // Step 6: Monte-Carlo collisions
         if(i % K_SUB == 0) collisions_i(p_i, n_active_i, lpos_i, mesh_x, mesh_y, dens_n, M_I, p_null_i, nu_prime_i);
         collisions_e(p_e, n_active_e, lpos_e, p_i, n_active_i, lpos_i, mesh_x, mesh_y, dens_n, M_I, p_null_e, nu_prime_e);
@@ -290,10 +293,14 @@ int main(int argc, char* argv[])
 
     // ----------------------------- Saving outputs ---------------------------
     
-    save_state(p_e, n_active_e, p_i, n_active_i, phi, wmesh_e, wmesh_i, vmesh, i, v_cap, "_state");
-    save_to_csv(v_cap_diag, "v_cap.csv");
-    save_to_csv(n_active_e_diag, "n_active_e.csv");
-    save_to_csv(n_active_i_diag, "n_active_i.csv");
+    // save_state(p_e, n_active_e, p_i, n_active_i, phi, wmesh_e, wmesh_i, vmesh, i, v_cap, "_state");
+    // save_to_csv(v_cap_diag, "v_cap.csv");
+    // save_to_csv(n_active_e_diag, "n_active_e.csv");
+    // save_to_csv(n_active_i_diag, "n_active_i.csv");
+
+    efield_av_x = efield_x / ((Q * DT * DT) / (M_EL * DX));
+
+    save_to_csv(efield_av_x, "efieldx.csv");
 
     // ----------------------------- Finalizing -------------------------------
     delete_cross_sections_arrays();

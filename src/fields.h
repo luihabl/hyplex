@@ -7,7 +7,7 @@ void init_mesh(fmatrix & mesh_x, fmatrix & mesh_y, double a_x, double a_y, int n
 void init_volume_mesh(fmatrix & vmesh, fmatrix & mesh_x, fmatrix & mesh_y);
 
 double ac_voltage_at_time(size_t i, double dt, double freq_hz, double amplitude, double phase);
-void calculate_efield(fmatrix & efield_x, fmatrix & efield_y, fmatrix & phi, fmatrix & w_i, fmatrix & w_e, fmatrix & mesh_x , fmatrix & mesh_y, fmatrix & vmesh);
+void calculate_efield(fmatrix & efield_x, fmatrix & efield_y, fmatrix & phi, fmatrix & w_i, fmatrix & w_e, fmatrix & mesh_x , fmatrix & mesh_y, fmatrix & vmesh, imatrix & electrode_mask);
 
 double calculate_phi_zero(double sigma_old, double n_in, double q_cap, double sigma_laplace, fmatrix & phi_poisson, fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vmesh, imatrix & electrode_mask);
 double sigma_from_phi(fmatrix & phi, fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vmesh, imatrix & electrode_mask);

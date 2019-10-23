@@ -45,53 +45,34 @@ double ac_voltage_at_time(size_t i, double dt, double freq_hz, double amplitude,
  @todo still needs a correction for non-uniform meshes
  @todo correction for space charge
  */
-void calculate_efield(fmatrix & efield_x, fmatrix & efield_y, fmatrix & phi, fmatrix & w_i, fmatrix & w_e, fmatrix & mesh_x , fmatrix & mesh_y, fmatrix & vmesh)
+void calculate_efield(fmatrix & efield_x, fmatrix & efield_y, fmatrix & phi, fmatrix & w_i, fmatrix & w_e, fmatrix & mesh_x , fmatrix & mesh_y, fmatrix & vmesh, imatrix & electrode_mask)
 {
-	/*
-    for(size_t i = 0; i < phi.n1; i++){
-        for(size_t j = 0; j < phi.n2; j++)
+	int ip, im, jp, jm, e_mask;
+	int n_mesh_x =  (int) mesh_x.n1, n_mesh_y =  (int) mesh_y.n2;
+	double signal_x, signal_y;
+
+	for(int i = 0; i < n_mesh_x; i++){
+        for(int j = 0; j < n_mesh_y; j++)
         {
-            if (i == 0)
-                efield_x.val[i * efield_x.n2 + j] = (phi.val[i * phi.n2 + j] - phi.val[(i + 1) * phi.n2 + j]) / (mesh_x.val[(i + 1) * mesh_x.n2 + j] - mesh_x.val[i * mesh_x.n2 + j]) - GAMMA * (w_i.val[i * w_i.n2 + j] - w_e.val[i * w_e.n2 + j]) * (mesh_x.val[(i + 1) * mesh_x.n2 + j] - mesh_x.val[i * mesh_x.n2 + j]) / vmesh.val[i * vmesh.n2 + j];
-            else if(i == phi.n1 - 1)
-                efield_x.val[i * efield_x.n2 + j] = (phi.val[(i - 1) * phi.n2 + j] - phi.val[i * phi.n2 + j]) / (mesh_x.val[i * mesh_x.n2 + j] - mesh_x.val[(i - 1) * mesh_x.n2 + j]) + GAMMA * (w_i.val[i * w_i.n2 + j] - w_e.val[i * w_e.n2 + j]) * (mesh_x.val[i * mesh_x.n2 + j] - mesh_x.val[(i - 1) * mesh_x.n2 + j]) / vmesh.val[i * vmesh.n2 + j];
-            else
-                efield_x.val[i * efield_x.n2 + j] = (phi.val[(i - 1) * phi.n2 + j] - phi.val[(i + 1) * phi.n2 + j]) / (mesh_x.val[(i + 1) * mesh_x.n2 + j] - mesh_x.val[(i - 1) * mesh_x.n2 + j]);
-            
-             if (j == 0)
-                efield_y.val[i * efield_y.n2 + j] = (phi.val[i * phi.n2 + j] - phi.val[i * phi.n2 + (j + 1)]) / (mesh_y.val[i * mesh_y.n2 + (j + 1)] - mesh_y.val[i * mesh_y.n2 + j]);
-            else if(j == phi.n2 - 1)
-                efield_y.val[i * efield_y.n2 + j] = (phi.val[i * phi.n2 + (j - 1)] - phi.val[i * phi.n2 + j]) / (mesh_y.val[i * mesh_y.n2 + j] - mesh_y.val[i * mesh_y.n2 + (j - 1)]);
-            else
-                efield_y.val[i * efield_y.n2 + j] = (phi.val[i * phi.n2 + (j - 1)] - phi.val[i * phi.n2 + (j + 1)]) / (mesh_y.val[i * mesh_y.n2 + (j + 1)] - mesh_y.val[i * mesh_y.n2 + (j - 1)]);
+
+			ip = clamp(0, n_mesh_x - 1, i + 1);
+			im = clamp(0, n_mesh_x - 1, i - 1);
+			jp = clamp(0, n_mesh_y - 1, j + 1);
+			jm = clamp(0, n_mesh_y - 1, j - 1);
+			e_mask = electrode_mask.val[i * n_mesh_y + j];
+
+			efield_x.val[i * n_mesh_y + j] = (phi.val[im * n_mesh_y + j] - phi.val[ip * n_mesh_y + j]) / (mesh_x.val[ip * n_mesh_y + j] - mesh_x.val[im * n_mesh_y + j]);
+			efield_y.val[i * n_mesh_y + j] = (phi.val[i * n_mesh_y + jm] - phi.val[i * n_mesh_y + jp]) / (mesh_y.val[i * n_mesh_y + jp] - mesh_y.val[i * n_mesh_y + jm]);
+
+			if(e_mask == 1 || e_mask == 2){
+				signal_x = 2 * i - ip - im;
+				signal_y = 2 * j - jp - jm;
+
+				efield_x.val[i * n_mesh_y + j] += signal_x * GAMMA * (w_i.val[i * n_mesh_y + j] - w_e.val[i * n_mesh_y + j]) * (mesh_x.val[ip * n_mesh_y + j] - mesh_x.val[im * n_mesh_y + j]) / vmesh.val[i * n_mesh_y + j];
+				efield_y.val[i * n_mesh_y + j] += signal_y * GAMMA * (w_i.val[i * n_mesh_y + j] - w_e.val[i * n_mesh_y + j]) * (mesh_y.val[i * n_mesh_y + jp] - mesh_y.val[i * n_mesh_y + jm]) / vmesh.val[i * n_mesh_y + j];
+			}
         }
     }
-	*/
-
-	for(size_t i = 0; i < phi.n1; i++){
-        for(size_t j = 0; j < phi.n2; j++)
-        {
-            if (i == 0)
-                efield_x.val[i * efield_x.n2 + j] = (phi.val[i * phi.n2 + j] - phi.val[(i + 1) * phi.n2 + j]) / (mesh_x.val[(i + 1) * mesh_x.n2 + j] - mesh_x.val[i * mesh_x.n2 + j]);
-            else if(i == phi.n1 - 1)
-                efield_x.val[i * efield_x.n2 + j] = (phi.val[(i - 1) * phi.n2 + j] - phi.val[i * phi.n2 + j]) / (mesh_x.val[i * mesh_x.n2 + j] - mesh_x.val[(i - 1) * mesh_x.n2 + j]);
-            else
-                efield_x.val[i * efield_x.n2 + j] = (phi.val[(i - 1) * phi.n2 + j] - phi.val[(i + 1) * phi.n2 + j]) / (mesh_x.val[(i + 1) * mesh_x.n2 + j] - mesh_x.val[(i - 1) * mesh_x.n2 + j]);
-            
-            if (j == 0)
-                efield_y.val[i * efield_y.n2 + j] = (phi.val[i * phi.n2 + j] - phi.val[i * phi.n2 + (j + 1)]) / (mesh_y.val[i * mesh_y.n2 + (j + 1)] - mesh_y.val[i * mesh_y.n2 + j]);
-            else if(j == phi.n2 - 1)
-                efield_y.val[i * efield_y.n2 + j] = (phi.val[i * phi.n2 + (j - 1)] - phi.val[i * phi.n2 + j]) / (mesh_y.val[i * mesh_y.n2 + j] - mesh_y.val[i * mesh_y.n2 + (j - 1)]);
-            else
-                efield_y.val[i * efield_y.n2 + j] = (phi.val[i * phi.n2 + (j - 1)] - phi.val[i * phi.n2 + (j + 1)]) / (mesh_y.val[i * mesh_y.n2 + (j + 1)] - mesh_y.val[i * mesh_y.n2 + (j - 1)]);
-        }
-    }
-
-	
-	// ADD HERE ELECTRIC FIELD CORRECTION <--------------------------
-
-
-
 }
 
 
@@ -103,7 +84,7 @@ double calculate_phi_zero(double sigma_old, double n_in, double q_cap, double si
 
 double sigma_from_phi(fmatrix & phi, fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vmesh, imatrix & electrode_mask){
 	
-	double sigma = 0, area, volume, dw, phi_xx, phi_yy;
+	double sigma = 0, volume, dw, phi_xx, phi_yy;
 	double dx1, dx2, dy1, dy2;
 	int ip, im, jp, jm;
 	int n_mesh_x =  (int) mesh_x.n1, n_mesh_y =  (int) mesh_y.n2;
