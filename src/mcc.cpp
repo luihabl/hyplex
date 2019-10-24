@@ -6,7 +6,7 @@
 #include "fmath.h"
 
 #include "config.h"
-#include "util.h"
+#include "num-tools.h"
 #include "fields.h"
 #include "particles.h"
 #include "random-numbers.h"

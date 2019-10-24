@@ -16,6 +16,7 @@
 #include "particles-in-mesh.h"
 #include "rsolver.h"
 #include "util.h"
+#include "num-tools.h"
 
 #define CONFIG_PATH "src/config/config.ini"
 
@@ -209,7 +210,15 @@ int main(int argc, char* argv[])
     
     // ----------------------------- Loading initial state -------------------
 
-    if(INITIAL_STATE == "load") load_state(p_e, n_active_e, p_i, n_active_i, step_offset, v_cap, "_state_input");
+    if(INITIAL_STATE == "load") 
+    {
+        fmatrix misc(4);
+        load_state(p_e, n_active_e, p_i, n_active_i, step_offset, misc, "_state_input");
+        sigma_1 = misc.val[0];
+        n_out_i = misc.val[1];
+        n_out_e = misc.val[2];
+        q_cap   = misc.val[3];
+    }
 
 	// ----------------------------- Main loop --------------------------------
     verbose_log(" ---- Starting main loop ---- ");
@@ -229,7 +238,7 @@ int main(int argc, char* argv[])
         
         sigma_1 = calculate_sigma(sigma_0, phi_zero, n_out_i -  n_out_e, q_cap);
         q_cap = calculate_cap_charge(sigma_1, sigma_0, q_cap, n_out_i -  n_out_e);
-        
+
         phi = phi_poisson + (phi_zero * phi_laplace);
         v_cap = phi_zero / K_PHI; 
 
@@ -260,7 +269,6 @@ int main(int argc, char* argv[])
             v_drift_e = sqrt(2 * Q * 20 / M_EL);
         }
         add_flux_particles(p_e, n_active_e, T_EL, v_drift_e, M_EL, n_inj_e);
-        
 
         // Step 6: Monte-Carlo collisions
         if(i % K_SUB == 0) collisions_i(p_i, n_active_i, lpos_i, mesh_x, mesh_y, dens_n, M_I, p_null_i, nu_prime_i);
@@ -270,8 +278,10 @@ int main(int argc, char* argv[])
 
         print_info(i, step_offset, p_e, n_active_e, p_i, n_active_i, v_cap, 100);
 
-         if(i % 10000 == 0) {
-             save_state(p_e, n_active_e, p_i, n_active_i, phi, wmesh_e, wmesh_i, vmesh, i, v_cap, "_state");
+         if(i % 10000 == 0) 
+         {
+            fmatrix misc = {sigma_1, q_cap, (double) n_out_e, (double) n_out_i, q_cap};
+            save_state(p_e, n_active_e, p_i, n_active_i, i, misc, "_state");
          }
 
         v_cap_diag.val[i - step_offset] = v_cap;
@@ -294,13 +304,10 @@ int main(int argc, char* argv[])
     // ----------------------------- Saving outputs ---------------------------
     
     // save_state(p_e, n_active_e, p_i, n_active_i, phi, wmesh_e, wmesh_i, vmesh, i, v_cap, "_state");
-    // save_to_csv(v_cap_diag, "v_cap.csv");
-    // save_to_csv(n_active_e_diag, "n_active_e.csv");
-    // save_to_csv(n_active_i_diag, "n_active_i.csv");
+    save_to_csv(v_cap_diag, "v_cap.csv");
+    save_to_csv(n_active_e_diag, "n_active_e.csv");
+    save_to_csv(n_active_i_diag, "n_active_i.csv");
 
-    efield_av_x = efield_x / ((Q * DT * DT) / (M_EL * DX));
-
-    save_to_csv(efield_av_x, "efieldx.csv");
 
     // ----------------------------- Finalizing -------------------------------
     delete_cross_sections_arrays();

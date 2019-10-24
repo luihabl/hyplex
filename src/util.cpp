@@ -5,119 +5,18 @@
 #include <string>
 #include <sstream>
 #include <fstream>
-#include <random>
-#include <algorithm>
-#include <cmath>
 #include <chrono>
 
 #include "fmatrix.h"
 #include "fmath.h"
-#include "mcc.h"
-#include "random-numbers.h"
 
 using namespace std;
 using namespace std::chrono;
 
-double interp(const fmatrix & data, double x)
-{
-	if (x <= data.val[0 * 2 + 0])
-		return data.val[0 * 2 + 1];
-
-	else if (x >= data.val[(data.n1 - 1) * 2 + 0])
-		return data.val[(data.n1 - 1) * 2 + 1];
-
-	else
-	{
-		int left_index = 0;
-		while (x > data.val[(left_index + 1) * 2 + 0]) left_index++;
-
-		double x0 = data.val[left_index * 2 + 0];
-		double y0 = data.val[left_index * 2 + 1];
-		double x1 = data.val[(left_index + 1) * 2 + 0];
-		double y1 = data.val[(left_index + 1) * 2 + 1];
-
-		return y0 + (x - x0) * (y1 - y0) / (x1 - x0);
-	}
-}
-
-fmatrix interp(const fmatrix & data, fmatrix & x)
-{
-	fmatrix interp_results(x.n1);
-	for (size_t i = 0; i < interp_results.n1; i++)
-		interp_results.val[i] = interp(data, x.val[i]);
-
-	return interp_results;
-}
-
-
-imatrix sample_from_sequence_shuffle(int sample_size, int range)
-{
-	imatrix shuffled_sequence(range);
-	shuffled_sequence.set_sequence();
-
-    shuffle(&shuffled_sequence.val[0], &shuffled_sequence.val[range], gen);
-	imatrix samples(sample_size);
-
-	for (int i = 0; i < sample_size; i++)
-		samples.val[i] = shuffled_sequence.val[i];
-
-	return samples;
-}
-
-bool is_in_set(imatrix & seq, int last_index) {
-	for (int j = 0; j < last_index; j++)
-		if (seq.val[j] == seq.val[last_index]) return true;
-	return false;
-}
-
-imatrix sample_from_sequence_naive(int sample_size, int range)
-{
-	imatrix samples(sample_size);
-    
-	bool repeated = false;
-	for (int i = 0; i < sample_size; i++)
-	{
-		do {
-			samples.val[i] = (int) floor(r_unif() * (double) range);
-			repeated = is_in_set(samples, i);
-		} while (repeated && i > 0);
-	}
-	return samples;
-}
-
-fmatrix load_csv(string file_path, char delim, int cols)
-{
-    string line;
-    ifstream file(file_path);
-    
-    int line_count = 0;
-    while (getline(file, line)) line_count++;
-    file.clear();
-    file.seekg(0, ios::beg);
-    
-    fmatrix data(line_count, cols); 
-    int i = 0;
-    while (getline(file, line))
-    {
-        istringstream s(line);
-        string field;
-        int j = 0;
-        while (getline(s, field, delim))
-        {
-            if (j > cols - 1) {
-                cout << "csv exceed j limit!" << endl;
-                break;
-            }
-            data.val[i * cols + j] = atof(field.c_str());
-            j++;
-        }
-        i++;
-    }
-    
-    if (!file.eof()) {
-        cout << "Could not read file " << endl;
-    }
-    return data;
+void verbose_log(string message){
+    #ifdef VERBOSE
+    cout << message << endl;
+    #endif
 }
 
 void print_dsmc_info(int i, int n_active_n, int step_interval, int n_steps){
@@ -161,15 +60,42 @@ void print_initial_info(double p_null_e, double p_null_i)
     printf("P Null (I):\t\t %.4e\n\n", p_null_i);
 }
 
-void average_field(fmatrix & av_field, const fmatrix & field, int step)
+fmatrix load_csv(string file_path, char delim, int cols)
 {
-    // step is actually step = i - (N_STEPS - N_AVERAGE);
-    for (size_t j = 0; j < field.n1 * field.n2 * field.n3; j++) {
-        av_field.val[j] = ((step - 1) * av_field.val[j] / step) + (field.val[j] / step);
+    string line;
+    ifstream file(file_path);
+    
+    int line_count = 0;
+    while (getline(file, line)) line_count++;
+    file.clear();
+    file.seekg(0, ios::beg);
+    
+    fmatrix data(line_count, cols); 
+    int i = 0;
+    while (getline(file, line))
+    {
+        istringstream s(line);
+        string field;
+        int j = 0;
+        while (getline(s, field, delim))
+        {
+            if (j > cols - 1) {
+                cout << "csv exceed j limit!" << endl;
+                break;
+            }
+            data.val[i * cols + j] = atof(field.c_str());
+            j++;
+        }
+        i++;
     }
+    
+    if (!file.eof()) {
+        cout << "Could not read file " << endl;
+    }
+    return data;
 }
 
-void save_state(fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i, fmatrix & phi,  fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vmesh, int i, double v_cap, string suffix){
+void save_state(fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i,  int i, fmatrix & misc, string suffix){
     
     
     fmatrix p_e_corrected = DX * p_e;
@@ -188,23 +114,17 @@ void save_state(fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i, fm
     }
     save_to_csv(p_i_corrected, "p_i" + suffix + ".csv", n_active_i);
     
-    
-    fmatrix phi_corrected = phi * (M_EL * pow(DX, 2))/(Q * pow(DT, 2));
-    save_to_csv(phi_corrected, "phi" + suffix + ".csv");
-
-    fmatrix dens_e = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_e / vmesh;
-    save_to_csv(dens_e, "dens_e" + suffix + ".csv");
-
-    fmatrix dens_i = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_i / vmesh;
-    save_to_csv(dens_i, "dens_i" + suffix + ".csv");
-
-    fmatrix sim_state = {(double) i, v_cap};
+    fmatrix sim_state(1 + misc.n1);
+   
+    sim_state.val[0] = (double) i;
+    for (int j = 1; j < (int) sim_state.n1; j++) sim_state.val[i] = misc.val[i - 1];
+   
     save_to_csv(sim_state, "sim" + suffix + ".csv");
     
     verbose_log("State saved");
 }
 
-void load_state(fmatrix & p_e, int & n_active_e, fmatrix & p_i, int & n_active_i, int & step_offset, double & v_cap, string suffix){
+void load_state(fmatrix & p_e, int & n_active_e, fmatrix & p_i, int & n_active_i, int & step_offset, fmatrix & misc, string suffix){
 
     fmatrix p_i_load = load_csv("output/p_i" + suffix + ".csv",',', 6);
     fmatrix p_e_load = load_csv("output/p_e" + suffix + ".csv",',', 6);
@@ -230,40 +150,22 @@ void load_state(fmatrix & p_e, int & n_active_e, fmatrix & p_i, int & n_active_i
     for(int i=0; i < n_active_e * 6; i++) p_e.val[i] = p_e_load.val[i];
 
     fmatrix sim_state = load_csv("output/sim" + suffix + ".csv",',', 1);
+    for(int i=1; i < (int) sim_state.n1; i++) misc.val[i-1] = sim_state.val[i];
     step_offset = sim_state.val[0];
-    v_cap = sim_state.val[1];
 
+    verbose_log("State loaded: i: " + to_string(step_offset) + " Active electrons: " + to_string(n_active_e) + " Active ions: " + to_string(n_active_i));
+}
 
-    
-    verbose_log("State loaded: i: " + to_string(step_offset) + " Cap. voltage: " + to_string(v_cap) + " Active electrons: " + to_string(n_active_e) + " Active ions: " + to_string(n_active_i));
+void save_fields(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vmesh, string suffix){
+        
+    fmatrix phi_corrected = phi * (M_EL * pow(DX, 2))/(Q * pow(DT, 2));
+    save_to_csv(phi_corrected, "phi" + suffix + ".csv");
+
+    fmatrix dens_e = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_e / vmesh;
+    save_to_csv(dens_e, "dens_e" + suffix + ".csv");
+
+    fmatrix dens_i = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_i / vmesh;
+    save_to_csv(dens_i, "dens_i" + suffix + ".csv");
 }
 
 
-
-void verbose_log(string message){
-    #ifdef VERBOSE
-    cout << message << endl;
-    #endif
-}
-
-
-// Identify what is going wrong here?
-// imatrix sample_from_sequence_swap(int sample_size, int range){
-
-//     imatrix sequence(range);
-// 	sequence.set_sequence();
-//     imatrix samples(sample_size);
-
-//     int n_storage = range;
-//     int num = 0;
-
-//     for (int i = 0; i < sample_size; i++)
-//     {
-//         num = r_unif() * n_storage;
-//         samples.val[i] = sequence.val[num];
-//         sequence.val[num] = sequence.val[range - i - 1];
-//         n_storage -= 1;
-//     }
-
-//     return samples;
-// }

@@ -9,38 +9,16 @@
 #include "config.h"
 #include "util.h"
 
-#define GET_VARIABLE_NAME(Variable) (#Variable)
-
-
 using namespace std;
 
-double interp(const fmatrix & data, double x);
-fmatrix interp(const fmatrix & data, fmatrix & x);
-fmatrix load_csv(string file_path, char delim = ';', int cols = 2);
-imatrix sample_from_sequence_shuffle(int sample_size, int range);
-imatrix sample_from_sequence_naive(int sample_size, int range);
-// imatrix sample_from_sequence_swap(int sample_size, int range);
+void verbose_log(string message);
 void print_info(int i, int step_offset, fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i, double v_cap, int step_interval);
 void print_initial_info(double p_null_e, double p_null_i);
 void print_dsmc_info(int i, int n_active_n, int step_interval, int n_steps);
-void average_field(fmatrix & av_field, const fmatrix & field, int step);
-void verbose_log(string message);
-void save_state(fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i, fmatrix & phi,  fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vmesh, int i, double v_cap, string suffix);
-void load_state(fmatrix & p_e, int & n_active_e, fmatrix & p_i, int & n_active_i, int & step_offset, double & v_cap, string suffix);
 
-template <class T>
-T clamp(T low, T hi, T val){
-    if (val < low) {return low;}
-    else if (val > hi) {return hi;}
-    else {return val;}
-}
-
-inline
-void swap(double& a, double& b) {
-    double temp = a;
-    a = b;
-    b = temp;
-}
+void save_state(fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i,  int i, fmatrix & misc, string suffix);
+void load_state(fmatrix & p_e, int & n_active_e, fmatrix & p_i, int & n_active_i, int & step_offset, fmatrix & misc, string suffix);
+fmatrix load_csv(string file_path, char delim = ';', int cols = 2);
 
 template <class T>
 void save_to_csv(tmatrix<T> & m, string name = "out.csv", int nrows = -1, int ncols = -1)
@@ -68,6 +46,7 @@ void save_to_csv(tmatrix<T> & m, string name = "out.csv", int nrows = -1, int nc
     verbose_log("Saved " + name);
 }
 
+
 template <class T>
 void print_fmatrix(tmatrix<T> & phi){
     for(size_t i = 0; i < phi.n1; i++){
@@ -76,17 +55,6 @@ void print_fmatrix(tmatrix<T> & phi){
         }
         cout << endl << endl;
     }
-}
-
-template <class T>
-bool hasnan(tmatrix<T> & m, int max_n=-1){
-    max_n = (int) (max_n < 0 ? m.n1 * m.n2 * m.n3 : max_n);
-    for(int i = 0; i < max_n; i++){
-        if(isnan(m.val[i]) || isinf(m.val[i])){
-            return true;
-        }
-    }
-    return false;
 }
 
 #endif

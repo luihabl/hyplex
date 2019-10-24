@@ -14,7 +14,7 @@
 
 #include "fmatrix.h"
 #include "config.h"
-#include "util.h"
+#include "num-tools.h"
 
 /**
  Calculates a sinusoidal voltage level in time

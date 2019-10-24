@@ -10,7 +10,7 @@
 #include <cmath>
 
 #include "fmatrix.h"
-#include "util.h"
+#include "num-tools.h"
 #include "config.h"
 #include "random-numbers.h"
 #include "particles-in-mesh.h"

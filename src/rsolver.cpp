@@ -9,7 +9,6 @@
 #include "fmatrix.h"
 #include "fields.h"
 #include "config.h"
-#include "util.h"
 
 #define SOLVER_PRINT_LEVEL 2
 #define SOLVER_F(A, B) A ## SMG ## B

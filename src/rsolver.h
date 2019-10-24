@@ -7,8 +7,6 @@
 #include "fmatrix.h"
 #include "fields.h"
 #include "config.h"
-#include "util.h"
-
 
 class rsolver{
     
