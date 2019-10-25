@@ -79,3 +79,15 @@ void average_field(fmatrix & av_field, const fmatrix & field, int step)
         av_field.val[j] = ((step - 1) * av_field.val[j] / step) + (field.val[j] / step);
     }
 }
+
+int average_field_over_period(fmatrix & av_field, const fmatrix & field, int period, int total_period, int counter){
+
+	int counter_offset = total_period % period;
+	int internal_counter = ((counter - counter_offset) % period) + 1;
+
+	if(counter >= counter_offset){
+		average_field(av_field, field, internal_counter);
+	}
+
+	return internal_counter;
+}

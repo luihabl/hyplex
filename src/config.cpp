@@ -97,6 +97,7 @@ using namespace std;
  double DX;
  double DY;
  double OMEGA_I;
+ int RF_PERIOD_I;
  double VOLT_0_NORM;
  double VOLT_1_NORM;
  double K_PHI;
@@ -217,5 +218,6 @@ void load_config_file(string filename){
     ALPHA = K_SUB * M_EL / M_I;
 
     OMEGA_I = 2 * PI * FREQ * DT;
+    RF_PERIOD_I = round(2 * PI / OMEGA_I);
     K_INJ_EL = N_INJ_I * sqrt(M_I / (2 * PI * M_EL));
 }

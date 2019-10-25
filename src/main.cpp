@@ -43,6 +43,7 @@ int main(int argc, char* argv[])
     fmatrix vmesh           = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     imatrix electrode_mask  = imatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix voltages        = fmatrix::zeros(3);
+    fmatrix misc            = fmatrix::zeros(4);
     double v_cap            = 0;
     double q_cap            = 0;
     double sigma_0          = 0;
@@ -55,8 +56,8 @@ int main(int argc, char* argv[])
     fmatrix phi_av          = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix efield_av_x     = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix efield_av_y     = fmatrix::zeros(N_MESH_X, N_MESH_Y);
-    fmatrix dens_e_av       = fmatrix::zeros(N_MESH_X, N_MESH_Y);
-    fmatrix dens_i_av       = fmatrix::zeros(N_MESH_X, N_MESH_Y);
+    fmatrix wmesh_e_av       = fmatrix::zeros(N_MESH_X, N_MESH_Y);
+    fmatrix wmesh_i_av       = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix kefield_i       = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix kefield_e       = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix v_cap_diag      = fmatrix::zeros(N_STEPS);
@@ -212,7 +213,6 @@ int main(int argc, char* argv[])
 
     if(INITIAL_STATE == "load") 
     {
-        fmatrix misc(4);
         load_state(p_e, n_active_e, p_i, n_active_i, step_offset, misc, "_state_input");
         sigma_1 = misc.val[0];
         n_out_i = misc.val[1];
@@ -278,21 +278,30 @@ int main(int argc, char* argv[])
 
         print_info(i, step_offset, p_e, n_active_e, p_i, n_active_i, v_cap, 100);
 
-         if(i % 10000 == 0) 
-         {
-            fmatrix misc = {sigma_1, q_cap, (double) n_out_e, (double) n_out_i, q_cap};
+        if(i % 10000 == 0) 
+        {
+            misc = {sigma_1, q_cap, (double) n_out_e, (double) n_out_i};
             save_state(p_e, n_active_e, p_i, n_active_i, i, misc, "_state");
-         }
+            save_fields(phi, wmesh_e, wmesh_i, vmesh, "_state");
+        }
 
         v_cap_diag.val[i - step_offset] = v_cap;
         n_active_e_diag.val[i - step_offset] = n_active_e;
         n_active_i_diag.val[i - step_offset] = n_active_i;
 
-         if(i % 50000 == 0) {
-             save_to_csv(v_cap_diag, "v_cap.csv", i - step_offset, 1);
-             save_to_csv(n_active_e_diag, "n_active_e.csv", i - step_offset, 1);
-             save_to_csv(n_active_i_diag, "n_active_i.csv", i - step_offset, 1);
-         }
+        if(i % 50000 == 0) {
+            save_to_csv(v_cap_diag, "v_cap.csv", i - step_offset, 1);
+            save_to_csv(n_active_e_diag, "n_active_e.csv", i - step_offset, 1);
+            save_to_csv(n_active_i_diag, "n_active_i.csv", i - step_offset, 1);
+        }
+
+        if(i > (double) 0.9 * N_STEPS){
+            int i_av = average_field_over_period(phi_av, phi, RF_PERIOD_I, N_STEPS, i - step_offset);
+            if(i_av == RF_PERIOD_I){
+                save_fields(phi_av, wmesh_e_av, wmesh_i_av, vmesh, "_av");
+            }
+        }
+        
 
         // if(i % 10 == 0) save_state(p_e, n_active_e, p_i, n_active_i, phi, wmesh_e, wmesh_i, vmesh, i, v_cap, "_state_" + to_string(i));
 	}
@@ -303,7 +312,11 @@ int main(int argc, char* argv[])
 
     // ----------------------------- Saving outputs ---------------------------
     
-    // save_state(p_e, n_active_e, p_i, n_active_i, phi, wmesh_e, wmesh_i, vmesh, i, v_cap, "_state");
+    misc = {sigma_1, q_cap, (double) n_out_e, (double) n_out_i};
+    save_state(p_e, n_active_e, p_i, n_active_i, i, misc, "_state");
+    
+    save_fields(phi, wmesh_e, wmesh_i, vmesh, "_state");
+    
     save_to_csv(v_cap_diag, "v_cap.csv");
     save_to_csv(n_active_e_diag, "n_active_e.csv");
     save_to_csv(n_active_i_diag, "n_active_i.csv");

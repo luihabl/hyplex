@@ -10,6 +10,7 @@ imatrix sample_from_sequence_shuffle(int sample_size, int range);
 imatrix sample_from_sequence_naive(int sample_size, int range);
 
 void average_field(fmatrix & av_field, const fmatrix & field, int step);
+int average_field_over_period(fmatrix & av_field, const fmatrix & field, int period, int total_period, int counter);
 
 inline
 void swap(double& a, double& b) {

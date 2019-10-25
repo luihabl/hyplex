@@ -49,58 +49,48 @@ def plot_distribution(v, bins='auto'):
 #     x = np.arange(phi.shape[0]) if x == None else x
 #     plt.plot(x, y)
 #     plt.show()
-    
+
+
+def load_fmatrix(path):
+    try:
+        return np.transpose(pd.read_csv(path, header=None).values)
+    except:
+        print('failed to load ' + path)
+        return None
+
+def load_array(path):
+    try:
+        return pd.read_csv(path, header=None).values
+    except:
+        print('failed to load ' + path)
+        return None
+
 def load():
-    global dens_e, dens_i, dens_n, p_e, p_i, phi, v_e, v_i, k_e, k_i, ne, ni, v_cap
+    global dens_e, dens_i, dens_n, p_e, p_i, phi, phi_av, v_e, v_i, k_e, k_i, ne, ni, v_cap
     
-    try:
-        dens_e = np.transpose(pd.read_csv('dens_e_state.csv', header=None).values)
-    except:
-        print('failed to load dens_e')
+    dens_e = load_fmatrix('dens_e_state.csv')
+    dens_i = load_fmatrix('dens_i_state.csv')
+    dens_n = load_fmatrix('dens_n.csv')
+    phi = load_fmatrix('phi_state.csv')
+    phi_av = load_fmatrix('phi_av.csv')
+    ne = load_array('n_active_e.csv')
+    ni = load_array('n_active_i.csv')
+    v_cap = load_array('v_cap.csv')
+    p_e = load_fmatrix('p_e_state.csv')
+    p_i = load_fmatrix('p_i_state.csv')
 
-    try:
-        dens_i = np.transpose(pd.read_csv('dens_i_state.csv', header=None).values)
-    except:
-        print('failed to load dens_i')
-
-    try:
-        dens_n = np.transpose(pd.read_csv('dens_n.csv', header=None).values)
-    except:
-        print('failed to load dens_n')
-
-    try:
-        p_e = np.transpose(pd.read_csv('p_e_state.csv', header=None).values)
+    try:    
         v_e = p_e[3:6, :]
         k_e = 0.5 * m_e * (v_e[0] ** 2 + v_e[1] ** 2 + v_e[2] ** 2)
     except:
-        print('failed to load p_e')
+        print('failed to calc v_e and k_e')
 
     try:
-        p_i = np.transpose(pd.read_csv('p_i_state.csv', header=None).values)
         v_i = p_i[3:6, :]
         k_i = 0.5 * m_i * (v_i[0] ** 2 + v_i[1] ** 2 + v_i[2] ** 2)
     except:
-        print('failed to load p_i')
+        print('failed to calc v_i and k_i')
 
-    try:
-        phi = np.transpose(pd.read_csv('phi_state.csv', header=None).values)
-    except:
-        print('failed to load phi')
-        
-    try:
-        ne = pd.read_csv('n_active_e.csv', header=None).values
-    except:
-        print('failed to load n_active_e.csv')
-    
-    try:
-        ni = pd.read_csv('n_active_i.csv', header=None).values
-    except:
-        print('failed to load n_active_i.csv')
-        
-    try:
-        v_cap = pd.read_csv('v_cap.csv', header=None).values
-    except:
-        print('failed to load v_cap.csv')
     
 
 if __name__=='__main__':

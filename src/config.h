@@ -97,6 +97,7 @@ extern string ISO_PATH              ;//Path isotropic cross section
 extern double DX;
 extern double DY;
 extern double OMEGA_I;
+extern int RF_PERIOD_I;
 extern double VOLT_0_NORM;
 extern double VOLT_1_NORM;
 extern double GAMMA;

@@ -95,7 +95,7 @@ fmatrix load_csv(string file_path, char delim, int cols)
     return data;
 }
 
-void save_state(fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i,  int i, fmatrix & misc, string suffix){
+void save_state(fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i,  int step, fmatrix & misc, string suffix){
     
     
     fmatrix p_e_corrected = DX * p_e;
@@ -114,10 +114,10 @@ void save_state(fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i,  i
     }
     save_to_csv(p_i_corrected, "p_i" + suffix + ".csv", n_active_i);
     
-    fmatrix sim_state(1 + misc.n1);
+    fmatrix sim_state(1 + (int) misc.n1);
    
-    sim_state.val[0] = (double) i;
-    for (int j = 1; j < (int) sim_state.n1; j++) sim_state.val[i] = misc.val[i - 1];
+    sim_state.val[0] = (double) step;
+    for (int j = 1; j < (int) sim_state.n1; j++) sim_state.val[j] = misc.val[j - 1];
    
     save_to_csv(sim_state, "sim" + suffix + ".csv");
     
@@ -150,9 +150,9 @@ void load_state(fmatrix & p_e, int & n_active_e, fmatrix & p_i, int & n_active_i
     for(int i=0; i < n_active_e * 6; i++) p_e.val[i] = p_e_load.val[i];
 
     fmatrix sim_state = load_csv("output/sim" + suffix + ".csv",',', 1);
-    for(int i=1; i < (int) sim_state.n1; i++) misc.val[i-1] = sim_state.val[i];
     step_offset = sim_state.val[0];
-
+    for(int i=1; i < (int) sim_state.n1; i++) misc.val[i - 1] = sim_state.val[i];
+    
     verbose_log("State loaded: i: " + to_string(step_offset) + " Active electrons: " + to_string(n_active_e) + " Active ions: " + to_string(n_active_i));
 }
 
