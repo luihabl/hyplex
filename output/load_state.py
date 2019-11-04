@@ -5,6 +5,7 @@ import matplotlib
 
 import pandas as pd
 import numpy as np
+import os
 
 from scipy.constants import m_e, e, epsilon_0, k
 m_i = 2.17e-25
@@ -65,37 +66,39 @@ def load_array(path):
         print('failed to load ' + path)
         return None
 
-def load():
-    global dens_e, dens_i, dens_n, p_e, p_i, phi, phi_av, v_e, v_i, k_e, k_i, ne, ni, v_cap
-    
-    dens_e = load_fmatrix('dens_e_state.csv')
-    dens_i = load_fmatrix('dens_i_state.csv')
-    dens_n = load_fmatrix('dens_n.csv')
-    phi = load_fmatrix('phi_state.csv')
-    phi_av = load_fmatrix('phi_av.csv')
-    ne = load_array('n_active_e.csv')
-    ni = load_array('n_active_i.csv')
-    v_cap = load_array('v_cap.csv')
-    p_e = load_fmatrix('p_e_state.csv')
-    p_i = load_fmatrix('p_i_state.csv')
+def load(path='.'):
 
+    data_dict = {}
+    
+    data_dict['dens_e'] = load_fmatrix(os.path.join(path, 'dens_e_state.csv'))
+    data_dict['dens_i'] = load_fmatrix(os.path.join(path, 'dens_i_state.csv'))
+    data_dict['dens_n'] = load_fmatrix(os.path.join(path, 'dens_n.csv'))
+    data_dict['phi_in'] = load_fmatrix(os.path.join(path, 'phi_state.csv'))
+    data_dict['phi_av'] = load_fmatrix(os.path.join(path, 'phi_av.csv'))
+    data_dict['ne'] = load_array(os.path.join(path, 'n_active_e.csv'))
+    data_dict['ni'] = load_array(os.path.join(path, 'n_active_i.csv'))
+    data_dict['v_cap'] = load_array(os.path.join(path, 'v_cap.csv'))
+    data_dict['p_e'] = load_fmatrix(os.path.join(path, 'p_e_state.csv'))
+    data_dict['p_i'] = load_fmatrix(os.path.join(path, 'p_i_state.csv'))
+    
     try:    
-        v_e = p_e[3:6, :]
-        k_e = 0.5 * m_e * (v_e[0] ** 2 + v_e[1] ** 2 + v_e[2] ** 2)
+        data_dict['k_e'] = 0.5 * m_e * (data_dict['p_e'][3] ** 2 + data_dict['p_e'][4] ** 2 + data_dict['p_e'][5] ** 2) / e
     except:
-        print('failed to calc v_e and k_e')
+        print('failed to calc k_e')
 
     try:
-        v_i = p_i[3:6, :]
-        k_i = 0.5 * m_i * (v_i[0] ** 2 + v_i[1] ** 2 + v_i[2] ** 2)
+        data_dict['k_i'] = 0.5 * m_i * (data_dict['p_i'][3] ** 2 + data_dict['p_i'][4] ** 2 + data_dict['p_i'][5] ** 2) / e
     except:
-        print('failed to calc v_i and k_i')
-
+        print('failed to calc k_i')
+        
+    try:
+        data_dict['v_cap_av'] = data_dict['v_cap'][-int(0.1 * data_dict['v_cap'].shape[0]):].mean()
+    except:
+        print('failed to calc k_i')
+    
+    return data_dict
     
 
 if __name__=='__main__':
-    load()
-    x = np.arange(phi.shape[1]) * 0.166e-3
-    y = np.arange(phi.shape[0]) * 0.166e-3
-    X, Y = np.meshgrid(x, y)
-
+    global d
+    d = load()

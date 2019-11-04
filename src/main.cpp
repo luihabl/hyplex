@@ -103,64 +103,67 @@ int main(int argc, char* argv[])
     verbose_log("Initializing solver");
 
     int n_dirichlet = 0, n_neumann = 0;
-    imatrix box_thruster        = {0, 0, 0, N_THRUSTER - 1};
-    imatrix box_top_thruster    = {0, N_THRUSTER, 0, N_MESH_Y - 2};
-    imatrix box_ob_top          = {0, N_MESH_Y - 1, N_MESH_X - 2, N_MESH_Y - 1};
-    imatrix box_ob_right        = {N_MESH_X - 1, 0, N_MESH_X - 1, N_MESH_Y - 1};
-    imatrix box_sym             = {1, 0, N_MESH_X - 2, 0};
-
-    if(OB_TYPE == "dirichlet"){
-        n_dirichlet = 3;
-        n_neumann   = 2;
-    }
-    if(OB_TYPE == "neumann"){
-        n_dirichlet = 1;
-        n_neumann   = 4;
-    }
-
-    rsolver solver(mesh_x, mesh_y, vmesh, n_neumann, n_dirichlet);
-
-    if(OB_TYPE == "neumann"){
-        solver.set_dirichlet_box(box_thruster, 0);
-        solver.set_neumann_box(box_top_thruster, 0);
-        solver.set_neumann_box(box_ob_top, 1);
-        solver.set_neumann_box(box_ob_right, 2);
-        solver.set_neumann_box(box_sym, 3);
-    }
-
-    if(OB_TYPE == "dirichlet"){
-        solver.set_dirichlet_box(box_thruster, 0);
-        solver.set_dirichlet_box(box_ob_right, 1);
-        solver.set_dirichlet_box(box_ob_top, 2);
-        
-        solver.set_neumann_box(box_sym, 0);
-        solver.set_neumann_box(box_top_thruster, 1);
-
-        electrode_mask.setbox_value(1, box_ob_top.val[0], box_ob_top.val[1], box_ob_top.val[2], box_ob_top.val[3]);
-        electrode_mask.setbox_value(1, box_ob_right.val[0], box_ob_right.val[1], box_ob_right.val[2], box_ob_right.val[3]);
-    }
-
-    electrode_mask.setbox_value(2, box_thruster.val[0], box_thruster.val[1], box_thruster.val[2], box_thruster.val[3]);
-
-
-    // imatrix box_thruster        = {0, 0, 0, N_MESH_Y - 1};
-    // imatrix box_ob_top          = {1, N_MESH_Y - 1, N_MESH_X - 2, N_MESH_Y - 1};
+    // imatrix box_thruster        = {0, 0, 0, N_THRUSTER - 1};
+    // imatrix box_top_thruster    = {0, N_THRUSTER, 0, N_MESH_Y - 2};
+    // imatrix box_ob_top          = {0, N_MESH_Y - 1, N_MESH_X - 2, N_MESH_Y - 1};
     // imatrix box_ob_right        = {N_MESH_X - 1, 0, N_MESH_X - 1, N_MESH_Y - 1};
     // imatrix box_sym             = {1, 0, N_MESH_X - 2, 0};
 
-    // n_dirichlet = 2;
-    // n_neumann   = 2;
+    // if(OB_TYPE == "dirichlet"){
+    //     n_dirichlet = 3;
+    //     n_neumann   = 2;
+    // }
+    // if(OB_TYPE == "neumann"){
+    //     n_dirichlet = 1;
+    //     n_neumann   = 4;
+    // }
 
     // rsolver solver(mesh_x, mesh_y, vmesh, n_neumann, n_dirichlet);
 
-    // solver.set_dirichlet_box(box_thruster, 0);
-    // solver.set_dirichlet_box(box_ob_right, 1);
+    // if(OB_TYPE == "neumann"){
+    //     solver.set_dirichlet_box(box_thruster, 0);
+    //     solver.set_neumann_box(box_top_thruster, 0);
+    //     solver.set_neumann_box(box_ob_top, 1);
+    //     solver.set_neumann_box(box_ob_right, 2);
+    //     solver.set_neumann_box(box_sym, 3);
+    // }
 
-    // solver.set_neumann_box(box_sym, 0);
-    // solver.set_neumann_box(box_ob_top, 1);
+    // if(OB_TYPE == "dirichlet"){
+    //     solver.set_dirichlet_box(box_thruster, 0);
+    //     solver.set_dirichlet_box(box_ob_right, 1);
+    //     solver.set_dirichlet_box(box_ob_top, 2);
+        
+    //     solver.set_neumann_box(box_sym, 0);
+    //     solver.set_neumann_box(box_top_thruster, 1);
 
-    // electrode_mask.setbox_value(1, box_ob_right.val[0], box_ob_right.val[1], box_ob_right.val[2], box_ob_right.val[3]);
-    
+    //     electrode_mask.setbox_value(1, box_ob_top.val[0], box_ob_top.val[1], box_ob_top.val[2], box_ob_top.val[3]);
+    //     electrode_mask.setbox_value(1, box_ob_right.val[0], box_ob_right.val[1], box_ob_right.val[2], box_ob_right.val[3]);
+    // }
+
+    // electrode_mask.setbox_value(2, box_thruster.val[0], box_thruster.val[1], box_thruster.val[2], box_thruster.val[3]);
+
+
+    imatrix box_thruster        = {0, 1, 0, N_MESH_Y - 2};
+    imatrix box_ob_top          = {1, N_MESH_Y - 1, N_MESH_X - 1, N_MESH_Y - 1};
+    imatrix box_ob_right        = {N_MESH_X - 1, 1, N_MESH_X - 1, N_MESH_Y - 2};
+    imatrix box_sym             = {0, 0, N_MESH_X - 1, 0};
+
+    n_dirichlet = 2;
+    n_neumann   = 2;
+
+    rsolver solver(mesh_x, mesh_y, vmesh, n_neumann, n_dirichlet);
+
+    solver.set_dirichlet_box(box_sym, 0);
+    solver.set_dirichlet_box(box_ob_top, 1);
+
+    solver.set_neumann_box(box_thruster, 0);
+    solver.set_neumann_box(box_ob_right, 1);
+
+    electrode_mask.setbox_value(1, box_ob_top.val[0], box_ob_top.val[1], box_ob_top.val[2], box_ob_top.val[3]);
+
+
+
+
 
     solver.assemble();
 
@@ -260,15 +263,15 @@ int main(int argc, char* argv[])
         // // v_cap = cap_voltage(v_cap, n_out_e, n_out_i);
 
         // Step 5: particles injection
-        double v_drift_e = 0;
-        if(i % K_SUB == 0) add_flux_particles(p_i, n_active_i, T_I, V_DRIFT_I, M_I, N_INJ_I, K_SUB);
-        if(INJ_MODEL == "constant")       n_inj_e = N_INJ_EL;
-        else if(INJ_MODEL == "balanced")  n_inj_e = balanced_injection(n_inj_e, 0.01, wmesh_i, wmesh_e, 0, 0, 0, N_THRUSTER - 1);
-        else if(INJ_MODEL == "pulsed"){
-            n_inj_e = pulsed_injection(K_INJ_EL, V_SB, V_RF, T_EL, OMEGA_I, i);
-            v_drift_e = sqrt(2 * Q * 20 / M_EL);
-        }
-        add_flux_particles(p_e, n_active_e, T_EL, v_drift_e, M_EL, n_inj_e);
+        // double v_drift_e = 0;
+        // if(i % K_SUB == 0) add_flux_particles(p_i, n_active_i, T_I, V_DRIFT_I, M_I, N_INJ_I, K_SUB);
+        // if(INJ_MODEL == "constant")       n_inj_e = N_INJ_EL;
+        // else if(INJ_MODEL == "balanced")  n_inj_e = balanced_injection(n_inj_e, 0.01, wmesh_i, wmesh_e, 0, 0, 0, N_THRUSTER - 1);
+        // else if(INJ_MODEL == "pulsed"){
+        //     n_inj_e = pulsed_injection(K_INJ_EL, V_SB, V_RF, T_EL, OMEGA_I, i);
+        //     v_drift_e = sqrt(2 * Q * 20 / M_EL);
+        // }
+        // add_flux_particles(p_e, n_active_e, T_EL, v_drift_e, M_EL, n_inj_e);
 
         // Step 6: Monte-Carlo collisions
         if(i % K_SUB == 0) collisions_i(p_i, n_active_i, lpos_i, mesh_x, mesh_y, dens_n, M_I, p_null_i, nu_prime_i);
