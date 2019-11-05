@@ -11,7 +11,7 @@ from scipy.constants import m_e, e, epsilon_0, k
 m_i = 2.17e-25
 at_sccm = 4.477962e17
 
-def plot_field(field):
+def plot_field(field, label=''):
     fig, axes = plt.subplots(nrows=1, figsize=(10, 4))
 
     p = axes.imshow(field, cmap='plasma', origin='lower')
@@ -22,7 +22,7 @@ def plot_field(field):
     divider0 = make_axes_locatable(axes)
     cax0 = divider0.append_axes("right", size="1%", pad=0.1)
     
-    fig.colorbar(p, ax=axes,cax=cax0)
+    fig.colorbar(p, ax=axes,cax=cax0, label=label)
     
     axes.axis('image')
     axes.set_ylabel('y/$\lambda_{De}$')
