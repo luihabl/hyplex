@@ -10,6 +10,7 @@ void add_flux_particles(fmatrix & p, int & n_active, const double temperature, c
 void add_maxwellian_flux_particles(fmatrix & p, int & n_active, const double temperature, const double v_drift, const double mass, const double n_add, double k_sub);
 double balanced_injection(double old_n_inj, double rate_constant, fmatrix & wmesh_i, fmatrix & wmesh_e, int ill, int jll, int iur, int jur);
 double pulsed_injection(double k_inj, double v_sb, double v_rf, double temp_e, double omega_i, int i);
+double square_injection(double alpha, double freq, double dt, double duty_cycle, int i);
 
 void boundaries_i(fmatrix & p, int & n_active, imatrix & lpos, int & n_removed);
 void boundaries_e(fmatrix & p, int & n_active, imatrix & lpos, int n_out_i);

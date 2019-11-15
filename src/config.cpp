@@ -64,16 +64,18 @@ using namespace std;
 
 //[neutral]
  string EXPM_NEUTRAL          ;//Expansion model of neutral flow: 'dsmc' or 'constant'
+ string MCC_COLL              ;//Toggle MCC collisions: 'on' or 'off'
  double T_NEUTRAL             ;//Temperature of neutral gas [eV]
  double N_NEUTRAL             ;//Density of neutral gas [m^-3]
 
 //[electrons]
  string INJ_MODEL             ;//Electron injection model: 'constant', 'pulsed' or 'balanced'
+ double SQR_DUTY_CYCLE        ;//Duty cycle of square pulsed injection []
  double M_EL                  ;//Electron mass [kg]
  double Q_EL                  ;//Electron charge [C]
  double T_EL                  ;//Initial electron temperature [eV]
  double I_EL                  ;//Electron injection current [A/m]
- double V_DRIFT_EL             ;//Electron injection drift velocity [m/s]
+ double V_DRIFT_EL            ;//Electron injection drift velocity [m/s]
 
 //[ions]
  string GAS_NAME              ;//Name of gas: 'helium' or 'xenon'
@@ -164,13 +166,16 @@ void load_config_file(string filename){
     // neutral
     T_NEUTRAL = reader.GetReal("neutral", "T_NEUTRAL", -1);
     N_NEUTRAL = reader.GetReal("neutral", "N_NEUTRAL", -1);
+    MCC_COLL = reader.Get("neutral", "MCC_COLL", "");
     EXPM_NEUTRAL = reader.Get("neutral", "EXPM_NEUTRAL", "");
     MASS_FLOW_RATE = reader.GetReal("thruster", "MASS_FLOW_RATE", -1);
     ETA_PROPELLANT = reader.GetReal("thruster", "ETA_PROPELLANT", -1);
     N_FACTOR_DSMC = reader.GetReal("particles", "N_FACTOR_DSMC", -1);
+    
 
     // Particle 1 - Electrons
     INJ_MODEL = reader.Get("electrons", "INJ_MODEL", "");
+    SQR_DUTY_CYCLE = reader.GetReal("electrons", "SQR_DUTY_CYCLE", -1);
     M_EL = reader.GetReal("electrons", "M_EL", -1);
     Q_EL = reader.GetReal("electrons", "Q_EL", -1);
     T_EL = reader.GetReal("electrons", "T_EL", -1);

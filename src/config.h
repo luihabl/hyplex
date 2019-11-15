@@ -64,16 +64,18 @@ extern int N_MAX_PARTICLES          ;//Maximum number of particles in the array 
 
 //[neutral]
 extern string EXPM_NEUTRAL          ;//Expansion model of neutral flow: 'dsmc' or 'constant'
+extern string MCC_COLL              ;//Toggle MCC collisions: 'on' or 'off'
 extern double T_NEUTRAL             ;//Temperature of neutral gas [eV]
 extern double N_NEUTRAL             ;//Density of neutral gas [m^-3]
 
 //[electrons]
-extern string INJ_MODEL             ;//Electron injection model: 'constant', 'pulsed' or 'balanced'
+extern string INJ_MODEL             ;//Electron injection model: 'constant', 'pulsed', 'balanced' or 'square'
+extern double SQR_DUTY_CYCLE        ;//Duty cycle of square pulsed injection []
 extern double M_EL                  ;//Electron mass [kg]
 extern double Q_EL                  ;//Electron charge [C]
 extern double T_EL                  ;//Initial electron temperature [eV]
 extern double I_EL                  ;//Electron injection current [A/m]
-extern double V_DRIFT_EL             ;//Electron injection drift velocity [m/s]
+extern double V_DRIFT_EL            ;//Electron injection drift velocity [m/s]
 
 //[ions]
 extern string GAS_NAME              ;//Name of gas: 'helium' or 'xenon'

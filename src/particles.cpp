@@ -138,6 +138,16 @@ double pulsed_injection(double k_inj, double v_sb, double v_rf, double temp_e, d
 	return k_inj *  exp(- (v_sb + v_rf * sin(omega_i * (double) i)) / temp_e);
 }
 
+double square_injection(double alpha, double freq, double dt, double duty_cycle, int i){
+	double n_period = round(1 / (freq * dt));
+	double n_0 = round((duty_cycle) / (freq * dt));
+	
+	if(i % (int) n_period < (int) n_0){
+		return (alpha / duty_cycle) * (dt / (Q * N_FACTOR)) * I_I;
+	}
+	return 0;
+}
+
 //  ----------------------------- Boundaries ----------------------------------
 
 void boundaries_n(fmatrix & p, int & n_active, imatrix & lpos){
@@ -208,6 +218,9 @@ void boundaries_i(fmatrix & p, int & n_active, imatrix & lpos, int & n_removed_o
 
 	for (int i = n_remove - 1; i >= 0; i--)
 	{
+		if(p.val[tbremoved.val[i] * 6 + 0] > 0 && p.val[tbremoved.val[i] * 6 + 0] < 256 && p.val[tbremoved.val[i] * 6 + 1] > 0 && p.val[tbremoved.val[i] * 6 + 1] < 64){
+			cout << p.val[tbremoved.val[i] * 6 + 0] << " " << p.val[tbremoved.val[i] * 6 + 1] << endl;
+		}
 		remove_particle(p, n_active, tbremoved.val[i], lpos);
 	}
 }
