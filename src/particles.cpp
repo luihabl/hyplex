@@ -39,20 +39,19 @@ void add_maxwellian_particles(fmatrix & p, int & n_active, const double temperat
 void add_flux_particles(fmatrix & p, int & n_active, const double temperature, const double v_drift, const double mass, const double n_add, double k_sub){
 	
 	double f_n_add = floor(k_sub * n_add);
-	int n_new = (r_unif() < (k_sub * n_add - f_n_add) ?  f_n_add + 1 : f_n_add);
-
-	// double f_n_add = floor(n_add); <=================== Maybe this change to ^^^^^^ caused the waves to appear?
-    // size_t n_new = k_sub * (r_unif() < (n_add - f_n_add) ?  (size_t) f_n_add + 1 : (size_t) f_n_add);
+	int n_new = (r_unif() <= (k_sub * n_add - f_n_add) ?  f_n_add + 1 : f_n_add);
 
 	double v_temperature = sqrt(Q * temperature / mass);
 
 	for (int i = n_active; i < n_active + n_new; i++)
 	{	
-		p.val[i * 6 + 3] = (DT / DX) * (v_temperature * sqrt(- 2 *log(r_unif())) + v_drift);
+		p.val[i * 6 + 3] = (DT / DX) * (v_temperature * sqrt(- 2 *  log(r_unif())) + v_drift);
+		// p.val[i * 6 + 3] = (DT / DX) * sqrt(pow(v_temperature * sqrt(- log(r_unif())), 2) + (v_drift * v_drift));
+		// p.val[i * 6 + 3] = (DT / DX) * (r_norm(0.0, v_temperature) + v_drift);
 		p.val[i * 6 + 4] = (DT / DX) * r_norm(0.0, v_temperature);
 		p.val[i * 6 + 5] = (DT / DX) * r_norm(0.0, v_temperature);
 
-		p.val[i * 6 + 0] = k_sub * p.val[i * 6 + 3] * r_unif(); // maybe necessary to multiply K_SUB here!
+		p.val[i * 6 + 0] = k_sub * p.val[i * 6 + 3] * r_unif();
 		p.val[i * 6 + 1] = (DY / DX) * ((double) N_THRUSTER - 1.0) * r_unif();
 		p.val[i * 6 + 2] = 0.0;
 	}
@@ -152,11 +151,11 @@ double square_injection(double alpha, double freq, double dt, double duty_cycle,
 
 void boundaries_n(fmatrix & p, int & n_active, imatrix & lpos){
     int n_remove = 0;
-    static imatrix tbremoved(100000); // Modify fmatrix class to include int as template. Make a smart guess of the maximum removed particles.
-    
+    imatrix tbremoved((size_t) (n_active * 0.5) + 150); 
+
     double x, y;
-    static const double x_max = ((double) N_MESH_X - 1);
-    static const double y_max = ((double) N_MESH_Y - 1) * (DY / DX);
+    const double x_max = ((double) N_MESH_X - 1);
+    const double y_max = ((double) N_MESH_Y - 1) * (DY / DX);
     
     for (int i = 0; i < n_active; i++)
     {
@@ -184,20 +183,20 @@ void boundaries_i(fmatrix & p, int & n_active, imatrix & lpos, int & n_removed_o
 {
 	n_removed_ob = 0;
 	int n_remove = 0;
-	static imatrix tbremoved(100000); // Modify fmatrix class to include int as template. Make a smart guess of the maximum removed particles.
+	static imatrix tbremoved(100000);
 
 	double x, y;
 	bool in_thr, in_sym;
-	static const double x_max = ((double) N_MESH_X - 1);
-	static const double y_max = ((double) N_MESH_Y - 1) * (DY / DX);
-	static const double y_thr = ((double) N_THRUSTER - 1) * (DY / DX);
+	const double x_max = ((double) N_MESH_X - 1);
+	const double y_max = ((double) N_MESH_Y - 1) * (DY / DX);
+	const double y_thr = ((double) N_THRUSTER - 1) * (DY / DX);
 
 	for (int i = 0; i < n_active; i++)
 	{
 		x = p.val[i * 6 + 0];
 		y = p.val[i * 6 + 1];
 
-		if (x <= 0 || x >= x_max || y >= y_max)
+		if (x < 0 || x > x_max || y > y_max)
 		{
 			tbremoved.val[n_remove] = i;
 			n_remove += 1;
@@ -218,9 +217,6 @@ void boundaries_i(fmatrix & p, int & n_active, imatrix & lpos, int & n_removed_o
 
 	for (int i = n_remove - 1; i >= 0; i--)
 	{
-		if(p.val[tbremoved.val[i] * 6 + 0] > 0 && p.val[tbremoved.val[i] * 6 + 0] < 256 && p.val[tbremoved.val[i] * 6 + 1] > 0 && p.val[tbremoved.val[i] * 6 + 1] < 64){
-			cout << p.val[tbremoved.val[i] * 6 + 0] << " " << p.val[tbremoved.val[i] * 6 + 1] << endl;
-		}
 		remove_particle(p, n_active, tbremoved.val[i], lpos);
 	}
 }
@@ -406,12 +402,24 @@ void reflect_particle(fmatrix & p, int & n_active, int i, double x, double y, do
 
 void remove_particle(fmatrix & p, int & n_active, int i, imatrix & lpos)
 {
-	for (size_t j = 0; j < 6; j++)
-	{
-		swap(p.val[i * 6 + j], p.val[(n_active - 1) * 6 + j]);
-	}
-	swap(lpos.val[i * 2 + 0], lpos.val[(n_active - 1) * 2 + 0]);
-	swap(lpos.val[i * 2 + 1], lpos.val[(n_active - 1) * 2 + 1]);
+	// for (size_t j = 0; j < 6; j++)
+	// {
+	//   swap(p.val[i * 6 + j], p.val[(n_active - 1) * 6 + j]);
+	// }
+
+	// swap(lpos.val[i * 2 + 0], lpos.val[(n_active - 1) * 2 + 0]);
+	// swap(lpos.val[i * 2 + 1], lpos.val[(n_active - 1) * 2 + 1]);
+
+	p.val[i * 6 + 0] = p.val[(n_active - 1) * 6 + 0];
+	p.val[i * 6 + 1] = p.val[(n_active - 1) * 6 + 1];
+	p.val[i * 6 + 2] = p.val[(n_active - 1) * 6 + 2];
+	p.val[i * 6 + 3] = p.val[(n_active - 1) * 6 + 3];
+	p.val[i * 6 + 4] = p.val[(n_active - 1) * 6 + 4];
+	p.val[i * 6 + 5] = p.val[(n_active - 1) * 6 + 5];
+
+	lpos.val[i * 2 + 0] = lpos.val[(n_active - 1) * 2 + 0];
+	lpos.val[i * 2 + 1] = lpos.val[(n_active - 1) * 2 + 1];
+
 	n_active -= 1;
 }
 

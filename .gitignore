@@ -2,6 +2,9 @@
 /build/
 /lib/hypre-2.16.0/*
 /output/**/*.csv
+/output/**/*.txt
+/output/**/*.png
+/output/**/*.mp4
 /output/anim/*.csv
 /output/*.mp4
 /output/*.png
