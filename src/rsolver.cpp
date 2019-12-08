@@ -11,6 +11,7 @@
 #include "config.h"
 
 #define SOLVER_PRINT_LEVEL 0
+#define SOLVER_TOLERANCE 1e-6
 #define SOLVER_F(A, B) A ## SMG ## B // Solvers: SMG, PCG
 
 using namespace std::chrono;
@@ -291,7 +292,7 @@ void rsolver::solve(fmatrix & solution, fmatrix & voltages, fmatrix & w_i, fmatr
     HYPRE_StructVectorAssemble(hypre_x);
 
     SOLVER_F(HYPRE_Struct, Create)(MPI_COMM_WORLD, &hypre_solver);
-    SOLVER_F(HYPRE_Struct, SetTol)(hypre_solver, 1.0e-6);
+    SOLVER_F(HYPRE_Struct, SetTol)(hypre_solver, SOLVER_TOLERANCE);
     // SOLVER_F(HYPRE_Struct, SetPrintLevel)(hypre_solver, SOLVER_PRINT_LEVEL);
     SOLVER_F(HYPRE_Struct, Setup)(hypre_solver, hypre_A, hypre_b, hypre_x);
     SOLVER_F(HYPRE_Struct, Solve)(hypre_solver, hypre_A, hypre_b, hypre_x);

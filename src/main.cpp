@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
     fmatrix mesh_y          = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix vmesh           = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     imatrix electrode_mask  = imatrix::zeros(N_MESH_X, N_MESH_Y);
-    fmatrix voltages        = fmatrix::zeros(3);
+    fmatrix voltages        = fmatrix::zeros(4);
     fmatrix misc            = fmatrix::zeros(4);
     double v_cap            = 0;
     double q_cap            = 0;
@@ -104,44 +104,44 @@ int main(int argc, char* argv[])
     verbose_log("Initializing solver");
 
     int n_dirichlet = 0, n_neumann = 0;
-    imatrix box_thruster        = {0, 0, 0, N_THRUSTER - 1};
-    imatrix box_top_thruster    = {0, N_THRUSTER, 0, N_MESH_Y - 2};
-    imatrix box_ob_top          = {0, N_MESH_Y - 1, N_MESH_X - 2, N_MESH_Y - 1};
-    imatrix box_ob_right        = {N_MESH_X - 1, 0, N_MESH_X - 1, N_MESH_Y - 1};
-    imatrix box_sym             = {1, 0, N_MESH_X - 2, 0};
-
-    if(OB_TYPE == "dirichlet"){
-        n_dirichlet = 3;
-        n_neumann   = 2;
-    }
-    if(OB_TYPE == "neumann"){
-        n_dirichlet = 1;
-        n_neumann   = 4;
-    }
-
-    rsolver solver(mesh_x, mesh_y, vmesh, n_neumann, n_dirichlet);
-
-    if(OB_TYPE == "neumann"){
-        solver.set_dirichlet_box(box_thruster, 0);
-        solver.set_neumann_box(box_top_thruster, 0);
-        solver.set_neumann_box(box_ob_top, 1);
-        solver.set_neumann_box(box_ob_right, 2);
-        solver.set_neumann_box(box_sym, 3);
-    }
-
-    if(OB_TYPE == "dirichlet"){
-        solver.set_dirichlet_box(box_thruster, 0);
-        solver.set_dirichlet_box(box_ob_right, 1);
-        solver.set_dirichlet_box(box_ob_top, 2);
-
-        solver.set_neumann_box(box_sym, 0);
-        solver.set_neumann_box(box_top_thruster, 1);
-
-        electrode_mask.setbox_value(1, box_ob_top.val[0], box_ob_top.val[1], box_ob_top.val[2], box_ob_top.val[3]);
-        electrode_mask.setbox_value(1, box_ob_right.val[0], box_ob_right.val[1], box_ob_right.val[2], box_ob_right.val[3]);
-    }
-
-    electrode_mask.setbox_value(2, box_thruster.val[0], box_thruster.val[1], box_thruster.val[2], box_thruster.val[3]);
+//    imatrix box_thruster        = {0, 0, 0, N_THRUSTER - 1};
+//    imatrix box_top_thruster    = {0, N_THRUSTER, 0, N_MESH_Y - 2};
+//    imatrix box_ob_top          = {0, N_MESH_Y - 1, N_MESH_X - 2, N_MESH_Y - 1};
+//    imatrix box_ob_right        = {N_MESH_X - 1, 0, N_MESH_X - 1, N_MESH_Y - 1};
+//    imatrix box_sym             = {1, 0, N_MESH_X - 2, 0};
+//
+//    if(OB_TYPE == "dirichlet"){
+//        n_dirichlet = 3;
+//        n_neumann   = 2;
+//    }
+//    if(OB_TYPE == "neumann"){
+//        n_dirichlet = 1;
+//        n_neumann   = 4;
+//    }
+//
+//    rsolver solver(mesh_x, mesh_y, vmesh, n_neumann, n_dirichlet);
+//
+//    if(OB_TYPE == "neumann"){
+//        solver.set_dirichlet_box(box_thruster, 0);
+//        solver.set_neumann_box(box_top_thruster, 0);
+//        solver.set_neumann_box(box_ob_top, 1);
+//        solver.set_neumann_box(box_ob_right, 2);
+//        solver.set_neumann_box(box_sym, 3);
+//    }
+//
+//    if(OB_TYPE == "dirichlet"){
+//        solver.set_dirichlet_box(box_thruster, 0);
+//        solver.set_dirichlet_box(box_ob_right, 1);
+//        solver.set_dirichlet_box(box_ob_top, 2);
+//
+//        solver.set_neumann_box(box_sym, 0);
+//        solver.set_neumann_box(box_top_thruster, 1);
+//
+//        electrode_mask.setbox_value(1, box_ob_top.val[0], box_ob_top.val[1], box_ob_top.val[2], box_ob_top.val[3]);
+//        electrode_mask.setbox_value(1, box_ob_right.val[0], box_ob_right.val[1], box_ob_right.val[2], box_ob_right.val[3]);
+//    }
+//
+//    electrode_mask.setbox_value(2, box_thruster.val[0], box_thruster.val[1], box_thruster.val[2], box_thruster.val[3]);
     
 //    n_dirichlet = 2;
 //    n_neumann   = 2;
@@ -169,6 +169,27 @@ int main(int argc, char* argv[])
 
 //    imatrix box_ob_top          = {           1, N_MESH_Y - 1, N_MESH_X - 2, N_MESH_Y - 1};
 //    imatrix box_sym             = {           1,            0, N_MESH_X - 2,            0};
+    
+    n_dirichlet = 4;
+    n_neumann   = 2;
+
+    rsolver solver(mesh_x, mesh_y, vmesh, n_neumann, n_dirichlet);
+    
+    imatrix box_thruster1       = {           0,            0,            0, N_THRUSTER - 1};
+    imatrix box_thruster2       = {           0,            0,            N_THRUSTER - 1, 0};
+    imatrix box_ob_top          = {           0, N_MESH_Y - 1, N_MESH_X - 2, N_MESH_Y - 1};
+    imatrix box_ob_right        = {N_MESH_X - 1,            0, N_MESH_X - 1, N_MESH_Y - 1};
+
+    imatrix box_sym1             = {0, N_THRUSTER, 0, N_MESH_Y - 2};
+    imatrix box_sym2             = {N_THRUSTER, 0, N_MESH_X - 2, 0};
+    
+    solver.set_dirichlet_box(box_thruster1, 0);
+    solver.set_dirichlet_box(box_thruster2, 1);
+    solver.set_dirichlet_box(box_ob_top, 2);
+    solver.set_dirichlet_box(box_ob_right, 3);
+//
+    solver.set_neumann_box(box_sym1, 0);
+    solver.set_neumann_box(box_sym2, 1);
 
 //    solver.set_dirichlet_box(box_thruster, 0);
 //    solver.set_dirichlet_box(box_ob_right, 1);
@@ -177,21 +198,16 @@ int main(int argc, char* argv[])
 //    solver.set_neumann_box(box_sym, 1);
 
 //    electrode_mask.setbox_value(1, box_ob_right.val[0], box_ob_right.val[1], box_ob_right.val[2], box_ob_right.val[3]);
-
-
-
+//    electrode_mask.setbox_value(1, box_ob_right.val[0], box_ob_right.val[1], box_ob_right.val[2], box_ob_right.val[3]);
 
 
     solver.assemble();
 
-    voltages = {0, 1, 1};
-    solver.solve(phi_laplace, voltages, wmesh_i, wmesh_e);
-    double sigma_laplace = sigma_from_phi(phi_laplace, mesh_x, mesh_y, wmesh_e, wmesh_e, vmesh, electrode_mask);
+//    voltages = {0, 1, 1};
+//    solver.solve(phi_laplace, voltages, wmesh_i, wmesh_e);
+//    double sigma_laplace = sigma_from_phi(phi_laplace, mesh_x, mesh_y, wmesh_e, wmesh_e, vmesh, electrode_mask);
 
-    voltages = {VOLT_0_NORM, VOLT_1_NORM, VOLT_1_NORM};
-
-    save_to_csv(solver.node_type, "node_type.csv");
-    return 0;
+    voltages = {VOLT_0_NORM, VOLT_0_NORM, VOLT_1_NORM, VOLT_1_NORM};
 
     // ----------------------------- DSMC loop --------------------------------
     if (EXPM_NEUTRAL == "dsmc"){
