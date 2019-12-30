@@ -4,6 +4,7 @@
 #include <iostream>
 #include <iomanip>
 #include <sstream>
+#include <string>
 
 #include "cross-sections.h"
 #include "config.h"
@@ -104,110 +105,53 @@ int main(int argc, char* argv[])
     verbose_log("Initializing solver");
 
     int n_dirichlet = 0, n_neumann = 0;
-//   imatrix box_thruster        = {0, 0, 0, N_THRUSTER - 1};
-//   imatrix box_top_thruster    = {0, N_THRUSTER, 0, N_MESH_Y - 2};
-//   imatrix box_ob_top          = {0, N_MESH_Y - 1, N_MESH_X - 2, N_MESH_Y - 1};
-//   imatrix box_ob_right        = {N_MESH_X - 1, 0, N_MESH_X - 1, N_MESH_Y - 1};
-//   imatrix box_sym             = {1, 0, N_MESH_X - 2, 0};
-//
-//   if(OB_TYPE == "dirichlet"){
-//       n_dirichlet = 3;
-//       n_neumann   = 2;
-//   }
-//   if(OB_TYPE == "neumann"){
-//       n_dirichlet = 1;
-//       n_neumann   = 4;
-//   }
-//
-//   rsolver solver(mesh_x, mesh_y, vmesh, n_neumann, n_dirichlet);
-//
-//   if(OB_TYPE == "neumann"){
-//       solver.set_dirichlet_box(box_thruster, 0);
-//       solver.set_neumann_box(box_top_thruster, 0);
-//       solver.set_neumann_box(box_ob_top, 1);
-//       solver.set_neumann_box(box_ob_right, 2);
-//       solver.set_neumann_box(box_sym, 3);
-//   }
-//
-//   if(OB_TYPE == "dirichlet"){
-//       solver.set_dirichlet_box(box_thruster, 0);
-//       solver.set_dirichlet_box(box_ob_right, 1);
-//       solver.set_dirichlet_box(box_ob_top, 2);
-//
-//       solver.set_neumann_box(box_sym, 0);
-//       solver.set_neumann_box(box_top_thruster, 1);
-//
-//       electrode_mask.setbox_value(1, box_ob_top.val[0], box_ob_top.val[1], box_ob_top.val[2], box_ob_top.val[3]);
-//       electrode_mask.setbox_value(1, box_ob_right.val[0], box_ob_right.val[1], box_ob_right.val[2], box_ob_right.val[3]);
-//   }
-//
-//   electrode_mask.setbox_value(2, box_thruster.val[0], box_thruster.val[1], box_thruster.val[2], box_thruster.val[3]);
-//
-    n_dirichlet = 3;
-    n_neumann   = 1;
-
-    rsolver solver(mesh_x, mesh_y, vmesh, n_neumann, n_dirichlet);
-    
-
-    imatrix box_thruster        = {0, 0, 0, N_MESH_Y - 1};
-    imatrix box_ob_top          = {1, N_MESH_Y - 1, N_MESH_X - 2, N_MESH_Y - 1};
+    imatrix box_thruster        = {0, 0, 0, N_THRUSTER - 1};
+    imatrix box_top_thruster    = {0, N_THRUSTER, 0, N_MESH_Y - 2};
+    imatrix box_ob_top          = {0, N_MESH_Y - 1, N_MESH_X - 2, N_MESH_Y - 1};
     imatrix box_ob_right        = {N_MESH_X - 1, 0, N_MESH_X - 1, N_MESH_Y - 1};
     imatrix box_sym             = {1, 0, N_MESH_X - 2, 0};
-
-    solver.set_neumann_box(box_sym, 0);
     
-    solver.set_dirichlet_box(box_ob_top, 0);
-    solver.set_dirichlet_box(box_thruster, 1);
-    solver.set_dirichlet_box(box_ob_right, 2);
+    if(OB_TYPE == "dirichlet"){
+        n_dirichlet = 3;
+        n_neumann   = 2;
+    }
+    if(OB_TYPE == "neumann"){
+        n_dirichlet = 1;
+        n_neumann   = 4;
+    }
 
-//    electrode_mask.setbox_value(1, box_ob_top.val[0], box_ob_top.val[1], box_ob_top.val[2], box_ob_top.val[3]);
- 
-    
-    
-//    imatrix box_thruster        = {           0,            0,            0, N_MESH_Y - 1};
-//    imatrix box_ob_right        = {N_MESH_X - 1,            0, N_MESH_X - 1, N_MESH_Y - 1};
+    rsolver solver(mesh_x, mesh_y, vmesh, n_neumann, n_dirichlet);
 
-//    imatrix box_ob_top          = {           1, N_MESH_Y - 1, N_MESH_X - 2, N_MESH_Y - 1};
-//    imatrix box_sym             = {           1,            0, N_MESH_X - 2,            0};
-    
-//     n_dirichlet = 4;
-//     n_neumann   = 2;
+    if(OB_TYPE == "neumann"){
+        solver.set_dirichlet_box(box_thruster, 0);
+        solver.set_neumann_box(box_top_thruster, 0);
+        solver.set_neumann_box(box_ob_top, 1);
+        solver.set_neumann_box(box_ob_right, 2);
+        solver.set_neumann_box(box_sym, 3);
+    }
 
-//     rsolver solver(mesh_x, mesh_y, vmesh, n_neumann, n_dirichlet);
-    
-//     imatrix box_thruster1       = {           0,            0,            0, N_THRUSTER - 1};
-//     imatrix box_thruster2       = {           0,            0,            N_THRUSTER - 1, 0};
-//     imatrix box_ob_top          = {           0, N_MESH_Y - 1, N_MESH_X - 2, N_MESH_Y - 1};
-//     imatrix box_ob_right        = {N_MESH_X - 1,            0, N_MESH_X - 1, N_MESH_Y - 1};
+    if(OB_TYPE == "dirichlet"){
+        
+        solver.set_neumann_box(box_sym, 0);
+        solver.set_neumann_box(box_top_thruster, 1);
 
-//     imatrix box_sym1             = {0, N_THRUSTER, 0, N_MESH_Y - 2};
-//     imatrix box_sym2             = {N_THRUSTER, 0, N_MESH_X - 2, 0};
-    
-//     solver.set_dirichlet_box(box_thruster1, 0);
-//     solver.set_dirichlet_box(box_thruster2, 1);
-//     solver.set_dirichlet_box(box_ob_top, 2);
-//     solver.set_dirichlet_box(box_ob_right, 3);
-// //
-//     solver.set_neumann_box(box_sym1, 0);
-//     solver.set_neumann_box(box_sym2, 1);
+        solver.set_dirichlet_box(box_ob_top, 0);
+        solver.set_dirichlet_box(box_thruster, 1);
+        solver.set_dirichlet_box(box_ob_right, 2);
+            
+        electrode_mask.setbox_value(1, box_ob_top.val[0], box_ob_top.val[1], box_ob_top.val[2], box_ob_top.val[3]);
+        electrode_mask.setbox_value(1, box_ob_right.val[0], box_ob_right.val[1], box_ob_right.val[2], box_ob_right.val[3]);
+    }
 
-//    solver.set_dirichlet_box(box_thruster, 0);
-//    solver.set_dirichlet_box(box_ob_right, 1);
-
-//    solver.set_neumann_box(box_ob_top, 0);
-//    solver.set_neumann_box(box_sym, 1);
-
-//    electrode_mask.setbox_value(1, box_ob_right.val[0], box_ob_right.val[1], box_ob_right.val[2], box_ob_right.val[3]);
-//    electrode_mask.setbox_value(1, box_ob_right.val[0], box_ob_right.val[1], box_ob_right.val[2], box_ob_right.val[3]);
-
+    electrode_mask.setbox_value(2, box_thruster.val[0], box_thruster.val[1], box_thruster.val[2], box_thruster.val[3]);
 
     solver.assemble();
 
-//    voltages = {0, 1, 1};
-//    solver.solve(phi_laplace, voltages, wmesh_i, wmesh_e);
-//    double sigma_laplace = sigma_from_phi(phi_laplace, mesh_x, mesh_y, wmesh_e, wmesh_e, vmesh, electrode_mask);
-
-    voltages = {VOLT_0_NORM, VOLT_0_NORM, VOLT_0_NORM, VOLT_0_NORM};
+    voltages = {1, 0, 1, 1};
+    solver.solve(phi_laplace, voltages, wmesh_i, wmesh_e);
+    double sigma_laplace = sigma_from_phi(phi_laplace, mesh_x, mesh_y, wmesh_e, wmesh_e, vmesh, electrode_mask);
+    
+    voltages = {VOLT_1_NORM, VOLT_0_NORM, VOLT_1_NORM, VOLT_1_NORM};
 
     // ----------------------------- DSMC loop --------------------------------
     if (EXPM_NEUTRAL == "dsmc"){
@@ -266,60 +210,51 @@ int main(int argc, char* argv[])
 	for (i = step_offset; i < N_STEPS + step_offset; i++)
 	{ 
 		// Step 1.0: particle weighting
-        // if(i % K_SUB == 0) weight(p_i, n_active_i, wmesh_i, mesh_x, mesh_y, lpos_i);
-        weight(p_i, n_active_i, wmesh_i, mesh_x, mesh_y, lpos_i);
+        if(i % K_SUB == 0) weight(p_i, n_active_i, wmesh_i, mesh_x, mesh_y, lpos_i);
         weight(p_e, n_active_e, wmesh_e, mesh_x, mesh_y, lpos_e);
 
         // Step 2.0 integration of Poisson's equation
-        // solver.solve(phi_poisson, voltages, wmesh_i, wmesh_e);
-        solver.solve(phi, voltages, wmesh_i, wmesh_e);
+        solver.solve(phi_poisson, voltages, wmesh_i, wmesh_e);
+        // solver.solve(phi, voltages, wmesh_i, wmesh_e);
         
-        // sigma_0 = sigma_1;
-        // phi_zero = calculate_phi_zero(sigma_1, n_out_i -  n_out_e, q_cap, sigma_laplace, phi_poisson, mesh_x, mesh_y, wmesh_e, wmesh_i, vmesh, electrode_mask);
+        sigma_0 = sigma_1;
+        phi_zero = calculate_phi_zero(sigma_1, n_out_i -  n_out_e, q_cap, sigma_laplace, phi_poisson, mesh_x, mesh_y, wmesh_e, wmesh_i, vmesh, electrode_mask);
         
-        // sigma_1 = calculate_sigma(sigma_0, phi_zero, n_out_i -  n_out_e, q_cap);
-        // q_cap = calculate_cap_charge(sigma_1, sigma_0, q_cap, n_out_i -  n_out_e);
+        sigma_1 = calculate_sigma(sigma_0, phi_zero, n_out_i -  n_out_e, q_cap);
+        q_cap = calculate_cap_charge(sigma_1, sigma_0, q_cap, n_out_i -  n_out_e);
 
-        // phi = phi_poisson + (phi_zero * phi_laplace);
-        // v_cap = phi_zero / K_PHI; 
+        phi = phi_poisson + (phi_zero * phi_laplace);
+        v_cap = phi_zero / K_PHI; 
 
         // Step 2.1: calculation of electric field
         calculate_efield(efield_x, efield_y, phi, wmesh_i, wmesh_e, mesh_x, mesh_y, vmesh, electrode_mask);
 
         // Step 2.2: field weighting
-        // if(i % K_SUB == 0) electric_field_at_particles(efield_x_at_p_i, efield_y_at_p_i, efield_x, efield_y, p_i, n_active_i, mesh_x, mesh_y, lpos_i);
-        electric_field_at_particles(efield_x_at_p_i, efield_y_at_p_i, efield_x, efield_y, p_i, n_active_i, mesh_x, mesh_y, lpos_i);
+        if(i % K_SUB == 0) electric_field_at_particles(efield_x_at_p_i, efield_y_at_p_i, efield_x, efield_y, p_i, n_active_i, mesh_x, mesh_y, lpos_i);
         electric_field_at_particles(efield_x_at_p_e, efield_y_at_p_e, efield_x, efield_y, p_e, n_active_e, mesh_x, mesh_y, lpos_e);
 
         // Step 3: integration of equations of motion
-        // if(i % K_SUB == 0) move_i(p_i, n_active_i, efield_x_at_p_i, efield_y_at_p_i);
-        move_i(p_i, n_active_i, efield_x_at_p_i, efield_y_at_p_i);
+        if(i % K_SUB == 0) move_i(p_i, n_active_i, efield_x_at_p_i, efield_y_at_p_i);
         move_e(p_e, n_active_e, efield_x_at_p_e, efield_y_at_p_e);
 
         // // Step 4: particle loss at boundaries
-        // if(i % K_SUB == 0) boundaries_i(p_i, n_active_i, lpos_i, n_out_i);
-        boundaries_n(p_i, n_active_i, lpos_i);
-        boundaries_n(p_e, n_active_e, lpos_e);
-        // boundaries_e_cap(p_e, n_active_e, lpos_e, n_out_e, v_cap, phi, mesh_x, mesh_y);
-        // // v_cap = cap_voltage(v_cap, n_out_e, n_out_i);
+        if(i % K_SUB == 0) boundaries_ob_count(p_i, n_active_i, lpos_i, n_out_i);
+        boundaries_ob_count(p_e, n_active_e, lpos_e, n_out_e);
 
         // Step 5: particles injection
         //  double v_drift_e = 0;
-        // if(i % K_SUB == 0) add_flux_particles(p_i, n_active_i, T_I, V_DRIFT_I, M_I, N_INJ_I, K_SUB);
-        // add_flux_particles(p_i, n_active_i, T_I, V_DRIFT_I, M_I, 0, K_SUB);
-        // if(INJ_MODEL == "constant")       n_inj_e = N_INJ_EL;
-        // else if(INJ_MODEL == "balanced")  n_inj_e = balanced_injection(n_inj_e, 0.01, wmesh_i, wmesh_e, 0, 0, 0, N_THRUSTER - 1);
-        // else if(INJ_MODEL == "pulsed")    n_inj_e = pulsed_injection(K_INJ_EL, V_SB, V_RF, T_EL, OMEGA_I, i);
-        // else if(INJ_MODEL == "square")    n_inj_e = square_injection(2.5, FREQ, DT, SQR_DUTY_CYCLE, i);
-        // n_inj_e = square_injection(4, FREQ, DT, SQR_DUTY_CYCLE, i);
-        // n_inj_e = 8.0 * (6666 / 666) * (5.0e-12 / (Q * N_FACTOR)) * I_I;
-        add_flux_particles(p_e, n_active_e, T_EL, V_DRIFT_EL, M_EL, N_INJ_EL, 1);
+        if(i % K_SUB == 0) add_flux_particles(p_i, n_active_i, T_I, V_DRIFT_I, M_I, N_INJ_I, K_SUB);
+        if(INJ_MODEL == "constant")       n_inj_e = N_INJ_EL;
+        else if(INJ_MODEL == "balanced")  n_inj_e = balanced_injection(n_inj_e, 0.01, wmesh_i, wmesh_e, 0, 0, 0, N_THRUSTER - 1);
+        else if(INJ_MODEL == "pulsed")    n_inj_e = pulsed_injection(K_INJ_EL, V_SB, V_RF, T_EL, OMEGA_I, i);
+        else if(INJ_MODEL == "square")    n_inj_e = square_injection(4.0, FREQ, DT, SQR_DUTY_CYCLE, i);
+        add_flux_particles(p_e, n_active_e, T_EL, V_DRIFT_EL, M_EL, n_inj_e, 1);
 
         // Step 6: Monte-Carlo collisions
-        // if(MCC_COLL == "on"){
-        //     if(i % K_SUB == 0) collisions_i(p_i, n_active_i, lpos_i, mesh_x, mesh_y, dens_n, M_I, p_null_i, nu_prime_i);
-        //     collisions_e(p_e, n_active_e, lpos_e, p_i, n_active_i, lpos_i, mesh_x, mesh_y, dens_n, M_I, p_null_e, nu_prime_e);
-        // }
+        if(MCC_COLL == "on"){
+            if(i % K_SUB == 0) collisions_i(p_i, n_active_i, lpos_i, mesh_x, mesh_y, dens_n, M_I, p_null_i, nu_prime_i);
+            collisions_e(p_e, n_active_e, lpos_e, p_i, n_active_i, lpos_i, mesh_x, mesh_y, dens_n, M_I, p_null_e, nu_prime_e);
+        }
         
         //  ----------------------------- Diagnostics -------------------------
 
@@ -332,15 +267,11 @@ int main(int argc, char* argv[])
             save_fields(phi, wmesh_e, wmesh_i, vmesh, "_state");
         }
 
-        v_cap_diag.val[i - step_offset] = phi.max() * (M_EL * pow(DX, 2))/(Q * pow(DT, 2));
+        v_cap_diag.val[i - step_offset] = v_cap;
         n_active_e_diag.val[i - step_offset] = n_active_e;
         n_active_i_diag.val[i - step_offset] = n_active_i;
 
-        for(int u=0; u < n_active_e; u++){
-            av_ke.val[i - step_offset] += kinetic_energy_ev(p_e, u, M_EL) / ((double) n_active_e);
-        }
-
-        if(i % 50000 == 0) {
+        if(i % 20000 == 0) {
             save_to_csv(v_cap_diag, "v_cap.csv", i - step_offset, 1);
             save_to_csv(n_active_e_diag, "n_active_e.csv", i - step_offset, 1);
             save_to_csv(n_active_i_diag, "n_active_i.csv", i - step_offset, 1);
@@ -353,8 +284,6 @@ int main(int argc, char* argv[])
             }
         }
         
-
-        // if(i % 10 == 0) save_state(p_e, n_active_e, p_i, n_active_i, phi, wmesh_e, wmesh_i, vmesh, i, v_cap, "_state_" + to_string(i));
 	}
 
     auto stop = high_resolution_clock::now();
@@ -362,7 +291,6 @@ int main(int argc, char* argv[])
     std::cout << "Total execution duration: " << (double) duration.count() / (1.0e6 * 60) << " min" << endl;
 
     // ----------------------------- Saving outputs ---------------------------
-    
     misc = {sigma_1, q_cap, (double) n_out_e, (double) n_out_i};
     save_state(p_e, n_active_e, p_i, n_active_i, i, misc, "_state");
     
@@ -371,8 +299,6 @@ int main(int argc, char* argv[])
     save_to_csv(v_cap_diag, "v_cap.csv");
     save_to_csv(n_active_e_diag, "n_active_e.csv");
     save_to_csv(n_active_i_diag, "n_active_i.csv");
-
-    save_to_csv(av_ke, "av_ke.csv");
 
     // ----------------------------- Finalizing -------------------------------
     delete_cross_sections_arrays();

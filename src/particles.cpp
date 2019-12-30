@@ -156,21 +156,27 @@ void boundaries_n(fmatrix & p, int & n_active, imatrix & lpos){
     double x, y;
     const double x_max = ((double) N_MESH_X - 1);
     const double y_max = ((double) N_MESH_Y - 1) * (DY / DX);
+	const double y_thr = ((double) N_THRUSTER - 1) * (DY / DX);
     
     for (int i = 0; i < n_active; i++)
     {
         x = p.val[i * 6 + 0];
         y = p.val[i * 6 + 1];
         
-        if (x < 0 || x > x_max || y > y_max)
+        if (x > x_max || y > y_max || (x < 0 && y < y_thr))
         {
             tbremoved.val[n_remove] = i;
             n_remove += 1;
 
-        } else if (y < 0) {
+        }
+		else if (y < 0) {
             p.val[i * 6 + 1] = - p.val[i * 6 + 1];
             p.val[i * 6 + 4] = - p.val[i * 6 + 4];
         }
+		else if (x < 0 && y >= y_thr) {
+			p.val[i * 6 + 0] = - p.val[i * 6 + 0];
+            p.val[i * 6 + 3] = - p.val[i * 6 + 3];
+		}
     }
     
     for (int i = n_remove - 1; i >= 0; i--)
@@ -179,14 +185,13 @@ void boundaries_n(fmatrix & p, int & n_active, imatrix & lpos){
     }
 }
 
-void boundaries_i(fmatrix & p, int & n_active, imatrix & lpos, int & n_removed_ob)
+void boundaries_ob_count(fmatrix & p, int & n_active, imatrix & lpos, int & n_removed_ob)
 {
 	n_removed_ob = 0;
 	int n_remove = 0;
 	static imatrix tbremoved(100000);
 
 	double x, y;
-	bool in_thr, in_sym;
 	const double x_max = ((double) N_MESH_X - 1);
 	const double y_max = ((double) N_MESH_Y - 1) * (DY / DX);
 	const double y_thr = ((double) N_THRUSTER - 1) * (DY / DX);
@@ -196,21 +201,23 @@ void boundaries_i(fmatrix & p, int & n_active, imatrix & lpos, int & n_removed_o
 		x = p.val[i * 6 + 0];
 		y = p.val[i * 6 + 1];
 
-		if (x < 0 || x > x_max || y > y_max)
+		if (x > x_max || y > y_max || (x < 0 && y < y_thr))
 		{
 			tbremoved.val[n_remove] = i;
 			n_remove += 1;
 
-			in_thr = (y <= y_thr) && (y > 0) && (x <= 0);
-			in_sym = y <= 0;
-
-			if(!in_thr && !in_sym && x > 0){
+			if(x > x_max || y > y_max){
 				n_removed_ob += 1;
 			}
 
-		} else if (y < 0) {
-			p.val[i * 6 + 1] = - p.val[i * 6 + 1];
-			p.val[i * 6 + 4] = - p.val[i * 6 + 4];
+		} 
+		else if (y < 0) {
+            p.val[i * 6 + 1] = - p.val[i * 6 + 1];
+            p.val[i * 6 + 4] = - p.val[i * 6 + 4];
+        }
+		else if (x < 0 && y >= y_thr) {
+			p.val[i * 6 + 0] = - p.val[i * 6 + 0];
+            p.val[i * 6 + 3] = - p.val[i * 6 + 3];
 		}
 
 	}

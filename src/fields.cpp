@@ -47,9 +47,9 @@ double ac_voltage_at_time(size_t i, double dt, double freq_hz, double amplitude,
  */
 void calculate_efield(fmatrix & efield_x, fmatrix & efield_y, fmatrix & phi, fmatrix & w_i, fmatrix & w_e, fmatrix & mesh_x , fmatrix & mesh_y, fmatrix & vmesh, imatrix & electrode_mask)
 {
-	int ip, im, jp, jm, e_mask;
+	int ip, im, jp, jm; //e_mask;
 	int n_mesh_x =  (int) mesh_x.n1, n_mesh_y =  (int) mesh_y.n2;
-	double signal_x, signal_y;
+	// double signal_x, signal_y;
 
 	for(int i = 0; i < n_mesh_x; i++){
         for(int j = 0; j < n_mesh_y; j++)
@@ -59,18 +59,19 @@ void calculate_efield(fmatrix & efield_x, fmatrix & efield_y, fmatrix & phi, fma
 			im = clamp(0, n_mesh_x - 1, i - 1);
 			jp = clamp(0, n_mesh_y - 1, j + 1);
 			jm = clamp(0, n_mesh_y - 1, j - 1);
-			e_mask = electrode_mask.val[i * n_mesh_y + j];
 
 			efield_x.val[i * n_mesh_y + j] = (phi.val[im * n_mesh_y + j] - phi.val[ip * n_mesh_y + j]) / (mesh_x.val[ip * n_mesh_y + j] - mesh_x.val[im * n_mesh_y + j]);
 			efield_y.val[i * n_mesh_y + j] = (phi.val[i * n_mesh_y + jm] - phi.val[i * n_mesh_y + jp]) / (mesh_y.val[i * n_mesh_y + jp] - mesh_y.val[i * n_mesh_y + jm]);
 
-			if(e_mask == 1 || e_mask == 2){
-				signal_x = 2 * i - ip - im;
-				signal_y = 2 * j - jp - jm;
+			// Problem with correction of the electric field: gives number of electrons different from xoopic
+			// e_mask = electrode_mask.val[i * n_mesh_y + j];
+			// if(e_mask == 1 || e_mask == 2){
+			// 	signal_x = 2 * i - ip - im;
+			// 	signal_y = 2 * j - jp - jm;
 
-				efield_x.val[i * n_mesh_y + j] += signal_x * GAMMA * (w_i.val[i * n_mesh_y + j] - w_e.val[i * n_mesh_y + j]) * (mesh_x.val[ip * n_mesh_y + j] - mesh_x.val[im * n_mesh_y + j]) / vmesh.val[i * n_mesh_y + j];
-				efield_y.val[i * n_mesh_y + j] += signal_y * GAMMA * (w_i.val[i * n_mesh_y + j] - w_e.val[i * n_mesh_y + j]) * (mesh_y.val[i * n_mesh_y + jp] - mesh_y.val[i * n_mesh_y + jm]) / vmesh.val[i * n_mesh_y + j];
-			}
+			// 	efield_x.val[i * n_mesh_y + j] += signal_x * GAMMA * (w_i.val[i * n_mesh_y + j] - w_e.val[i * n_mesh_y + j]) * (mesh_x.val[ip * n_mesh_y + j] - mesh_x.val[im * n_mesh_y + j]) / vmesh.val[i * n_mesh_y + j];
+			// 	efield_y.val[i * n_mesh_y + j] += signal_y * GAMMA * (w_i.val[i * n_mesh_y + j] - w_e.val[i * n_mesh_y + j]) * (mesh_y.val[i * n_mesh_y + jp] - mesh_y.val[i * n_mesh_y + jm]) / vmesh.val[i * n_mesh_y + j];
+			// }
         }
     }
 }
