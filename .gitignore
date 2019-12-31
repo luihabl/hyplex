@@ -2,6 +2,7 @@
 /build/
 /lib/hypre-2.16.0/*
 /output/**/*.csv
+/output/**/*.h5
 /output/**/*.txt
 /output/**/*.png
 /output/**/*.mp4
@@ -9,5 +10,6 @@
 /output/*.mp4
 /output/*.png
 /output/*.zip
+/input/**/*.h5
 /.vscode/
 *.DS_Store

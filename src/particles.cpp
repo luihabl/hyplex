@@ -141,7 +141,7 @@ double square_injection(double alpha, double freq, double dt, double duty_cycle,
 	double n_period = round(1 / (freq * dt));
 	double n_0 = round((duty_cycle) / (freq * dt));
 	
-	if(i % (int) n_period < (int) n_0){
+	if(i % (int) n_period > (int) (n_period - n_0)){ //if square injection does not work, check this
 		return (alpha / duty_cycle) * (dt / (Q * N_FACTOR)) * I_I;
 	}
 	return 0;

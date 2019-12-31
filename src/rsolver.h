@@ -44,14 +44,18 @@ public:
 public:
     // constructors and destructors
     rsolver(fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & vmesh, int n_neumann, int n_dirichlet);
+    rsolver(fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & vmesh);
     ~rsolver();
     
     // public methods
+    void late_init(int n_neumann, int n_dirichlet);
     void assemble();
     void solve(fmatrix & solution, fmatrix & voltages, fmatrix & w_i, fmatrix & w_e);
     void set_dirichlet_box(imatrix & box, int counter);
     void set_neumann_box(imatrix & box, int counter);
     int get_node_type(int i, int j, int ioff=0, int joff=0);
 };
+
+void setup_rsolver(rsolver & solver, fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & vmesh, imatrix & electrode_mask);
 
 #endif

@@ -1,7 +1,7 @@
 // Printing, saving and loading
 
-#ifndef UTIL_H
-#define UTIL_H
+#ifndef INPUTOUTPUT_H
+#define INPUTOUTPUT_H
 
 #include <string>
 #include <fstream>
@@ -9,20 +9,21 @@
 #include <iomanip>
 #include "fmatrix.h"
 #include "config.h"
-#include "util.h"
+#include "state_info.h"
+#include "input-output.h"
 
 using namespace std;
 
 void verbose_log(string message);
-void print_info(int i, int step_offset, fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i, double v_cap, int step_interval);
+void print_info(state_info state, int step_interval);
 void print_initial_info(double p_null_e, double p_null_i);
 void print_dsmc_info(int i, int n_active_n, int step_interval, int n_steps);
 
-void save_state(fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i,  int i, fmatrix & misc, string suffix);
+void save_state(fmatrix & p_e, fmatrix & p_i, state_info & state);
+void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state);
 void save_fields(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vmesh, string suffix);
-void load_state(fmatrix & p_e, int & n_active_e, fmatrix & p_i, int & n_active_i, int & step_offset, fmatrix & misc, string suffix);
-fmatrix load_csv(string file_path, char delim = ';', int cols = 2);
 
+fmatrix load_csv(string file_path, char delim = ';', int cols = 2);
 template <class T>
 void save_to_csv(tmatrix<T> & m, string name = "out.csv", int nrows = -1, int ncols = -1)
 {

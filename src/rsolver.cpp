@@ -40,6 +40,31 @@ rsolver::rsolver(fmatrix & _mesh_x, fmatrix & _mesh_y, fmatrix & _vmesh, int _n_
     inner_ur = {n_mesh_x - 2, n_mesh_y - 2};
 }
 
+rsolver::rsolver(fmatrix & _mesh_x, fmatrix & _mesh_y, fmatrix & _vmesh): mesh_x(_mesh_x), mesh_y(_mesh_y), vmesh(_vmesh){
+
+    MPI_Init(NULL, NULL);
+
+    n_mesh_x = (int) _mesh_x.n1;
+    n_mesh_y = (int) _mesh_y.n2;
+    n_input_dirichlet = 0;
+    n_solve = 0;
+
+    ll = ur = inner_ll = inner_ur = imatrix::zeros(2);
+    node_type = imatrix::zeros(n_mesh_x, n_mesh_y);
+    dirichlet_input = fmatrix::zeros(2 * n_mesh_x + 2 * n_mesh_y, 4);
+
+    inner_ll = {1, 1};
+    inner_ur = {n_mesh_x - 2, n_mesh_y - 2};
+}
+
+void rsolver::late_init(int _n_neumann, int _n_dirichlet){
+    n_neumann = _n_neumann;
+    n_dirichlet = _n_dirichlet;
+
+    dirichlet_boxes = imatrix::zeros(n_dirichlet, 4);
+    neumann_boxes = imatrix::zeros(n_neumann, 4);
+}
+
 rsolver::~rsolver(){
     HYPRE_StructGridDestroy(hypre_grid);
     HYPRE_StructStencilDestroy(hypre_stencil);
@@ -321,6 +346,52 @@ bool rsolver::in_box(int i, int j, int ill, int jll, int iur, int jur){
 }
 
 
+void setup_rsolver(rsolver & solver, fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & vmesh, imatrix & electrode_mask){
+    
+    int n_dirichlet = 0, n_neumann = 0;
 
+    if(OB_TYPE == "dirichlet"){
+        n_dirichlet = 3;
+        n_neumann   = 2;
+    }
+    if(OB_TYPE == "neumann"){
+        n_dirichlet = 1;
+        n_neumann   = 4;
+    }
+
+    solver.late_init(n_neumann, n_dirichlet);
+    
+    imatrix box_thruster        = {0, 0, 0, N_THRUSTER - 1};
+    imatrix box_top_thruster    = {0, N_THRUSTER, 0, N_MESH_Y - 2};
+    imatrix box_ob_top          = {0, N_MESH_Y - 1, N_MESH_X - 2, N_MESH_Y - 1};
+    imatrix box_ob_right        = {N_MESH_X - 1, 0, N_MESH_X - 1, N_MESH_Y - 1};
+    imatrix box_sym             = {1, 0, N_MESH_X - 2, 0};
+
+    if(OB_TYPE == "neumann"){
+        solver.set_dirichlet_box(box_thruster, 0);
+        solver.set_neumann_box(box_top_thruster, 0);
+        solver.set_neumann_box(box_ob_top, 1);
+        solver.set_neumann_box(box_ob_right, 2);
+        solver.set_neumann_box(box_sym, 3);
+    }
+
+    if(OB_TYPE == "dirichlet"){
+        
+        solver.set_neumann_box(box_sym, 0);
+        solver.set_neumann_box(box_top_thruster, 1);
+
+        solver.set_dirichlet_box(box_ob_top, 0);
+        solver.set_dirichlet_box(box_thruster, 1);
+        solver.set_dirichlet_box(box_ob_right, 2);
+            
+        electrode_mask.setbox_value(1, box_ob_top.val[0], box_ob_top.val[1], box_ob_top.val[2], box_ob_top.val[3]);
+        electrode_mask.setbox_value(1, box_ob_right.val[0], box_ob_right.val[1], box_ob_right.val[2], box_ob_right.val[3]);
+    }
+
+    electrode_mask.setbox_value(2, box_thruster.val[0], box_thruster.val[1], box_thruster.val[2], box_thruster.val[3]);
+
+    solver.assemble();
+
+}   
 
 

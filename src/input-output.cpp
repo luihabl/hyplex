@@ -1,5 +1,5 @@
 
-#include "util.h"
+#include "input-output.h"
 
 #include <iostream>
 #include <string>
@@ -10,8 +10,13 @@
 #include "fmatrix.h"
 #include "fmath.h"
 
+#include "state_info.h"
+#include "h5io.h"
+#include "H5Cpp.h"
+
 using namespace std;
 using namespace std::chrono;
+using namespace H5;
 
 void verbose_log(string message){
     #ifdef VERBOSE
@@ -33,17 +38,17 @@ void print_dsmc_info(int i, int n_active_n, int step_interval, int n_steps){
     }
 }
 
-void print_info(int i, int step_offset, fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i, double v_cap, int step_interval)
+void print_info(state_info state, int step_interval)
 {
     static high_resolution_clock::time_point t0;
-    if(i==0) t0 = high_resolution_clock::now();
-    if ((i + 1) % step_interval == 0 || i == 0)
+    if(state.step==state.step_offset) t0 = high_resolution_clock::now();
+    if ((state.step + 1) % step_interval == 0 || state.step == 0)
     {
-        printf("[%05.2f%%] ", (double) (100.0 * (i + 1 - step_offset) / N_STEPS));
-        printf("Step: %-8d ", i + 1);
-        printf("Active electrons: %-8d ", n_active_e);
-        printf("Active ions: %-8d ", n_active_i);
-        printf("Cap. voltage: %.4f V   ", v_cap);
+        printf("[%05.2f%%] ", (double) (100.0 * (state.step + 1 - state.step_offset) / N_STEPS));
+        printf("Step: %-8d ", state.step + 1);
+        printf("Active electrons: %-8d ", state.n_active_e);
+        printf("Active ions: %-8d ", state.n_active_i);
+        printf("Cap. voltage: %.4f V   ", state.phi_zero / K_PHI);
         printf("Loop time: %.2f ms ", (double) duration_cast<microseconds>(high_resolution_clock::now() - t0).count() / (1e3 * step_interval));
         printf("\n");
         t0 = high_resolution_clock::now();
@@ -95,65 +100,87 @@ fmatrix load_csv(string file_path, char delim, int cols)
     return data;
 }
 
-void save_state(fmatrix & p_e, int n_active_e, fmatrix & p_i, int n_active_i,  int step, fmatrix & misc, string suffix){
+void save_state(fmatrix & p_e, fmatrix & p_i, state_info & state){
     
     
     fmatrix p_e_corrected = DX * p_e;
-    for(int i = 0; i < n_active_e; i++){
+    for(int i = 0; i < state.n_active_e; i++){
         p_e_corrected.val[i * 6 + 3] = p_e_corrected.val[i * 6 + 3] / DT;
         p_e_corrected.val[i * 6 + 4] = p_e_corrected.val[i * 6 + 4] / DT;
         p_e_corrected.val[i * 6 + 5] = p_e_corrected.val[i * 6 + 5] / DT;
     }
-    save_to_csv(p_e_corrected, "p_e" + suffix + ".csv", n_active_e);
 
-    fmatrix p_i_corrected = DX * p_i;
-    for(int i = 0; i < n_active_i; i++){
+    fmatrix p_i_corrected =  DX * p_i;
+    for(int i = 0; i < state.n_active_i; i++){
         p_i_corrected.val[i * 6 + 3] = p_i_corrected.val[i * 6 + 3] / DT;
         p_i_corrected.val[i * 6 + 4] = p_i_corrected.val[i * 6 + 4] / DT;
         p_i_corrected.val[i * 6 + 5] = p_i_corrected.val[i * 6 + 5] / DT;
     }
-    save_to_csv(p_i_corrected, "p_i" + suffix + ".csv", n_active_i);
-    
-    fmatrix sim_state(1 + (int) misc.n1);
+
+    H5File file("output/state.h5", H5F_ACC_TRUNC);
    
-    sim_state.val[0] = (double) step;
-    for (int j = 1; j < (int) sim_state.n1; j++) sim_state.val[j] = misc.val[j - 1];
-   
-    save_to_csv(sim_state, "sim" + suffix + ".csv");
+    p_i_corrected.n1 = state.n_active_i;
+    DataSet p_i_dataset = create_dataset(file, p_i_corrected, "p_i", 2);
+
+    p_e_corrected.n1 = state.n_active_e;
+    DataSet p_e_dataset = create_dataset(file, p_e_corrected, "p_e", 2);
+
+    write_attribute(file, "Time [s]", (double) state.step * DT);
+    write_attribute(file, "Capacitor voltage [V]", state.phi_zero / K_PHI);
+    write_attribute(file, "Step", state.step);
+    write_attribute(file, "Capacitor charge [norm. C]", state.q_cap);
+    write_attribute(file, "Surface charge density [norm. C/m^2]", state.sigma_1);
     
-    verbose_log("State saved");
+    write_attribute(p_i_dataset, "Active ions", state.n_active_i);
+    write_attribute(p_i_dataset, "Removed ions", state.n_out_e);
+
+    write_attribute(p_e_dataset, "Active electrons", state.n_active_e);
+    write_attribute(p_e_dataset, "Removed electrons", state.n_out_e);
+
+    verbose_log("Saved state");
 }
 
-void load_state(fmatrix & p_e, int & n_active_e, fmatrix & p_i, int & n_active_i, int & step_offset, fmatrix & misc, string suffix){
+void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state){
 
-    fmatrix p_i_load = load_csv("output/p_i" + suffix + ".csv",',', 6);
-    fmatrix p_e_load = load_csv("output/p_e" + suffix + ".csv",',', 6);
+    H5File file("input/state.h5", H5F_ACC_RDONLY);
 
-    n_active_i = (int) p_i_load.n1;
-    n_active_e = (int) p_e_load.n1;
+    DataSet p_i_dataset = file.openDataSet("p_i");
+    DataSet p_e_dataset = file.openDataSet("p_e");
+
+    read_attribute(file, "Step", state.step_offset);
+    read_attribute(file, "Capacitor charge [norm. C]", state.q_cap);
+    read_attribute(file, "Surface charge density [norm. C/m^2]", state.sigma_1);
+    
+    read_attribute(p_i_dataset, "Active ions", state.n_active_i);
+    read_attribute(p_i_dataset, "Removed ions", state.n_out_e);
+
+    read_attribute(p_e_dataset, "Active electrons", state.n_active_e);
+    read_attribute(p_e_dataset, "Removed electrons", state.n_out_e);
+
+    fmatrix p_i_load = fmatrix::zeros(state.n_active_i, 6);
+    fmatrix p_e_load = fmatrix::zeros(state.n_active_e, 6);
+
+    p_i_dataset.read(p_i_load.val, PredType::NATIVE_DOUBLE);
+    p_e_dataset.read(p_e_load.val, PredType::NATIVE_DOUBLE);
 
     p_e_load = p_e_load / DX;
-    for(int i = 0; i < n_active_e; i++){
+    for(int i = 0; i < state.n_active_e; i++){
         p_e_load.val[i * 6 + 3] = p_e_load.val[i * 6 + 3] * DT;
         p_e_load.val[i * 6 + 4] = p_e_load.val[i * 6 + 4] * DT;
         p_e_load.val[i * 6 + 5] = p_e_load.val[i * 6 + 5] * DT;
     }
 
     p_i_load = p_i_load / DX;
-    for(int i = 0; i < n_active_i; i++){
+    for(int i = 0; i < state.n_active_i; i++){
         p_i_load.val[i * 6 + 3] = p_i_load.val[i * 6 + 3] * DT;
         p_i_load.val[i * 6 + 4] = p_i_load.val[i * 6 + 4] * DT;
         p_i_load.val[i * 6 + 5] = p_i_load.val[i * 6 + 5] * DT;
     }
 
-    for(int i=0; i < n_active_i * 6; i++) p_i.val[i] = p_i_load.val[i];
-    for(int i=0; i < n_active_e * 6; i++) p_e.val[i] = p_e_load.val[i];
+    for(int i=0; i < state.n_active_i * 6; i++) p_i.val[i] = p_i_load.val[i];
+    for(int i=0; i < state.n_active_e * 6; i++) p_e.val[i] = p_e_load.val[i];
 
-    fmatrix sim_state = load_csv("output/sim" + suffix + ".csv",',', 1);
-    step_offset = sim_state.val[0];
-    for(int i=1; i < (int) sim_state.n1; i++) misc.val[i - 1] = sim_state.val[i];
-    
-    verbose_log("State loaded: i: " + to_string(step_offset) + " Active electrons: " + to_string(n_active_e) + " Active ions: " + to_string(n_active_i));
+    verbose_log("Loaded state: Step: " + to_string(state.step_offset) + " Active electrons: " + to_string(state.n_active_e) + " Active ions: " + to_string(state.n_active_i));
 }
 
 void save_fields(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vmesh, string suffix){
