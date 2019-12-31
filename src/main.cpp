@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <sstream>
 #include <string>
+#include <map>
 
 #include "cross-sections.h"
 #include "config.h"
@@ -55,16 +56,15 @@ int main(int argc, char* argv[])
     // Doiagnostics variables
     verbose_log("Initializing diagnostics variables");
     fmatrix phi_av          = fmatrix::zeros(N_MESH_X, N_MESH_Y);
-    fmatrix efield_av_x     = fmatrix::zeros(N_MESH_X, N_MESH_Y);
-    fmatrix efield_av_y     = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix wmesh_e_av      = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix wmesh_i_av      = fmatrix::zeros(N_MESH_X, N_MESH_Y);
-    fmatrix kefield_i       = fmatrix::zeros(N_MESH_X, N_MESH_Y);
-    fmatrix kefield_e       = fmatrix::zeros(N_MESH_X, N_MESH_Y);
-    fmatrix v_cap_diag      = fmatrix::zeros(N_STEPS);
-    fmatrix n_active_e_diag = fmatrix::zeros(N_STEPS);
-    fmatrix n_active_i_diag = fmatrix::zeros(N_STEPS);
-    fmatrix av_ke           = fmatrix::zeros(N_STEPS);
+    
+    map<string, fmatrix> series;
+    series["time"]          = fmatrix::zeros(N_STEPS);
+    series["v_cap"]         = fmatrix::zeros(N_STEPS);
+    series["n_active_e"]    = fmatrix::zeros(N_STEPS);
+    series["n_active_i"]    = fmatrix::zeros(N_STEPS);
+    int n_points_series     = 0;
     
 	// Particle 1 - Electrons
     verbose_log("Initializing electrons variables");
@@ -191,23 +191,25 @@ int main(int argc, char* argv[])
         if(state.step % 10000 == 0) 
         {
             save_state(p_e, p_i, state);
-            // save_fields(phi, wmesh_e, wmesh_i, vmesh, "_state");
+            save_fields_snapshot(phi, wmesh_e, wmesh_i, vmesh, state, "");
         }
 
-        v_cap_diag.val[state.step - state.step_offset] = state.phi_zero / K_PHI;
-        n_active_e_diag.val[state.step - state.step_offset] = state.n_active_e;
-        n_active_i_diag.val[state.step - state.step_offset] = state.n_active_i;
+        if(state.step % 5 == 0){
+            series["time"].val[n_points_series] = state.step * DT;
+            series["v_cap"].val[n_points_series] = state.phi_zero / K_PHI;
+            series["n_active_i"].val[n_points_series] = state.n_active_i;
+            series["n_active_e"].val[n_points_series] = state.n_active_e;
+            n_points_series += 1;
+        }
 
         if(state.step % 20000 == 0) {
-            save_to_csv(v_cap_diag, "v_cap.csv", state.step - state.step_offset, 1);
-            save_to_csv(n_active_e_diag, "n_active_e.csv", state.step - state.step_offset, 1);
-            save_to_csv(n_active_i_diag, "n_active_i.csv", state.step - state.step_offset, 1);
+            save_series(series, n_points_series, "");
         }
 
         if(state.step > (double) 0.9 * N_STEPS){
             int i_av = average_field_over_period(phi_av, phi, RF_PERIOD_I, N_STEPS, state.step - state.step_offset);
             if(i_av == RF_PERIOD_I){
-                save_fields(phi_av, wmesh_e_av, wmesh_i_av, vmesh, "_av");
+                save_fields_snapshot(phi_av, wmesh_e_av, wmesh_i_av, vmesh, state, "_av");
             }
         }
         
@@ -218,14 +220,9 @@ int main(int argc, char* argv[])
     std::cout << "Total execution duration: " << (double) duration.count() / (1.0e6 * 60) << " min" << endl;
 
     // ----------------------------- Saving outputs ---------------------------
-    // fmatrix misc = {state.sigma_1, state.q_cap, (double) state.n_out_e, (double) state.n_out_i};
-    // save_state(p_e, n_active_e, p_i, n_active_i, i, misc, "_state");
-    
-    save_fields(phi, wmesh_e, wmesh_i, vmesh, "_state");
-    
-    save_to_csv(v_cap_diag, "v_cap.csv");
-    save_to_csv(n_active_e_diag, "n_active_e.csv");
-    save_to_csv(n_active_i_diag, "n_active_i.csv");
+    save_state(p_e, p_i, state);
+    save_fields_snapshot(phi, wmesh_e, wmesh_i, vmesh, state, "");
+    save_series(series, n_points_series, "");
 
     // ----------------------------- Finalizing -------------------------------
     delete_cross_sections_arrays();

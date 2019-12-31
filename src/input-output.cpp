@@ -6,6 +6,7 @@
 #include <sstream>
 #include <fstream>
 #include <chrono>
+#include <map>
 
 #include "fmatrix.h"
 #include "fmath.h"
@@ -183,16 +184,38 @@ void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state){
     verbose_log("Loaded state: Step: " + to_string(state.step_offset) + " Active electrons: " + to_string(state.n_active_e) + " Active ions: " + to_string(state.n_active_i));
 }
 
-void save_fields(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vmesh, string suffix){
-        
+void save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vmesh, state_info & state, string suffix){
+    
+    H5File file("output/fields" + suffix + ".h5", H5F_ACC_TRUNC);
+
+    write_attribute(file, "Time [s]", (double) state.step * DT);
+    write_attribute(file, "Step", state.step);
+
     fmatrix phi_corrected = phi * (M_EL * pow(DX, 2))/(Q * pow(DT, 2));
-    save_to_csv(phi_corrected, "phi" + suffix + ".csv");
+    create_dataset(file, phi_corrected, "phi", 2);
 
     fmatrix dens_e = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_e / vmesh;
-    save_to_csv(dens_e, "dens_e" + suffix + ".csv");
+    create_dataset(file, dens_e, "dens_e", 2);
 
     fmatrix dens_i = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_i / vmesh;
-    save_to_csv(dens_i, "dens_i" + suffix + ".csv");
+    create_dataset(file, dens_i, "dens_i", 2);
+
+    verbose_log("Saved fields snapshot");
 }
 
+void save_series(map<string, fmatrix> & series, int & n_points, state_info state, string suffix){
 
+    H5File file("output/series" + suffix + ".h5", H5F_ACC_TRUNC);
+
+    write_attribute(file, "Time [s]", (double) state.step * DT);
+    write_attribute(file, "Step", state.step);
+    
+    map<string, fmatrix>::iterator cursor;
+
+    for(cursor = series.begin(); cursor!=series.end(); cursor++){
+        (cursor->second).n1 = n_points;
+        create_dataset(file, (cursor->second), cursor->first, 2);
+    }
+
+    verbose_log("Saved time series");
+}
