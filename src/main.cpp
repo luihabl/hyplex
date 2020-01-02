@@ -203,7 +203,7 @@ int main(int argc, char* argv[])
         }
 
         if(state.step % 20000 == 0) {
-            save_series(series, n_points_series, "");
+            save_series(series, n_points_series, state, "");
         }
 
         if(state.step > (double) 0.9 * N_STEPS){
@@ -222,7 +222,7 @@ int main(int argc, char* argv[])
     // ----------------------------- Saving outputs ---------------------------
     save_state(p_e, p_i, state);
     save_fields_snapshot(phi, wmesh_e, wmesh_i, vmesh, state, "");
-    save_series(series, n_points_series, "");
+    save_series(series, n_points_series, state, "");
 
     // ----------------------------- Finalizing -------------------------------
     delete_cross_sections_arrays();
