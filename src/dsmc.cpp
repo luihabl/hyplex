@@ -12,8 +12,8 @@
 
 void run_dsmc(fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & vmesh, fmatrix & dens_n){
     
-    int n_active_n;
-    fmatrix p_n = fmatrix::zeros(N_MAX_PARTICLES, 6);
+    int n_active_n = 0;
+    fmatrix p_n             = fmatrix::zeros(N_MAX_PARTICLES, 6);
     imatrix lpos_n          = imatrix::zeros(N_MAX_PARTICLES, 2);
     fmatrix wmesh_n         = fmatrix::zeros(N_MESH_X, N_MESH_Y);
     fmatrix wmesh_n_av      = fmatrix::zeros(N_MESH_X, N_MESH_Y);
@@ -33,7 +33,7 @@ void run_dsmc(fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & vmesh, fmatrix & den
     
     wmesh_n = (N_FACTOR_DSMC / N_FACTOR) * wmesh_n_av;
     dens_n = (4.0 / pow(DX, 2)) *  N_FACTOR * wmesh_n / vmesh;
-        
-    save_to_csv(dens_n, "dens_n.csv");
+
+    save_fmatrix(dens_n, OUTPUT_PATH + "dens_n.h5", "dens_n");
 }
 

@@ -12,4 +12,5 @@
 /output/*.zip
 /input/**/*.h5
 /.vscode/
+**/__pycache__/
 *.DS_Store

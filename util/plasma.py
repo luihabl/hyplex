@@ -13,6 +13,13 @@ def voltage_self_bias(t_e_ev, v_rf, m_i, alpha):
     l3 = - np.log(alpha)
     return t_e_ev * (l1 + l2 + l3) 
 
+def phi_const_rho(rho, x, boundaries=[0,0]):
+    L = x.max()
+    c0 = - rho / (2 * epsilon_0)
+    c1 = rho * L / (2 * epsilon_0) - boundaries[0] / L + boundaries[1] / L
+    c2 = boundaries[0]
+    return c0 * x**2 + c1 * x + c2 
+
 def debye_length(t_e_ev, n_0):
     return np.sqrt(epsilon_0 * e * t_e_ev / (e**2 * n_0))
 

@@ -219,3 +219,16 @@ void save_series(map<string, fmatrix> & series, int & n_points, state_info state
 
     verbose_log("Saved time series");
 }
+
+void save_fmatrix(fmatrix & m, string filename, string dataname){
+    H5File file(filename, H5F_ACC_TRUNC);
+    create_dataset(file, m, dataname, 2);
+    verbose_log("Saved " + filename + "/" + dataname);
+}
+
+void load_fmatrix(fmatrix & m, string filename, string dataname){
+    H5File file(filename, H5F_ACC_RDONLY);
+    DataSet ds = file.openDataSet(dataname);
+    ds.read(m.val, PredType::NATIVE_DOUBLE);
+    verbose_log("Loaded " + filename + "/" + dataname);
+}
