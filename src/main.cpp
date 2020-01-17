@@ -20,7 +20,7 @@
 #include "input-output.h"
 #include "num-tools.h"
 #include "dsmc.h"
-#include "state_info.h"
+#include "state-info.h"
 
 #define CONFIG_PATH "input/config/config.ini"
 
@@ -206,8 +206,10 @@ int main(int argc, char* argv[])
             save_series(series, n_points_series, state, "");
         }
 
-        if(state.step > (double) 0.9 * N_STEPS){
+        if(state.step - state.step_offset > 0){
             int i_av = average_field_over_period(phi_av, phi, RF_PERIOD_I, N_STEPS, state.step - state.step_offset);
+            average_field(wmesh_e_av, wmesh_e, state.step - state.step_offset);
+            average_field(wmesh_i_av, wmesh_i, state.step - state.step_offset);
             if(i_av == RF_PERIOD_I){
                 save_fields_snapshot(phi_av, wmesh_e_av, wmesh_i_av, vmesh, state, "_av");
             }

@@ -10,7 +10,7 @@
 #include <map>
 #include "fmatrix.h"
 #include "config.h"
-#include "state_info.h"
+#include "state-info.h"
 #include "input-output.h"
 
 using namespace std;

@@ -11,7 +11,7 @@
 #include "fmatrix.h"
 #include "fmath.h"
 
-#include "state_info.h"
+#include "state-info.h"
 #include "h5io.h"
 #include "H5Cpp.h"
 
