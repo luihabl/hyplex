@@ -7,8 +7,8 @@ hypre_dir=hypre-2.16.0
 # LDFLAGS = -Llib/$(hypre_dir)/src/hypre/lib -lHYPRE -L/usr/lib/x86_64-linux-gnu/hdf5/serial /usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5_hl_cpp.a /usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5_cpp.a /usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5_cpp.a /usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5_hl.a /usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5.a
 # CXXFLAGS = -Ilib -Ilib/$(hypre_dir)/src/hypre/include -I/usr/include/hdf5/serial -lpthread -lsz -lz -ldl -std=c++11 -O3 -march=native -Wall -D VERBOSE
 
-LDFLAGS = -L/usr/local/lib -Llib/$(hypre_dir)/src/hypre/lib -lmpi -lHYPRE -Wl,-rpath -Wl,/usr/local/lib -Wl,--enable-new-dtags
-CXXFLAGS = -I/usr/local/include -Ilib -Ilib/$(hypre_dir)/src/hypre/include -pthread -std=c++11 -O3 -march=native -Wall -D VERBOSE
+LDFLAGS = -L/usr/local/lib -Llib/$(hypre_dir)/src/hypre/lib -lmpi -lHYPRE
+CXXFLAGS = -I/usr/local/include -Ilib -Ilib/$(hypre_dir)/src/hypre/include -std=c++11 -O3 -march=native -Wall -D VERBOSE
 
 src = $(wildcard $(sdr)/*.cpp)
 srn = $(src:src/%=%)

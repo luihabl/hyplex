@@ -8,12 +8,10 @@ import matplotlib.animation as animation
 
 import pandas as pd
 import numpy as np
-import os
+import h5py
+import os, sys
 
 from scipy.constants import m_e, e, epsilon_0, k
-
-anim_folder = r'anim/'
-
 
 def plot_field(field):
     fig, axes = plt.subplots(nrows=1, figsize=(10, 4))
@@ -46,12 +44,7 @@ def plot_scatter(x, y, color='white', background='dark'):
     plt.tight_layout()
     plt.show()
     
-def animate(frame):
-    global data, image
-    image.set_array(data[frame])
-    return image
-
-    
+        
 def load_files():
 
     def num(s):
@@ -65,42 +58,122 @@ def load_files():
     for f in files: 
         data.append(np.transpose(pd.read_csv(anim_folder + f, header=None).values))
     
-
-load_files()
-
-fig, axes = plt.subplots(nrows=1, figsize=(10, 4))
-
-# image = axes.imshow(all_data[0], vmin=0, vmax=1)
-vmin = 1e100
-vmax = 0
-
-for d in data:
-    if vmax < d.max().max(): vmax = d.max()
-    if vmin > d.min().min(): vmin = d.min() 
-
-image = axes.imshow(data[0], cmap='plasma', origin='lower', vmin=vmin*5, vmax=vmax*0.5)
-
-divider0 = make_axes_locatable(axes)
-cax0 = divider0.append_axes("right", size="1%", pad=0.1)
-fig.colorbar(image, ax=axes, cax=cax0)
+def load_dataset(h5_file, key):
+    try:
+        data = h5_file[key][()]
+        if data.shape[1] > 1:
+            data = data.transpose()
+        return data
+    except:
+        print('failed to load ' + h5_file.filename + ' / ' + key)
+        return None
+        
+def load_attribute(h5_file, key, attr_name):
+    return h5_file[key].attrs[attr_name]
 
 
-animation = FuncAnimation(
-    # Your Matplotlib Figure object
-    fig,
-    # The function that does the updating of the Figure
-    animate,
-    # Frame information (here just frame number)
-    np.arange(758),
-    # Extra arguments to the animate function
-    fargs=[],
-    # Frame-time in ms; i.e. for a given frame-rate x, 1000/x
-    interval=1000 / 30
-)
+def load_file_data(file_path):
+    d = []
+    t = []
+    file = h5py.File(file_path, 'r')
+    for k in file.keys():
+        d.append(load_dataset(file, k))
+        t.append(load_attribute(file, k, 'Time [s]')[0])
+    return d, t
 
-animation.save("anim.mp4", dpi=300)
 
-# if __name__=='__main__':
+def animate(frame, image, axes, data, t):
+    print(frame)
+    image.set_array(data[frame])
+    axes.set_title('Time: {0:.2e} s'.format(t[frame] - t[0]))
+    return image
+
+def animate_line(frame, line, axes, data, t):
+    print(frame)
+    line.set_ydata(data[frame][0:64,:].mean(axis=0))
+    axes.set_title('Time: {0:.2e} s'.format(t[frame] - t[0]))
+    return (line,)
+       
+    
+def make_line_anim(file_path):
+    data, t = load_file_data(file_path)
+    data = data[::5]
+    t = t[::5]
+    
+    fig, axes = plt.subplots(nrows=1)
+    line, = axes.plot(data[0][0:64,:].mean(axis=0))
+    # image = axes.imshow(all_data[0], vmin=0, vmax=1)
+    vmin = 1e100
+    vmax = 0
+    
+    for d in data:
+        if vmax < d[0:64,:].mean(axis=0).max().max(): vmax = d[0:64,:].mean(axis=0).max()
+        if vmin > d[0:64,:].mean(axis=0).min().min(): vmin = d[0:64,:].mean(axis=0).min()
+
+    axes.set_ylim(vmin, vmax)
+    axes.set_title('Time: {0:.2e} s'.format(t[0] - t[0]))
+    
+    animation = FuncAnimation(
+        # Your Matplotlib Figure object
+        fig,
+        # The function that does the updating of the Figure
+        animate_line,
+        # Frame information (here just frame number)
+        np.arange(2000),
+        # Extra arguments to the animate function
+        fargs=[line, axes, data, t],
+        # Frame-time in ms; i.e. for a given frame-rate x, 1000/x
+        interval=1000 / 60
+    )
+    
+    animation.save(file_path.split('.')[0] + '_line' + '.mp4', dpi=150)
+
+    
+def make_anim(file_path):
+    
+    data, t = load_file_data(file_path)
+    data = data[::10]
+    t = t[::10]
+    
+    fig, axes = plt.subplots(nrows=1, figsize=(10, 4))
+    # image = axes.imshow(all_data[0], vmin=0, vmax=1)
+    vmin = 1e100
+    vmax = 0
+    
+    for d in data:
+        if vmax < d.max().max(): vmax = d.max()
+        if vmin > d.min().min(): vmin = d.min() 
+    
+    image = axes.imshow(data[0], cmap='seismic', origin='lower', vmin=vmin, vmax=vmax)
+    axes.set_title('Time: {0:.2e} s'.format(t[0] - t[0]))
+    
+    divider0 = make_axes_locatable(axes)
+    cax0 = divider0.append_axes("right", size="1%", pad=0.1)
+    fig.colorbar(image, ax=axes, cax=cax0)
+    
+    
+    animation = FuncAnimation(
+        # Your Matplotlib Figure object
+        fig,
+        # The function that does the updating of the Figure
+        animate,
+        # Frame information (here just frame number)
+        np.arange(1000),
+        # Extra arguments to the animate function
+        fargs=[image, axes, data, t],
+        # Frame-time in ms; i.e. for a given frame-rate x, 1000/x
+        interval=1000 / 30
+    )
+    
+    animation.save(file_path.split('.')[0] + '.mp4', dpi=300)
+
+
+    
+    
+    
+   
+
+
     
 
 

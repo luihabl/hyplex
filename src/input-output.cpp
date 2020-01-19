@@ -7,6 +7,7 @@
 #include <fstream>
 #include <chrono>
 #include <map>
+#include <sys/stat.h>
 
 #include "fmatrix.h"
 #include "fmath.h"
@@ -133,10 +134,10 @@ void save_state(fmatrix & p_e, fmatrix & p_i, state_info & state){
     write_attribute(file, "Surface charge density [norm. C/m^2]", state.sigma_1);
     
     write_attribute(p_i_dataset, "Active ions", state.n_active_i);
-    write_attribute(p_i_dataset, "Removed ions", state.n_out_e);
+    write_attribute(p_i_dataset, "Removed ions", state.n_out_ob_i);
 
     write_attribute(p_e_dataset, "Active electrons", state.n_active_e);
-    write_attribute(p_e_dataset, "Removed electrons", state.n_out_e);
+    write_attribute(p_e_dataset, "Removed electrons", state.n_out_ob_e);
 
     verbose_log("Saved state");
 }
@@ -153,10 +154,10 @@ void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state){
     read_attribute(file, "Surface charge density [norm. C/m^2]", state.sigma_1);
     
     read_attribute(p_i_dataset, "Active ions", state.n_active_i);
-    read_attribute(p_i_dataset, "Removed ions", state.n_out_e);
+    read_attribute(p_i_dataset, "Removed ions", state.n_out_ob_e);
 
     read_attribute(p_e_dataset, "Active electrons", state.n_active_e);
-    read_attribute(p_e_dataset, "Removed electrons", state.n_out_e);
+    read_attribute(p_e_dataset, "Removed electrons", state.n_out_ob_e);
 
     fmatrix p_i_load = fmatrix::zeros(state.n_active_i, 6);
     fmatrix p_e_load = fmatrix::zeros(state.n_active_e, 6);
@@ -218,6 +219,20 @@ void save_series(map<string, fmatrix> & series, int & n_points, state_info state
     }
 
     verbose_log("Saved time series");
+}
+
+void save_field_series(fmatrix & field, state_info state, double conversion_constant, string suffix){
+    H5File file;
+    struct stat buffer;
+    if(stat (("output/fseries" + suffix + ".h5").c_str(), &buffer) == 0){
+        file = H5File("output/fseries" + suffix + ".h5", H5F_ACC_RDWR);
+    } else {
+        file = H5File("output/fseries" + suffix + ".h5", H5F_ACC_TRUNC);
+    }
+    
+    fmatrix field_corrected = conversion_constant * field;
+    DataSet field_dataset = create_dataset(file, field_corrected, to_string(state.step), 2);
+    write_attribute(field_dataset, "Time [s]", (double) state.step * DT);  
 }
 
 void save_fmatrix(fmatrix & m, string filename, string dataname){

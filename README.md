@@ -19,15 +19,7 @@ Download HYPRE and extract it in the `/lib/` folder, then build the library in t
 Compile with the `-D VERBOSE` flag in the variable `CXXFLAGS` to print more information during runtime.
 
 ## To do
-
-- Inject electron in pulses. The magnitudes must always obey $\bar{I}_e \geq I_i$. Electron pulse shape obeys Boltzmann electron relation with $\phi = V_0\sin(\omega t) + V_{bias}$. Here $n_0$ is calculated from the maxwellian flux from the ion current and $V_{bias}$ should make the voltage to be always above zero and guarantee that the average electron current is higher than the ion current. Beyond that, electrons should have a drift velocity which is a parameter in the code
-    - Why are we losing all electrons? 
-    - Understand better the injection of the electrons, maybe there is a better way?
-
-
-- ~~Read paper about the capacitor coupled to the walls of the chamber~~ Is there a simpler way to implement the simultaneous solution of Poisson and the circuit? 
-- ~~Apply the external capacitor strategy. Electrons and ions that leave the domain charge a capacitor; reflect electrons which have $E_k < V_{cap}$. It's kind of $E_{crit} = V$~~
-  
+  ?
 Backlog:
 
 - Configuration file with expressions, possible to parametrize variables with plasma characteristics (e.g. Debye lenght) => use a big unordered_map for parameters and at the beggining of each loop use a dummy variable to decrease the access times

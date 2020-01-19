@@ -64,6 +64,15 @@ int main(int argc, char* argv[])
     series["v_cap"]         = fmatrix::zeros(N_STEPS);
     series["n_active_e"]    = fmatrix::zeros(N_STEPS);
     series["n_active_i"]    = fmatrix::zeros(N_STEPS);
+    
+    series["I_out_ob_e"]        = fmatrix::zeros(N_STEPS);
+    series["I_out_ob_i"]        = fmatrix::zeros(N_STEPS);
+    series["I_out_thr_e"]       = fmatrix::zeros(N_STEPS);
+    series["I_out_thr_i"]       = fmatrix::zeros(N_STEPS);
+    series["I_in_thr_e"]        = fmatrix::zeros(N_STEPS);
+    series["I_in_thr_i"]        = fmatrix::zeros(N_STEPS);
+    
+    
     int n_points_series     = 0;
     
 	// Particle 1 - Electrons
@@ -148,10 +157,10 @@ int main(int argc, char* argv[])
         solver.solve(phi_poisson, voltages, wmesh_i, wmesh_e);
         
         state.sigma_0 = state.sigma_1;
-        state.phi_zero = calculate_phi_zero(state.sigma_1, state.n_out_i -  state.n_out_e, state.q_cap, sigma_laplace, phi_poisson, mesh_x, mesh_y, wmesh_e, wmesh_i, vmesh, electrode_mask);
+        state.phi_zero = calculate_phi_zero(state.sigma_1, state.n_out_ob_i -  state.n_out_ob_e, state.q_cap, sigma_laplace, phi_poisson, mesh_x, mesh_y, wmesh_e, wmesh_i, vmesh, electrode_mask);
         
-        state.sigma_1 = calculate_sigma(state.sigma_0, state.phi_zero, state.n_out_i -  state.n_out_e, state.q_cap);
-        state.q_cap = calculate_cap_charge(state.sigma_1, state.sigma_0, state.q_cap, state.n_out_i -  state.n_out_e);
+        state.sigma_1 = calculate_sigma(state.sigma_0, state.phi_zero, state.n_out_ob_i -  state.n_out_ob_e, state.q_cap);
+        state.q_cap = calculate_cap_charge(state.sigma_1, state.sigma_0, state.q_cap, state.n_out_ob_i -  state.n_out_ob_e);
 
         phi = phi_poisson + (state.phi_zero * phi_laplace);
 
@@ -167,8 +176,8 @@ int main(int argc, char* argv[])
         move_e(p_e, state.n_active_e, efield_x_at_p_e, efield_y_at_p_e);
 
         // // Step 4: particle loss at boundaries
-        if(state.step % K_SUB == 0) boundaries_ob_count(p_i, state.n_active_i, lpos_i, state.n_out_i);
-        boundaries_ob_count(p_e, state.n_active_e, lpos_e, state.n_out_e);
+        if(state.step % K_SUB == 0) boundaries_ob_count(p_i, state.n_active_i, lpos_i, state.n_out_ob_i, state.n_out_thr_i);
+        boundaries_ob_count(p_e, state.n_active_e, lpos_e, state.n_out_ob_e, state.n_out_thr_e);
 
         // Step 5: particles injection
         if(state.step % K_SUB == 0) add_flux_particles(p_i, state.n_active_i, T_I, V_DRIFT_I, M_I, n_inj_i, K_SUB);
@@ -194,17 +203,31 @@ int main(int argc, char* argv[])
             save_fields_snapshot(phi, wmesh_e, wmesh_i, vmesh, state, "");
         }
 
-        if(state.step % 5 == 0){
+        if(state.step % 1 == 0){
             series["time"].val[n_points_series] = state.step * DT;
             series["v_cap"].val[n_points_series] = state.phi_zero / K_PHI;
             series["n_active_i"].val[n_points_series] = state.n_active_i;
             series["n_active_e"].val[n_points_series] = state.n_active_e;
+            
+            series["I_out_ob_e"].val[n_points_series] = state.n_out_ob_e * N_FACTOR * Q / DT;
+            series["I_out_ob_i"].val[n_points_series] = state.n_out_ob_i * N_FACTOR * Q / DT;
+            series["I_out_thr_e"].val[n_points_series] = state.n_out_thr_e * N_FACTOR * Q / DT;
+            series["I_out_thr_i"].val[n_points_series] = state.n_out_thr_i * N_FACTOR * Q / DT;
+            series["I_in_thr_e"].val[n_points_series] = n_inj_e * N_FACTOR * Q / DT;
+            series["I_in_thr_i"].val[n_points_series] = n_inj_i * N_FACTOR * Q / DT;
             n_points_series += 1;
         }
 
         if(state.step % 20000 == 0) {
             save_series(series, n_points_series, state, "");
         }
+        
+//        if(state.step % 1 == 0) {
+//            fmatrix dens_i = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_i / vmesh;
+//            save_field_series(dens_i, state, 1, "_dens_i");
+//            fmatrix dens_e = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_e / vmesh;
+//            save_field_series(dens_e, state, 1, "_dens_e");
+//        }
 
         if(state.step - state.step_offset > 0){
             int i_av = average_field_over_period(phi_av, phi, RF_PERIOD_I, N_STEPS, state.step - state.step_offset);

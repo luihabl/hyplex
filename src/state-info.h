@@ -13,8 +13,10 @@ struct state_info{
     // Particle variables
     int n_active_e          = 0;
     int n_active_i          = 0;
-    int n_out_e             = 0;
-    int n_out_i             = 0;
+    int n_out_ob_e          = 0;
+    int n_out_ob_i          = 0;
+    int n_out_thr_e         = 0;
+    int n_out_thr_i         = 0;
 
     // State variables
     int step                = 0;

@@ -12,7 +12,7 @@ double balanced_injection(double old_n_inj, double rate_constant, fmatrix & wmes
 double pulsed_injection(double k_inj, double v_sb, double v_rf, double temp_e, double omega_i, int i);
 double square_injection(double alpha, double freq, double dt, double duty_cycle, int i);
 
-void boundaries_ob_count(fmatrix & p, int & n_active, imatrix & lpos, int & n_removed);
+void boundaries_ob_count(fmatrix & p, int & n_active, imatrix & lpos, int & n_removed_ob, int & n_removed_thr);
 void boundaries_e(fmatrix & p, int & n_active, imatrix & lpos, int n_out_i);
 void boundaries_e_cap(fmatrix & p, int & n_active, imatrix & lpos, int & n_out_e, double v_cap, fmatrix & phi, fmatrix & mesh_x, fmatrix & mesh_y);
 void boundaries_n(fmatrix & p, int & n_active, imatrix & lpos);

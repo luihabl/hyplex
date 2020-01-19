@@ -185,9 +185,10 @@ void boundaries_n(fmatrix & p, int & n_active, imatrix & lpos){
     }
 }
 
-void boundaries_ob_count(fmatrix & p, int & n_active, imatrix & lpos, int & n_removed_ob)
+void boundaries_ob_count(fmatrix & p, int & n_active, imatrix & lpos, int & n_removed_ob, int & n_removed_thr)
 {
 	n_removed_ob = 0;
+    n_removed_thr = 0;
 	int n_remove = 0;
 	static imatrix tbremoved(100000);
 
@@ -209,6 +210,10 @@ void boundaries_ob_count(fmatrix & p, int & n_active, imatrix & lpos, int & n_re
 			if(x > x_max || y > y_max){
 				n_removed_ob += 1;
 			}
+            
+            if(y < y_thr){
+                n_removed_thr += 1;
+            }
 
 		} 
 		else if (y < 0) {
