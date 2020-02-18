@@ -11,12 +11,14 @@ then
     module load hdf5/1.10.1
     module load hypre/2.11.1
     
+    source ~/.bashrc
+
     make machine=zoidberg
 
 elif [ "$machine" == "" ]
 then
     echo "Compiling for other machines"
-    
+
     make machine=others
 fi
 

@@ -5,7 +5,7 @@ hypre_dir=hypre-2.16.0
 
 ifeq ($(machine),zoidberg)
   CC = g++
-  LDFLAGS = -lmpi -lHYPRE
+  LDFLAGS = -lHYPRE -lmpi 
   CXXFLAGS = -Ilib -std=c++11 -O3 -march=native -Wall -D VERBOSE
 else
   # CC = mpic++
