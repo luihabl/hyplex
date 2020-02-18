@@ -5,8 +5,9 @@ hypre_dir=hypre-2.16.0
 
 ifeq ($(machine),zoidberg)
   CC = g++
-  LDFLAGS = -lHYPRE -lmpi -lmpi_cxx -lhdf5 -lhdf5_hl_cpp -lhdf5_cpp -lhdf5_hl -lhdf5 
-  CXXFLAGS = -Ilib -I$(HDF5INCLUDE) -I$(MPI_INCLUDE) -I$(HYPREINCLUDE) -lpthread -lz -ldl -lm -std=c++11 -O3 -march=native -Wall -D VERBOSE 
+  #CC=h5c++
+  LDFLAGS = -L/usr/local/lib -lHYPRE -lmpi -lmpi_cxx -lhdf5 -lhdf5_hl_cpp -lhdf5_cpp -lhdf5_hl -lhdf5
+  CXXFLAGS = -I/usr/local/include -Ilib -I$(HDF5INCLUDE) -I$(MPI_INCLUDE) -I$(HYPREINCLUDE) -lpthread -lz -ldl -lm -std=c++11 -O3 -march=native -Wall -D VERBOSE 
 else
   # CC = mpic++
   # LDFLAGS = -Llib/$(hypre_dir)/src/hypre/lib -lHYPRE -L/usr/lib/x86_64-linux-gnu/hdf5/serial /usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5_hl_cpp.a /usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5_cpp.a /usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5_cpp.a /usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5_hl.a /usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5.a

@@ -30,7 +30,6 @@ using namespace std::chrono;
 // ----------------------------- Main function --------------------------------
 int main(int argc, char* argv[])
 {
-
     // ------------------- Loading configuration ------------------------------
 
     load_config_file(argv[1] == NULL ? CONFIG_PATH : argv[1]);
@@ -101,8 +100,7 @@ int main(int argc, char* argv[])
     verbose_log("Initializing mesh");
     init_mesh(mesh_x,  mesh_y, A_X, A_Y, N_MESH_X, N_MESH_Y);
     init_volume_mesh(vmesh, mesh_x, mesh_y);
-
-
+    	
     // ----------------------------- Solver -----------------------------------
     verbose_log("Initializing solver");
 
