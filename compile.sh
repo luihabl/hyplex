@@ -8,10 +8,8 @@ then
     echo "Compiling for zoidberg"
     
     module load openmpi/4.0.2
-    module load hdf5/1.10.1
+    module load hdf5-openmpi-4.0.2/1.10.5
     module load hypre/2.11.1
-    
-    source ~/.bashrc
 
     make machine=zoidberg
 
