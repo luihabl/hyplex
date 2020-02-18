@@ -6,7 +6,7 @@ hypre_dir=hypre-2.16.0
 ifeq ($(machine),zoidberg)
   CC = g++
   LDFLAGS = -lmpi -lHYPRE
-  CXXFLAGS = -std=c++11 -O3 -march=native -Wall -D VERBOSE
+  CXXFLAGS = -Ilib -std=c++11 -O3 -march=native -Wall -D VERBOSE
 else
   # CC = mpic++
   # LDFLAGS = -Llib/$(hypre_dir)/src/hypre/lib -lHYPRE -L/usr/lib/x86_64-linux-gnu/hdf5/serial /usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5_hl_cpp.a /usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5_cpp.a /usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5_cpp.a /usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5_hl.a /usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5.a
