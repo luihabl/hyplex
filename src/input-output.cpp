@@ -119,7 +119,7 @@ void save_state(fmatrix & p_e, fmatrix & p_i, state_info & state){
         p_i_corrected.val[i * 6 + 5] = p_i_corrected.val[i * 6 + 5] / DT;
     }
 
-    H5File file("output/state.h5", H5F_ACC_TRUNC);
+    H5File file(OUTPUT_PATH + "state.h5", H5F_ACC_TRUNC);
    
     p_i_corrected.n1 = state.n_active_i;
     DataSet p_i_dataset = create_dataset(file, p_i_corrected, "p_i", 2);
@@ -144,7 +144,7 @@ void save_state(fmatrix & p_e, fmatrix & p_i, state_info & state){
 
 void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state){
 
-    H5File file("input/state.h5", H5F_ACC_RDONLY);
+    H5File file(INPUT_PATH + "state.h5", H5F_ACC_RDONLY);
 
     DataSet p_i_dataset = file.openDataSet("p_i");
     DataSet p_e_dataset = file.openDataSet("p_e");
@@ -187,7 +187,7 @@ void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state){
 
 void save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vmesh, state_info & state, string suffix){
     
-    H5File file("output/fields" + suffix + ".h5", H5F_ACC_TRUNC);
+    H5File file(OUTPUT_PATH + "fields" + suffix + ".h5", H5F_ACC_TRUNC);
 
     write_attribute(file, "Time [s]", (double) state.step * DT);
     write_attribute(file, "Step", state.step);
@@ -206,7 +206,7 @@ void save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, f
 
 void save_series(map<string, fmatrix> & series, int & n_points, state_info state, string suffix){
 
-    H5File file("output/series" + suffix + ".h5", H5F_ACC_TRUNC);
+    H5File file(OUTPUT_PATH + "series" + suffix + ".h5", H5F_ACC_TRUNC);
 
     write_attribute(file, "Time [s]", (double) state.step * DT);
     write_attribute(file, "Step", state.step);
@@ -224,10 +224,10 @@ void save_series(map<string, fmatrix> & series, int & n_points, state_info state
 void save_field_series(fmatrix & field, state_info state, double conversion_constant, string suffix){
     H5File file;
     struct stat buffer;
-    if(stat (("output/fseries" + suffix + ".h5").c_str(), &buffer) == 0){
-        file = H5File("output/fseries" + suffix + ".h5", H5F_ACC_RDWR);
+    if(stat ((OUTPUT_PATH + "fseries" + suffix + ".h5").c_str(), &buffer) == 0){
+        file = H5File(OUTPUT_PATH + "fseries" + suffix + ".h5", H5F_ACC_RDWR);
     } else {
-        file = H5File("output/fseries" + suffix + ".h5", H5F_ACC_TRUNC);
+        file = H5File(OUTPUT_PATH + "fseries" + suffix + ".h5", H5F_ACC_TRUNC);
     }
     
     fmatrix field_corrected = conversion_constant * field;

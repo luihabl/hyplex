@@ -11,6 +11,7 @@ using namespace std;
 //; ----------------------------- General ---------------------------------------
 //[project]
 extern string OUTPUT_PATH;
+extern string INPUT_PATH;
 extern string CROSS_SECTIONS_PATH;
 
 //[simulation]

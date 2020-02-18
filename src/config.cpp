@@ -11,6 +11,7 @@ using namespace std;
 //; ----------------------------- General ---------------------------------------
 //[project]
  string OUTPUT_PATH;
+ string INPUT_PATH;
  string CROSS_SECTIONS_PATH;
 
  //[simulation]
@@ -118,6 +119,7 @@ void load_config_file(string filename){
 
     // Project configuration
     OUTPUT_PATH = reader.Get("project", "OUTPUT_PATH", "");
+    INPUT_PATH = reader.Get("project", "INPUT_PATH", "");
     CROSS_SECTIONS_PATH = reader.Get("project", "CROSS_SECTIONS_PATH", "");
 
     //Simulation
