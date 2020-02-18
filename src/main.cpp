@@ -218,28 +218,28 @@ int main(int argc, char* argv[])
             n_points_series += 1;
         }
 
-        if(state.step % 20000 == 0) {
+        if(state.step % 50000 == 0) {
             save_series(series, n_points_series, state, "");
         }
         
-        if(state.step % 1 == 0) {
+//         if(state.step % 1 == 0) {
 //            fmatrix dens_i = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_i / vmesh;
 //            save_field_series(dens_i, state, 1, "_dens_i");
 //            fmatrix dens_e = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_e / vmesh;
 //            save_field_series(dens_e, state, 1, "_dens_e");
             
-            fmatrix kefield = fmatrix::zeros(N_MESH_X, N_MESH_Y);
-            energy_field(kefield, p_i, state.n_active_i, mesh_x, mesh_y, vmesh, lpos_i, M_I);
-            save_field_series(kefield, state, 1, "_ke_i");
+//             fmatrix kefield = fmatrix::zeros(N_MESH_X, N_MESH_Y);
+//             energy_field(kefield, p_i, state.n_active_i, mesh_x, mesh_y, vmesh, lpos_i, M_I);
+//             save_field_series(kefield, state, 1, "_ke_i");
             
-            energy_field(kefield, p_e, state.n_active_e, mesh_x, mesh_y, vmesh, lpos_e, M_EL);
-            save_field_series(kefield, state, 1, "_ke_e");
+//             energy_field(kefield, p_e, state.n_active_e, mesh_x, mesh_y, vmesh, lpos_e, M_EL);
+//             save_field_series(kefield, state, 1, "_ke_e");
             
-            fmatrix phi_corrected = phi / K_PHI;
-            save_field_series(phi_corrected, state, 1, "_phi");
-        }
+//             fmatrix phi_corrected = phi / K_PHI;
+//             save_field_series(phi_corrected, state, 1, "_phi");
+//         }
 
-        if(state.step - state.step_offset > 0){
+        if(state.step - state.step_offset > 0.9 * (double) N_STEPS){
             int i_av = average_field_over_period(phi_av, phi, RF_PERIOD_I, N_STEPS, state.step - state.step_offset);
             average_field(wmesh_e_av, wmesh_e, state.step - state.step_offset);
             average_field(wmesh_i_av, wmesh_i, state.step - state.step_offset);
