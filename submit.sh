@@ -34,7 +34,7 @@ module load hypre/2.11.1
 # Here the code to execute with the SRUN command
 # THIS IS AN EXEMPLE
 
-srun ./run /home/habl/pic-plume/input/config/config-zoid.ini
+srun /home/habl/pic-plume/run /home/habl/pic-plume/input/config/config-zoid.ini
 
 
 # Make sure you return zero as exit code otherwiser SLURM will report your job
