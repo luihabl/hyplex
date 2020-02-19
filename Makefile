@@ -11,6 +11,10 @@ ifeq ($(machine),zoidberg)
   CC = h5c++
   LDFLAGS = -lHYPRE -lm
   CXXFLAGS = -Ilib -I$(HYPREINCLUDE) -std=c++11 -O3 -Wall -D VERBOSE 
+else ifeq ($(machine),hopper)
+  CC = mpic++
+  LDFLAGS = -lm
+  CXXFLAGS = -Ilib -I$(HDF5INCLUDE) -I$(HYPREINCLUDE) -std=c++11 -O3 -Wall -D VERBOS
 else
   # CC = mpic++
   # LDFLAGS = -Llib/$(hypre_dir)/src/hypre/lib -lHYPRE -L/usr/lib/x86_64-linux-gnu/hdf5/serial /usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5_hl_cpp.a /usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5_cpp.a /usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5_cpp.a /usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5_hl.a /usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5.a

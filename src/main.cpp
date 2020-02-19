@@ -32,6 +32,7 @@ int main(int argc, char* argv[])
 {
     // ------------------- Loading configuration ------------------------------
 
+    string job_suffix = argv[2] == NULL ? "" : argv[2];
     load_config_file(argv[1] == NULL ? CONFIG_PATH : argv[1]);
     load_cross_sections();
 
@@ -242,7 +243,7 @@ int main(int argc, char* argv[])
             average_field(wmesh_e_av, wmesh_e, state.step - state.step_offset);
             average_field(wmesh_i_av, wmesh_i, state.step - state.step_offset);
             if(i_av == RF_PERIOD_I){
-                save_fields_snapshot(phi_av, wmesh_e_av, wmesh_i_av, vmesh, state, "_av");
+                save_fields_snapshot(phi_av, wmesh_e_av, wmesh_i_av, vmesh, state, "_av" + job_suffix);
             }
         }
         

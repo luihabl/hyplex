@@ -12,7 +12,15 @@ then
     module load hypre/2.11.1
 
     make machine=zoidberg
-
+elif [ "$machine" == "hopper" ]
+then
+    echo "Compiling for hopper"
+    
+    module load mpich/ge/gcc/64/3.1
+    module load hdf5/1.6.10
+    module load hypre/2.14.0
+    
+    make machine=others
 elif [ "$machine" == "" ]
 then
     echo "Compiling for other machines"
