@@ -1,6 +1,7 @@
 import matplotlib
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib.animation import FuncAnimation
@@ -92,41 +93,11 @@ def animate_line(frame, line, axes, data, t):
     
 def make_line_anim(file_path):
     data, t = load_file_data(file_path)
-    data = data[::5]
-    t = t[::5]
-    
-    fig, axes = plt.subplots(nrows=1)
-    line, = axes.plot(data[0][0:64,:].mean(axis=0))
-    # image = axes.imshow(all_data[0], vmin=0, vmax=1)
-    vmin = 1e100
-    vmax = 0
-    
-    for d in data:
-        if vmax < d[0:64,:].mean(axis=0).max().max(): vmax = d[0:64,:].mean(axis=0).max()
-        if vmin > d[0:64,:].mean(axis=0).min().min(): vmin = d[0:64,:].mean(axis=0).min()
-
-    axes.set_ylim(vmin, vmax)
-    axes.set_title('Time: {0:.2e} s'.format(t[0] - t[0]))
-    
-    animation = FuncAnimation(
-        # Your Matplotlib Figure object
-        fig,
-        # The function that does the updating of the Figure
-        animate_line,
-        # Frame information (here just frame number)
-        np.arange(2000),
-        # Extra arguments to the animate function
-        fargs=[line, axes, data, t],
-        # Frame-time in ms; i.e. for a given frame-rate x, 1000/x
-        interval=1000 / 60
-    )
-    
-    animation.save(file_path.split('.')[0] + '_line' + '.mp4', dpi=150)
-    
-    
-def make_line_anim(data, t, filename):
-    data = data[::10]
-    t = t[::10]
+    subsample = 10
+    f0 = 0
+    ff = len(data)
+    data = data[0:ff//2:subsample]
+    t = t[0:ff//2:subsample]
     
     fig, axes = plt.subplots(nrows=1)
     line, = axes.plot(data[0][0:5,:].mean(axis=0))
@@ -147,21 +118,60 @@ def make_line_anim(data, t, filename):
         # The function that does the updating of the Figure
         animate_line,
         # Frame information (here just frame number)
-        np.arange(1000),
+        np.arange(len(data)),
         # Extra arguments to the animate function
         fargs=[line, axes, data, t],
         # Frame-time in ms; i.e. for a given frame-rate x, 1000/x
         interval=1000 / 60
     )
     
-    animation.save(filename + '.mp4', dpi=150)
+    animation.save(file_path.split('.')[0] + '_line' + '.mp4', dpi=150)
+    
+    
+# def make_line_anim(data, t, filename):
+#     subsample = 50
+#     f0 = 0
+#     ff = len(data)
+#     data = data[0:ff//2:subsample]
+#     t = t[0:ff//2:subsample]
+#     
+#     fig, axes = plt.subplots(nrows=1)
+#     line, = axes.plot(data[0][0:5,:].mean(axis=0))
+#     # image = axes.imshow(all_data[0], vmin=0, vmax=1)
+#     vmin = 1e100
+#     vmax = 0
+#     
+#     for d in data:
+#         if vmax < d[0:5,:].mean(axis=0).max().max(): vmax = d[0:5,:].mean(axis=0).max()
+#         if vmin > d[0:5,:].mean(axis=0).min().min(): vmin = d[0:5,:].mean(axis=0).min()
+# 
+#     axes.set_ylim(vmin, vmax)
+#     axes.set_title('Time: {0:.2e} s'.format(t[0] - t[0]))
+#     
+#     animation = FuncAnimation(
+#         # Your Matplotlib Figure object
+#         fig,
+#         # The function that does the updating of the Figure
+#         animate_line,
+#         # Frame information (here just frame number)
+#         np.arange(len(data)),
+#         # Extra arguments to the animate function
+#         fargs=[line, axes, data, t],
+#         # Frame-time in ms; i.e. for a given frame-rate x, 1000/x
+#         interval=1000 / 60
+#     )
+#     
+#     animation.save(filename + '.mp4', dpi=150)
 
     
 def make_anim(file_path):
     
     data, t = load_file_data(file_path)
-    data = data[::10]
-    t = t[::10]
+    subsample = 50
+    f0 = 0
+    ff = len(data)
+    data = data[0:ff//2:subsample]
+    t = t[0:ff//2:subsample]
     
     fig, axes = plt.subplots(nrows=1, figsize=(10, 4))
     # image = axes.imshow(all_data[0], vmin=0, vmax=1)
@@ -172,8 +182,7 @@ def make_anim(file_path):
         if vmax < d.max().max(): vmax = d.max()
         if vmin > d.min().min(): vmin = d.min() 
         
-    
-    image = axes.imshow(data[0], cmap='seismic', origin='lower', vmin=vmin, vmax=vmax)
+    image = axes.imshow(data[0], cmap='plasma', origin='lower', vmin=vmin, vmax=vmax, norm=colors.PowerNorm(gamma=0.5))
     axes.set_title('Time: {0:.2e} s'.format(t[0] - t[0]))
     
     divider0 = make_axes_locatable(axes)
@@ -187,7 +196,7 @@ def make_anim(file_path):
         # The function that does the updating of the Figure
         animate,
         # Frame information (here just frame number)
-        np.arange(1000),
+        np.arange(len(data)),
         # Extra arguments to the animate function
         fargs=[image, axes, data, t],
         # Frame-time in ms; i.e. for a given frame-rate x, 1000/x
@@ -198,43 +207,43 @@ def make_anim(file_path):
 
 
     
-def make_anim(data, t, filename):
-    
-    data = data[::10]
-    t = t[::10]
-    
-    fig, axes = plt.subplots(nrows=1, figsize=(10, 4))
-    # image = axes.imshow(all_data[0], vmin=0, vmax=1)
-    vmin = 1e100
-    vmax = 0
-    
-    for d in data:
-        if vmax < d.max().max(): vmax = d.max()
-        if vmin > d.min().min(): vmin = d.min() 
-        
-    
-    image = axes.imshow(data[0], cmap='plasma', origin='lower', vmin=vmin, vmax=vmax)
-    axes.set_title('Time: {0:.2e} s'.format(t[0] - t[0]))
-    
-    divider0 = make_axes_locatable(axes)
-    cax0 = divider0.append_axes("right", size="1%", pad=0.1)
-    fig.colorbar(image, ax=axes, cax=cax0)
-    
-    
-    animation = FuncAnimation(
-        # Your Matplotlib Figure object
-        fig,
-        # The function that does the updating of the Figure
-        animate,
-        # Frame information (here just frame number)
-        np.arange(1000),
-        # Extra arguments to the animate function
-        fargs=[image, axes, data, t],
-        # Frame-time in ms; i.e. for a given frame-rate x, 1000/x
-        interval=1000 / 30
-    )
-    
-    animation.save(filename + '.mp4', dpi=300)
+# def make_anim(data, t, filename):
+#     
+#     data = data[::10]
+#     t = t[::10]
+#     
+#     fig, axes = plt.subplots(nrows=1, figsize=(10, 4))
+#     # image = axes.imshow(all_data[0], vmin=0, vmax=1)
+#     vmin = 1e100
+#     vmax = 0
+#     
+#     for d in data:
+#         if vmax < d.max().max(): vmax = d.max()
+#         if vmin > d.min().min(): vmin = d.min() 
+#         
+#     
+#     image = axes.imshow(data[0], cmap='plasma', origin='lower', vmin=vmin, vmax=vmax)
+#     axes.set_title('Time: {0:.2e} s'.format(t[0] - t[0]))
+#     
+#     divider0 = make_axes_locatable(axes)
+#     cax0 = divider0.append_axes("right", size="1%", pad=0.1)
+#     fig.colorbar(image, ax=axes, cax=cax0)
+#     
+#     
+#     animation = FuncAnimation(
+#         # Your Matplotlib Figure object
+#         fig,
+#         # The function that does the updating of the Figure
+#         animate,
+#         # Frame information (here just frame number)
+#         np.arange(1000),
+#         # Extra arguments to the animate function
+#         fargs=[image, axes, data, t],
+#         # Frame-time in ms; i.e. for a given frame-rate x, 1000/x
+#         interval=1000 / 30
+#     )
+#     
+#     animation.save(filename + '.mp4', dpi=300)
     
 
 
