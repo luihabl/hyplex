@@ -13,8 +13,9 @@
 #include "fmath.h"
 
 #include "state-info.h"
-#include "h5io.h"
-#include "H5Cpp.h"
+// #include "h5io.h"
+// #include "H5Cpp.h"
+#include "exdir.h"
 
 using namespace std;
 using namespace std::chrono;
@@ -119,51 +120,94 @@ void save_state(fmatrix & p_e, fmatrix & p_i, state_info & state){
         p_i_corrected.val[i * 6 + 5] = p_i_corrected.val[i * 6 + 5] / DT;
     }
 
-    H5File file(OUTPUT_PATH + "state.h5", H5F_ACC_TRUNC);
+    // H5File file(OUTPUT_PATH + "state.h5", H5F_ACC_TRUNC);
+    exdir file(OUTPUT_PATH + "state.exdir");
    
     p_i_corrected.n1 = state.n_active_i;
-    DataSet p_i_dataset = create_dataset(file, p_i_corrected, "p_i", 2);
+    // DataSet p_i_dataset = create_dataset(file, p_i_corrected, "p_i", 2);
+    file.write_dataset("/p_i", p_i_corrected);
 
     p_e_corrected.n1 = state.n_active_e;
-    DataSet p_e_dataset = create_dataset(file, p_e_corrected, "p_e", 2);
+    // DataSet p_e_dataset = create_dataset(file, p_e_corrected, "p_e", 2);
+    file.write_dataset("/p_e", p_e_corrected);
 
-    write_attribute(file, "Time [s]", (double) state.step * DT);
-    write_attribute(file, "Capacitor voltage [V]", state.phi_zero / K_PHI);
-    write_attribute(file, "Step", state.step);
-    write_attribute(file, "Capacitor charge [norm. C]", state.q_cap);
-    write_attribute(file, "Surface charge density [norm. C/m^2]", state.sigma_1);
+    map<string, double> state_attrs_double = {
+        {"Time [s]", (double) state.step * DT},
+        {"Capacitor voltage [V]", state.phi_zero / K_PHI},
+        {"Capacitor charge [norm. C]", state.q_cap},
+        {"Surface charge density [norm. C/m^2]", state.sigma_1}
+    };
+
+    file.write_attribute("/", state_attrs_double);
+
+    map<string, int> state_attrs_int = {
+        {"Step", state.step},
+        {"Active ions", state.n_active_i},
+        {"Removed ions", state.n_out_ob_i},
+        {"Active electrons", state.n_active_e},
+        {"Removed electrons", state.n_out_ob_e}
+    };
+
+    file.write_attribute("/", state_attrs_int);
+
+
+
+
+
+    // write_attribute(file, "Time [s]", (double) state.step * DT);
+    // write_attribute(file, "Capacitor voltage [V]", state.phi_zero / K_PHI);
+    // write_attribute(file, "Step", state.step);
+    // write_attribute(file, "Capacitor charge [norm. C]", state.q_cap);
+    // write_attribute(file, "Surface charge density [norm. C/m^2]", state.sigma_1);
     
-    write_attribute(p_i_dataset, "Active ions", state.n_active_i);
-    write_attribute(p_i_dataset, "Removed ions", state.n_out_ob_i);
+    // write_attribute(p_i_dataset, "Active ions", state.n_active_i);
+    // write_attribute(p_i_dataset, "Removed ions", state.n_out_ob_i);
 
-    write_attribute(p_e_dataset, "Active electrons", state.n_active_e);
-    write_attribute(p_e_dataset, "Removed electrons", state.n_out_ob_e);
+    // write_attribute(p_e_dataset, "Active electrons", state.n_active_e);
+    // write_attribute(p_e_dataset, "Removed electrons", state.n_out_ob_e);
 
     verbose_log("Saved state");
 }
 
 void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state){
 
-    H5File file(INPUT_PATH + "state.h5", H5F_ACC_RDONLY);
+    // H5File file(INPUT_PATH + "state.h5", H5F_ACC_RDONLY);
+    exdir file(INPUT_PATH + "state.exdir");
 
-    DataSet p_i_dataset = file.openDataSet("p_i");
-    DataSet p_e_dataset = file.openDataSet("p_e");
+    // DataSet p_i_dataset = file.openDataSet("p_i");
+    // DataSet p_e_dataset = file.openDataSet("p_e");
 
-    read_attribute(file, "Step", state.step_offset);
-    read_attribute(file, "Capacitor charge [norm. C]", state.q_cap);
-    read_attribute(file, "Surface charge density [norm. C/m^2]", state.sigma_1);
+    YAML::Node attrs;
+    file.read_all_attributes("/", attrs);
+
+    state.step_offset = attrs["Step"].as<int>();
+    state.q_cap = attrs["Capacitor charge [norm. C]"].as<double>();
+    state.sigma_1 = attrs["Surface charge density [norm. C/m^2]"].as<double>();
+
+    state.n_active_i = attrs["Active ions"].as<int>();
+    state.n_out_ob_i = attrs["Removed ions"].as<int>();
+
+    state.n_active_e = attrs["Active electrons"].as<int>();
+    state.n_out_ob_e = attrs["Removed electron"].as<int>();
+
+    // read_attribute(file, "Step", state.step_offset);
+    // read_attribute(file, "Capacitor charge [norm. C]", state.q_cap);
+    // read_attribute(file, "Surface charge density [norm. C/m^2]", state.sigma_1);
     
-    read_attribute(p_i_dataset, "Active ions", state.n_active_i);
-    read_attribute(p_i_dataset, "Removed ions", state.n_out_ob_e);
+    // read_attribute(p_i_dataset, "Active ions", state.n_active_i);
+    // read_attribute(p_i_dataset, "Removed ions", state.n_out_ob_i);
 
-    read_attribute(p_e_dataset, "Active electrons", state.n_active_e);
-    read_attribute(p_e_dataset, "Removed electrons", state.n_out_ob_e);
+    // read_attribute(p_e_dataset, "Active electrons", state.n_active_e);
+    // read_attribute(p_e_dataset, "Removed electrons", state.n_out_ob_e);
 
     fmatrix p_i_load = fmatrix::zeros(state.n_active_i, 6);
     fmatrix p_e_load = fmatrix::zeros(state.n_active_e, 6);
 
-    p_i_dataset.read(p_i_load.val, PredType::NATIVE_DOUBLE);
-    p_e_dataset.read(p_e_load.val, PredType::NATIVE_DOUBLE);
+    file.read_dataset("/p_e", p_e_load);
+    file.read_dataset("/p_i", p_i_load);
+
+    // p_i_dataset.read(p_i_load.val, PredType::NATIVE_DOUBLE);
+    // p_e_dataset.read(p_e_load.val, PredType::NATIVE_DOUBLE);
 
     p_e_load = p_e_load / DX;
     for(int i = 0; i < state.n_active_e; i++){
@@ -187,35 +231,54 @@ void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state){
 
 void save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vmesh, state_info & state, string suffix){
     
-    H5File file(OUTPUT_PATH + "fields" + suffix + ".h5", H5F_ACC_TRUNC);
+    // H5File file(OUTPUT_PATH + "fields" + suffix + ".h5", H5F_ACC_TRUNC);
+    exdir file(OUTPUT_PATH + "fields.exdir");
 
-    write_attribute(file, "Time [s]", (double) state.step * DT);
-    write_attribute(file, "Step", state.step);
+    // write_attribute(file, "Time [s]", (double) state.step * DT);
+    // write_attribute(file, "Step", state.step);
+
+    file.write_attribute("/", "Time [s]", (double) state.step * DT);
+    file.write_attribute("/", "Step", (double) state.step);
+
 
     fmatrix phi_corrected = phi * (M_EL * pow(DX, 2))/(Q * pow(DT, 2));
-    create_dataset(file, phi_corrected, "phi", 2);
+    // create_dataset(file, phi_corrected, "phi", 2);
+    file.write_dataset("/phi", phi_corrected);
 
     fmatrix dens_e = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_e / vmesh;
-    create_dataset(file, dens_e, "dens_e", 2);
+    // create_dataset(file, dens_e, "dens_e", 2);
+    file.write_dataset("/dens_e", dens_e);
 
     fmatrix dens_i = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_i / vmesh;
-    create_dataset(file, dens_i, "dens_i", 2);
+    // create_dataset(file, dens_i, "dens_i", 2);
+    file.write_dataset("/dens_i", dens_i);
 
     verbose_log("Saved fields snapshot");
 }
 
 void save_series(map<string, fmatrix> & series, int & n_points, state_info state, string suffix){
 
-    H5File file(OUTPUT_PATH + "series" + suffix + ".h5", H5F_ACC_TRUNC);
-
-    write_attribute(file, "Time [s]", (double) state.step * DT);
-    write_attribute(file, "Step", state.step);
+    // H5File file(OUTPUT_PATH + "series" + suffix + ".h5", H5F_ACC_TRUNC);
     
+    exdir file(OUTPUT_PATH + "series" + suffix + ".exdir");
+
+    // write_attribute(file, "Time [s]", (double) state.step * DT);
+    // write_attribute(file, "Step", state.step);
+    
+    file.write_attribute("/", "Time [s]", (double) state.step * DT);
+    file.write_attribute("/", "Step", (double) state.step);
+
     map<string, fmatrix>::iterator cursor;
 
-    for(cursor = series.begin(); cursor!=series.end(); cursor++){
-        (cursor->second).n1 = n_points;
-        create_dataset(file, (cursor->second), cursor->first, 2);
+    // for(cursor = series.begin(); cursor!=series.end(); cursor++){
+    //     (cursor->second).n1 = n_points;
+    //     create_dataset(file, (cursor->second), cursor->first, 2);
+    // }
+
+    for (auto & element : series)
+    {
+        string path = "/" + element.first;
+        file.write_dataset(path, element.second);
     }
 
     verbose_log("Saved time series");

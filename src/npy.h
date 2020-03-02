@@ -299,7 +299,7 @@ inline std::string write_tuple(const tmatrix<T>& v) {
     const std::string delimiter = ", ";
       ss << "(";
       ss << v.val[0];
-      for(int i = 1; i < l; i++){
+      for(size_t i = 1; i < l; i++){
           ss << delimiter;
           ss << v.val[i];
       }
