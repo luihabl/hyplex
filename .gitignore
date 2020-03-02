@@ -1,6 +1,7 @@
 /run
 /build/
 /lib/hypre-2.16.0/*
+/lib/yaml/*
 /output/**/*.csv
 /output/**/*.h5
 /output/**/*.txt
