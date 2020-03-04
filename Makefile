@@ -19,7 +19,7 @@ else
   # CC = mpic++
   # LDFLAGS = -Llib/$(hypre_dir)/src/hypre/lib -lHYPRE -L/usr/lib/x86_64-linux-gnu/hdf5/serial /usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5_hl_cpp.a /usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5_cpp.a /usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5_cpp.a /usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5_hl.a /usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5.a
   # CXXFLAGS = -Ilib -Ilib/$(hypre_dir)/src/hypre/include -I/usr/include/hdf5/serial -lpthread -lsz -lz -ldl -std=c++11 -O3 -march=native -Wall -D VERBOSE
-  CC = h5c++
+  CC = g++
   LDFLAGS = -L/usr/local/lib -Llib/$(hypre_dir)/src/hypre/lib -Llib/yaml -lmpi -lHYPRE -lyaml-cpp
   CXXFLAGS = -I/usr/local/include -Ilib -Ilib/$(hypre_dir)/src/hypre/include -Ilib/yaml -std=c++11 -O3 -march=native -Wall -D VERBOSE
 endif

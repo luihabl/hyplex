@@ -125,7 +125,7 @@ int main(int argc, char* argv[])
     } 
     else if (EXPM_NEUTRAL == "load") {
         verbose_log(" ---- Loading neutral density field ---- ");
-        load_fmatrix(dens_n, INPUT_PATH + "dens_n.h5", "dens_n");
+        load_fmatrix(dens_n, INPUT_PATH + "dens_n.exdir", "dens_n");
     }
       
     // ----------------------------- MCC --------------------------------------

@@ -19,7 +19,7 @@
 
 using namespace std;
 using namespace std::chrono;
-using namespace H5;
+// using namespace H5;
 
 void verbose_log(string message){
     #ifdef VERBOSE
@@ -231,49 +231,32 @@ void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state){
 
 void save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vmesh, state_info & state, string suffix){
     
-    // H5File file(OUTPUT_PATH + "fields" + suffix + ".h5", H5F_ACC_TRUNC);
     exdir file(OUTPUT_PATH + "fields.exdir");
-
-    // write_attribute(file, "Time [s]", (double) state.step * DT);
-    // write_attribute(file, "Step", state.step);
 
     file.write_attribute("/", "Time [s]", (double) state.step * DT);
     file.write_attribute("/", "Step", (double) state.step);
 
 
     fmatrix phi_corrected = phi * (M_EL * pow(DX, 2))/(Q * pow(DT, 2));
-    // create_dataset(file, phi_corrected, "phi", 2);
     file.write_dataset("/phi", phi_corrected);
 
     fmatrix dens_e = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_e / vmesh;
-    // create_dataset(file, dens_e, "dens_e", 2);
     file.write_dataset("/dens_e", dens_e);
 
     fmatrix dens_i = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_i / vmesh;
-    // create_dataset(file, dens_i, "dens_i", 2);
     file.write_dataset("/dens_i", dens_i);
 
     verbose_log("Saved fields snapshot");
 }
 
 void save_series(map<string, fmatrix> & series, int & n_points, state_info state, string suffix){
-
-    // H5File file(OUTPUT_PATH + "series" + suffix + ".h5", H5F_ACC_TRUNC);
     
     exdir file(OUTPUT_PATH + "series" + suffix + ".exdir");
-
-    // write_attribute(file, "Time [s]", (double) state.step * DT);
-    // write_attribute(file, "Step", state.step);
     
     file.write_attribute("/", "Time [s]", (double) state.step * DT);
     file.write_attribute("/", "Step", (double) state.step);
 
     map<string, fmatrix>::iterator cursor;
-
-    // for(cursor = series.begin(); cursor!=series.end(); cursor++){
-    //     (cursor->second).n1 = n_points;
-    //     create_dataset(file, (cursor->second), cursor->first, 2);
-    // }
 
     for (auto & element : series)
     {
@@ -285,28 +268,23 @@ void save_series(map<string, fmatrix> & series, int & n_points, state_info state
 }
 
 void save_field_series(fmatrix & field, state_info state, double conversion_constant, string suffix){
-    H5File file;
-    struct stat buffer;
-    if(stat ((OUTPUT_PATH + "fseries" + suffix + ".h5").c_str(), &buffer) == 0){
-        file = H5File(OUTPUT_PATH + "fseries" + suffix + ".h5", H5F_ACC_RDWR);
-    } else {
-        file = H5File(OUTPUT_PATH + "fseries" + suffix + ".h5", H5F_ACC_TRUNC);
-    }
+
+    exdir file(OUTPUT_PATH + "fseries" + suffix + ".exdir");
     
     fmatrix field_corrected = conversion_constant * field;
-    DataSet field_dataset = create_dataset(file, field_corrected, to_string(state.step), 2);
-    write_attribute(field_dataset, "Time [s]", (double) state.step * DT);  
+
+    file.write_dataset("/" + to_string(state.step), field_corrected);
+    file.write_attribute("/" + to_string(state.step), "Time [s]", (double) state.step * DT);
 }
 
 void save_fmatrix(fmatrix & m, string filename, string dataname){
-    H5File file(filename, H5F_ACC_TRUNC);
-    create_dataset(file, m, dataname, 2);
+    exdir file(filename);
+    file.write_dataset("/" + dataname, m);
     verbose_log("Saved " + filename + "/" + dataname);
 }
 
 void load_fmatrix(fmatrix & m, string filename, string dataname){
-    H5File file(filename, H5F_ACC_RDONLY);
-    DataSet ds = file.openDataSet(dataname);
-    ds.read(m.val, PredType::NATIVE_DOUBLE);
+    exdir file(filename);
+    file.read_dataset("/dataname", m);
     verbose_log("Loaded " + filename + "/" + dataname);
 }
