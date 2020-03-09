@@ -13,6 +13,7 @@
 /output/*.png
 /output/*.zip
 /input/**/*.h5
+/input/**/*.exdir
 /.vscode/
 **/__pycache__/
 *.DS_Store

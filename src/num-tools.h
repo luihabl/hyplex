@@ -20,7 +20,7 @@ void swap(double& a, double& b) {
 }
 
 template <class T>
-T clamp(T low, T hi, T val){
+T clamp_n(T low, T hi, T val){
     if (val < low) {return low;}
     else if (val > hi) {return hi;}
     else {return val;}

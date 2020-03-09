@@ -349,8 +349,8 @@ void find_phi_at_particles(fmatrix & phi_at_patricles, fmatrix & phi, fmatrix & 
 
 	for (int n = 0; n < n_out; n++)
 	{	
-		x = clamp(0.0, x_max, p.val[out.val[n] * 6 + 0]);
-		y = clamp(0.0, y_max, p.val[out.val[n] * 6 + 1]);
+		x = clamp_n(0.0, x_max, p.val[out.val[n] * 6 + 0]);
+		y = clamp_n(0.0, y_max, p.val[out.val[n] * 6 + 1]);
 		lx = lpos.val[out.val[n] * 2 + 0];
 		ly = lpos.val[out.val[n] * 2 + 1];
 

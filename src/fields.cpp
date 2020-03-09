@@ -55,10 +55,10 @@ void calculate_efield(fmatrix & efield_x, fmatrix & efield_y, fmatrix & phi, fma
         for(int j = 0; j < n_mesh_y; j++)
         {
 
-			ip = clamp(0, n_mesh_x - 1, i + 1);
-			im = clamp(0, n_mesh_x - 1, i - 1);
-			jp = clamp(0, n_mesh_y - 1, j + 1);
-			jm = clamp(0, n_mesh_y - 1, j - 1);
+			ip = clamp_n(0, n_mesh_x - 1, i + 1);
+			im = clamp_n(0, n_mesh_x - 1, i - 1);
+			jp = clamp_n(0, n_mesh_y - 1, j + 1);
+			jm = clamp_n(0, n_mesh_y - 1, j - 1);
 
 			efield_x.val[i * n_mesh_y + j] = (phi.val[im * n_mesh_y + j] - phi.val[ip * n_mesh_y + j]) / (mesh_x.val[ip * n_mesh_y + j] - mesh_x.val[im * n_mesh_y + j]);
 			efield_y.val[i * n_mesh_y + j] = (phi.val[i * n_mesh_y + jm] - phi.val[i * n_mesh_y + jp]) / (mesh_y.val[i * n_mesh_y + jp] - mesh_y.val[i * n_mesh_y + jm]);
@@ -94,10 +94,10 @@ double sigma_from_phi(fmatrix & phi, fmatrix & mesh_x, fmatrix & mesh_y, fmatrix
 		for(int j = 0; j < n_mesh_y; j++){
 			if(electrode_mask.val[i * n_mesh_y + j] == 1){
 
-				ip = clamp(0, n_mesh_x - 1, i + 1);
-				im = clamp(0, n_mesh_x - 1, i - 1);
-				jp = clamp(0, n_mesh_y - 1, j + 1);
-				jm = clamp(0, n_mesh_y - 1, j - 1);
+				ip = clamp_n(0, n_mesh_x - 1, i + 1);
+				im = clamp_n(0, n_mesh_x - 1, i - 1);
+				jp = clamp_n(0, n_mesh_y - 1, j + 1);
+				jm = clamp_n(0, n_mesh_y - 1, j - 1);
 
                 dw = wmesh_i.val[i * n_mesh_y + j] - wmesh_e.val[i * n_mesh_y + j];
 
@@ -156,10 +156,10 @@ void init_volume_mesh(fmatrix & vmesh, fmatrix & mesh_x, fmatrix & mesh_y){
 	for(size_t i = 0; i < vmesh.n1; i++){
 		for(size_t j = 0; j < vmesh.n2; j++){
 			
-			ip = clamp(0, (int) mesh_x.n1 - 1, (int) i + 1);
-			im = clamp(0, (int) mesh_x.n1 - 1, (int) i - 1);
-			jp = clamp(0, (int) mesh_y.n2 - 1, (int) j + 1);
-			jm = clamp(0, (int) mesh_y.n2 - 1, (int) j - 1);
+			ip = clamp_n(0, (int) mesh_x.n1 - 1, (int) i + 1);
+			im = clamp_n(0, (int) mesh_x.n1 - 1, (int) i - 1);
+			jp = clamp_n(0, (int) mesh_y.n2 - 1, (int) j + 1);
+			jm = clamp_n(0, (int) mesh_y.n2 - 1, (int) j - 1);
 		
 
 			vmesh.val[i * vmesh.n2 + j] = (mesh_x.val[ip * mesh_x.n2 + j] - mesh_x.val[im * mesh_x.n2 + j]) * 
