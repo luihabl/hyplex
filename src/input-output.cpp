@@ -103,7 +103,7 @@ fmatrix load_csv(string file_path, char delim, int cols)
     return data;
 }
 
-void save_state(fmatrix & p_e, fmatrix & p_i, state_info & state){
+void save_state(fmatrix & p_e, fmatrix & p_i, state_info & state, string suffix){
     
     
     fmatrix p_e_corrected = DX * p_e;
@@ -120,15 +120,12 @@ void save_state(fmatrix & p_e, fmatrix & p_i, state_info & state){
         p_i_corrected.val[i * 6 + 5] = p_i_corrected.val[i * 6 + 5] / DT;
     }
 
-    // H5File file(OUTPUT_PATH + "state.h5", H5F_ACC_TRUNC);
-    exdir file(OUTPUT_PATH + "state.exdir");
+    exdir file(OUTPUT_PATH + "state" + suffix + ".exdir");
    
     p_i_corrected.n1 = state.n_active_i;
-    // DataSet p_i_dataset = create_dataset(file, p_i_corrected, "p_i", 2);
     file.write_dataset("/p_i", p_i_corrected);
 
     p_e_corrected.n1 = state.n_active_e;
-    // DataSet p_e_dataset = create_dataset(file, p_e_corrected, "p_e", 2);
     file.write_dataset("/p_e", p_e_corrected);
 
     map<string, double> state_attrs_double = {
@@ -150,29 +147,13 @@ void save_state(fmatrix & p_e, fmatrix & p_i, state_info & state){
 
     file.write_attribute("/", state_attrs_int);
 
-
-
-
-
-    // write_attribute(file, "Time [s]", (double) state.step * DT);
-    // write_attribute(file, "Capacitor voltage [V]", state.phi_zero / K_PHI);
-    // write_attribute(file, "Step", state.step);
-    // write_attribute(file, "Capacitor charge [norm. C]", state.q_cap);
-    // write_attribute(file, "Surface charge density [norm. C/m^2]", state.sigma_1);
-    
-    // write_attribute(p_i_dataset, "Active ions", state.n_active_i);
-    // write_attribute(p_i_dataset, "Removed ions", state.n_out_ob_i);
-
-    // write_attribute(p_e_dataset, "Active electrons", state.n_active_e);
-    // write_attribute(p_e_dataset, "Removed electrons", state.n_out_ob_e);
-
     verbose_log("Saved state");
 }
 
-void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state){
+void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state, string filename){
 
     // H5File file(INPUT_PATH + "state.h5", H5F_ACC_RDONLY);
-    exdir file(INPUT_PATH + "state.exdir");
+    exdir file(INPUT_PATH + filename);
 
     // DataSet p_i_dataset = file.openDataSet("p_i");
     // DataSet p_e_dataset = file.openDataSet("p_e");
@@ -231,7 +212,7 @@ void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state){
 
 void save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vmesh, state_info & state, string suffix){
     
-    exdir file(OUTPUT_PATH + "fields.exdir");
+    exdir file(OUTPUT_PATH + "fields" + suffix + ".exdir");
 
     file.write_attribute("/", "Time [s]", (double) state.step * DT);
     file.write_attribute("/", "Step", (double) state.step);

@@ -21,6 +21,7 @@
 #include "num-tools.h"
 #include "dsmc.h"
 #include "state-info.h"
+#include "arg-parser.h"
 
 #define CONFIG_PATH "input/config/config.ini"
 
@@ -32,9 +33,16 @@ int main(int argc, char* argv[])
 {
     // ------------------- Loading configuration ------------------------------
 
-    string job_suffix = argv[2] == NULL ? "" : argv[2];
-    load_config_file(argv[1] == NULL ? CONFIG_PATH : argv[1]);
+    
+    argparser arg(argc, argv);
+
+    string job_suffix = arg.get("name", "");
+    string config_path = arg.get("config", CONFIG_PATH);
+
+    load_config_file(config_path);
     load_cross_sections();
+
+    // return 0;
 
     // ------------------- Variable initialization ----------------------------
     
@@ -117,7 +125,7 @@ int main(int argc, char* argv[])
     
     if (EXPM_NEUTRAL == "dsmc"){
         verbose_log(" ---- Starting DSMC loop ---- ");
-        run_dsmc(mesh_x, mesh_y, vmesh, dens_n);
+        run_dsmc(mesh_x, mesh_y, vmesh, dens_n, "dens_n" + job_suffix + ".exdir");
     }
     else if (EXPM_NEUTRAL == "constant") {
         verbose_log(" ---- Setting constant neutral density ---- ");
@@ -198,8 +206,8 @@ int main(int argc, char* argv[])
 
         if(state.step % 10000 == 0) 
         {
-            save_state(p_e, p_i, state);
-            save_fields_snapshot(phi, wmesh_e, wmesh_i, vmesh, state, "");
+            save_state(p_e, p_i, state, job_suffix);
+            save_fields_snapshot(phi, wmesh_e, wmesh_i, vmesh, state, job_suffix);
         }
 
         // if(state.step % 1 == 0){
@@ -254,9 +262,9 @@ int main(int argc, char* argv[])
     std::cout << "Total execution duration: " << (double) duration.count() / (1.0e6 * 60) << " min" << endl;
 
     // ----------------------------- Saving outputs ---------------------------
-    save_state(p_e, p_i, state);
-    save_fields_snapshot(phi, wmesh_e, wmesh_i, vmesh, state, "");
-    save_series(series, n_points_series, state, "");
+    save_state(p_e, p_i, state, job_suffix);
+    save_fields_snapshot(phi, wmesh_e, wmesh_i, vmesh, state, job_suffix);
+    save_series(series, n_points_series, state, job_suffix);
 
     // ----------------------------- Finalizing -------------------------------
     delete_cross_sections_arrays();

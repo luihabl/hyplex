@@ -3,6 +3,6 @@
 
 #include "fmatrix.h"
 
-void run_dsmc(fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & vmesh, fmatrix & dens_n);
+void run_dsmc(fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & vmesh, fmatrix & dens_n, string output_name);
 
 #endif
