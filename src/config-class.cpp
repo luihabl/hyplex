@@ -129,17 +129,42 @@ void configuration::flatten_map(YAML::Node node, string parent_key)
 
 int configuration::i(string key)
 {
-    return _map_int[key];
+    return _map_int.at(key);
 }
 
 double configuration::f(string key)
 {
-    return _map_double[key];
+    return _map_double.at(key);
 }
 
 string configuration::s(string key)
 {
-    return _map_string[key];
+    return _map_string.at(key);
+}
+
+bool configuration::b(string key)
+{
+    return _map_bool.at(key);
+}
+
+tmatrix<int> configuration::is(string key)
+{
+    return _map_seq_int.at(key);
+}
+
+tmatrix<double> configuration::fs(string key)
+{
+    return _map_seq_double.at(key);
+}
+
+tmatrix<string> configuration::ss(string key)
+{
+    return _map_seq_string.at(key);
+}
+
+tmatrix<bool> configuration::bs(string key)
+{
+    return _map_seq_bool.at(key);
 }
 
 
@@ -266,7 +291,7 @@ void configuration::print_seq(dict_seq<T> & map){
     string types = abi::__cxa_demangle(typeid(T).name(), 0, 0, &s);
     if(typeid(T) == typeid(string)) types = "string";
     for (auto const& x : map) {
-        cout << x.first << ":" << endl;
+        cout << x.first << endl;
         for(size_t i = 0; i < x.second.n1; i++){
             cout << std::left;
             cout << setw(35) << "  " <<  "(" + types + ") " << x.second.val[i] << endl;

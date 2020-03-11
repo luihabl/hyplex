@@ -41,9 +41,6 @@ int main(int argc, char* argv[])
 
     configuration config("input/config/config.yaml");
 
-    config.print_all();
-
-    return 0;
 
     load_config_file(config_path);
     load_cross_sections();
