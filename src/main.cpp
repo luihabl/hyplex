@@ -5,7 +5,7 @@
 #include <iomanip>
 #include <sstream>
 #include <string>
-#include <map>
+#include <unordered_map>
 
 #include "cross-sections.h"
 #include "config.h"
@@ -22,6 +22,7 @@
 #include "dsmc.h"
 #include "state-info.h"
 #include "arg-parser.h"
+#include "config-class.h"
 
 #define CONFIG_PATH "input/config/config.ini"
 
@@ -33,81 +34,89 @@ int main(int argc, char* argv[])
 {
     // ------------------- Loading configuration ------------------------------
 
-    
     argparser arg(argc, argv);
 
     string job_suffix = arg.get("name", "");
     string config_path = arg.get("config", CONFIG_PATH);
 
+    configuration config("input/config/config.yaml");
+
+    config.print_all();
+
+    return 0;
+
     load_config_file(config_path);
     load_cross_sections();
-
-    // return 0;
 
     // ------------------- Variable initialization ----------------------------
     
 	// General field variables
     verbose_log("Initializing general variables");
-	fmatrix phi             = fmatrix::zeros(N_MESH_X, N_MESH_Y);
-    fmatrix phi_laplace     = fmatrix::zeros(N_MESH_X, N_MESH_Y);
-    fmatrix phi_poisson     = fmatrix::zeros(N_MESH_X, N_MESH_Y);
-	fmatrix efield_x        = fmatrix::zeros(N_MESH_X, N_MESH_Y);
-    fmatrix efield_y        = fmatrix::zeros(N_MESH_X, N_MESH_Y);
-    fmatrix mesh_x          = fmatrix::zeros(N_MESH_X, N_MESH_Y);
-    fmatrix mesh_y          = fmatrix::zeros(N_MESH_X, N_MESH_Y);
-    fmatrix vmesh           = fmatrix::zeros(N_MESH_X, N_MESH_Y);
-    imatrix electrode_mask  = imatrix::zeros(N_MESH_X, N_MESH_Y);
+
+    int n_steps = config.i("time/n_steps");
+    int n_mesh_x = config.i("geometry/n_mesh_x");
+    int n_mesh_y = config.i("geometry/n_mesh_y");
+    int n_max_particles = config.i("particles/n_max_particles");
+
+	fmatrix phi             = fmatrix::zeros(n_mesh_x, n_mesh_y);
+    fmatrix phi_laplace     = fmatrix::zeros(n_mesh_x, n_mesh_y);
+    fmatrix phi_poisson     = fmatrix::zeros(n_mesh_x, n_mesh_y);
+	fmatrix efield_x        = fmatrix::zeros(n_mesh_x, n_mesh_y);
+    fmatrix efield_y        = fmatrix::zeros(n_mesh_x, n_mesh_y);
+    fmatrix mesh_x          = fmatrix::zeros(n_mesh_x, n_mesh_y);
+    fmatrix mesh_y          = fmatrix::zeros(n_mesh_x, n_mesh_y);
+    fmatrix vmesh           = fmatrix::zeros(n_mesh_x, n_mesh_y);
+    imatrix electrode_mask  = imatrix::zeros(n_mesh_x, n_mesh_y);
     fmatrix voltages        = fmatrix::zeros(4);
     double sigma_laplace;
     state_info state;
     
     // Doiagnostics variables
     verbose_log("Initializing diagnostics variables");
-    fmatrix phi_av          = fmatrix::zeros(N_MESH_X, N_MESH_Y);
-    fmatrix wmesh_e_av      = fmatrix::zeros(N_MESH_X, N_MESH_Y);
-    fmatrix wmesh_i_av      = fmatrix::zeros(N_MESH_X, N_MESH_Y);
+    fmatrix phi_av          = fmatrix::zeros(n_mesh_x, n_mesh_y);
+    fmatrix wmesh_e_av      = fmatrix::zeros(n_mesh_x, n_mesh_y);
+    fmatrix wmesh_i_av      = fmatrix::zeros(n_mesh_x, n_mesh_y);
     
-    map<string, fmatrix> series;
-    series["time"]          = fmatrix::zeros(N_STEPS);
-    series["v_cap"]         = fmatrix::zeros(N_STEPS);
-    series["n_active_e"]    = fmatrix::zeros(N_STEPS);
-    series["n_active_i"]    = fmatrix::zeros(N_STEPS);
+    unordered_map<string, fmatrix> series;
+    series["time"]          = fmatrix::zeros(n_steps);
+    series["v_cap"]         = fmatrix::zeros(n_steps);
+    series["n_active_e"]    = fmatrix::zeros(n_steps);
+    series["n_active_i"]    = fmatrix::zeros(n_steps);
     
-    series["I_out_ob_e"]        = fmatrix::zeros(N_STEPS);
-    series["I_out_ob_i"]        = fmatrix::zeros(N_STEPS);
-    series["I_out_thr_e"]       = fmatrix::zeros(N_STEPS);
-    series["I_out_thr_i"]       = fmatrix::zeros(N_STEPS);
-    series["I_in_thr_e"]        = fmatrix::zeros(N_STEPS);
-    series["I_in_thr_i"]        = fmatrix::zeros(N_STEPS);
-    
+    series["I_out_ob_e"]        = fmatrix::zeros(n_steps);
+    series["I_out_ob_i"]        = fmatrix::zeros(n_steps);
+    series["I_out_thr_e"]       = fmatrix::zeros(n_steps);
+    series["I_out_thr_i"]       = fmatrix::zeros(n_steps);
+    series["I_in_thr_e"]        = fmatrix::zeros(n_steps);
+    series["I_in_thr_i"]        = fmatrix::zeros(n_steps);
     
     int n_points_series     = 0;
     
 	// Particle 1 - Electrons
     verbose_log("Initializing electrons variables");
-	fmatrix p_e             = fmatrix::zeros(N_MAX_PARTICLES, 6);
-    imatrix lpos_e          = imatrix::zeros(N_MAX_PARTICLES, 2);
-	fmatrix wmesh_e         = fmatrix::zeros(N_MESH_X, N_MESH_Y);
-    fmatrix efield_x_at_p_e = fmatrix::zeros(N_MAX_PARTICLES);
-    fmatrix efield_y_at_p_e = fmatrix::zeros(N_MAX_PARTICLES);
+	fmatrix p_e             = fmatrix::zeros(n_max_particles, 6);
+    imatrix lpos_e          = imatrix::zeros(n_max_particles, 2);
+	fmatrix wmesh_e         = fmatrix::zeros(n_mesh_x, n_mesh_y);
+    fmatrix efield_x_at_p_e = fmatrix::zeros(n_max_particles);
+    fmatrix efield_y_at_p_e = fmatrix::zeros(n_max_particles);
     double n_inj_e          = N_INJ_EL;
 	
 	// Particle 2 - Ions
     verbose_log("Initializing ions variables");
-	fmatrix p_i             = fmatrix::zeros(N_MAX_PARTICLES, 6);
-    imatrix lpos_i          = imatrix::zeros(N_MAX_PARTICLES, 2);
-	fmatrix wmesh_i         = fmatrix::zeros(N_MESH_X, N_MESH_Y);
-	fmatrix efield_x_at_p_i = fmatrix::zeros(N_MAX_PARTICLES);
-    fmatrix efield_y_at_p_i = fmatrix::zeros(N_MAX_PARTICLES);
+	fmatrix p_i             = fmatrix::zeros(n_max_particles, 6);
+    imatrix lpos_i          = imatrix::zeros(n_max_particles, 2);
+	fmatrix wmesh_i         = fmatrix::zeros(n_mesh_x, n_mesh_y);
+	fmatrix efield_x_at_p_i = fmatrix::zeros(n_max_particles);
+    fmatrix efield_y_at_p_i = fmatrix::zeros(n_max_particles);
     double n_inj_i          = N_INJ_I;
     
     // Particle 3 - Neutrals
     verbose_log("Initializing neutral variables");
-    fmatrix dens_n          = fmatrix::zeros(N_MESH_X, N_MESH_Y);
+    fmatrix dens_n          = fmatrix::zeros(n_mesh_x, n_mesh_y);
 
     // ----------------------------- Mesh -------------------------------------
     verbose_log("Initializing mesh");
-    init_mesh(mesh_x,  mesh_y, A_X, A_Y, N_MESH_X, N_MESH_Y);
+    init_mesh(mesh_x,  mesh_y, config.f("geometry/a_x"), config.f("geometry/a_y"), n_mesh_x, n_mesh_y);
     init_volume_mesh(vmesh, mesh_x, mesh_y);
     	
     // ----------------------------- Solver -----------------------------------

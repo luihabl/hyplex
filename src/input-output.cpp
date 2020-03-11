@@ -6,7 +6,7 @@
 #include <sstream>
 #include <fstream>
 #include <chrono>
-#include <map>
+#include <unordered_map>
 #include <sys/stat.h>
 
 #include "fmatrix.h"
@@ -230,7 +230,7 @@ void save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, f
     verbose_log("Saved fields snapshot");
 }
 
-void save_series(map<string, fmatrix> & series, int & n_points, state_info state, string suffix){
+void save_series(unordered_map<string, fmatrix> & series, int & n_points, state_info state, string suffix){
     
     exdir file(OUTPUT_PATH + "series" + suffix + ".exdir");
     
