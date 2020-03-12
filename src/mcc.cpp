@@ -121,6 +121,9 @@ void collisions_e(fmatrix & p, int & n_active, imatrix & lpos, fmatrix & p_i, in
 {   
     const double dt = config.f("time/dt");
     const double dx = config.f("p/dx");
+    const double dy = config.f("p/dy");
+    const double a_x = config.f("geometry/a_x");
+    const double a_y = config.f("geometry/a_y");
     const double m_i = config.f("ugas/m_i");
     const double m_el = config.f("electrons/m_el");
     const double q = config.f("physical/q");
@@ -153,7 +156,7 @@ void collisions_e(fmatrix & p, int & n_active, imatrix & lpos, fmatrix & p_i, in
 	{
 		i = particle_samples.val[k];
 		kinetic_energy = kinetic_energy_ev(p, i, m_el, dt, dx, q);
-        neutral_density = field_at_position(dens_n, mesh_x, mesh_y, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0], lpos.val[i * 2 + 1]);
+        neutral_density = field_at_position(dens_n, mesh_x, mesh_y, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0], lpos.val[i * 2 + 1], a_x, a_y, dx, dy);
 		random_number_1 = r_unif();
 
 		// Elastic collision:
@@ -236,6 +239,9 @@ void collisions_i(fmatrix & p, int & n_active, imatrix & lpos, fmatrix & mesh_x,
 
     const double dt = config.f("time/dt");
     const double dx = config.f("p/dx");
+    const double dy = config.f("p/dy");
+    const double a_x = config.f("geometry/a_x");
+    const double a_y = config.f("geometry/a_y");
     const double m_i = config.f("ugas/m_i");
     const double q = config.f("physical/q");
     const double pi = config.f("physical/pi");
@@ -259,7 +265,7 @@ void collisions_i(fmatrix & p, int & n_active, imatrix & lpos, fmatrix & mesh_x,
 	for (int k = 0; k < n_null; k++)
 	{
 		i = particle_samples.val[k];
-        neutral_density = field_at_position(dens_n, mesh_x, mesh_y, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0], lpos.val[i * 2 + 1]);
+        neutral_density = field_at_position(dens_n, mesh_x, mesh_y, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0], lpos.val[i * 2 + 1], a_x, a_y, dx, dy);
         
         v_neutral = {r_norm() * (dt / dx) * sqrt(q * t_neutral / m_i),
                      r_norm() * (dt / dx) * sqrt(q * t_neutral / m_i),

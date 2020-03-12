@@ -52,6 +52,8 @@ int main(int argc, char* argv[])
 
     // Loading variables from config
 
+    const double q = config.f("physical/q");
+
     const int n_steps = config.i("time/n_steps");
     const double dt = config.f("time/dt");
     const int k_sub = config.i("time/k_sub");
@@ -59,12 +61,15 @@ int main(int argc, char* argv[])
     const int n_mesh_x = config.i("geometry/n_mesh_x");
     const int n_mesh_y = config.i("geometry/n_mesh_y");
     const int n_thruster = config.i("geometry/n_thruster");
+    const double a_x = config.f("geometry/a_x");
+    const double a_y = config.f("geometry/a_y");
 
     const double freq = config.f("thruster/freq");
     const double v_sb = config.f("thruster/v_sb");
     const double v_rf = config.f("thruster/v_rf");
     
     const int n_max_particles = config.i("particles/n_max_particles");
+    const double n_factor = config.f("particles/n_factor");
     
     const double sqr_dt = config.f("electrons/sqr_duty_cycle");
     const double m_el = config.f("electrons/m_el");
@@ -73,6 +78,7 @@ int main(int argc, char* argv[])
 
     const double v_drift_i = config.f("ions/v_drift_i");
     const double t_i = config.f("ions/t_i");
+    const double i_i = config.f("ions/i_i");
 
     const double m_i = config.f("ugas/m_i");
 
@@ -80,7 +86,9 @@ int main(int argc, char* argv[])
     const double omega_i = config.f("p/omega_i");
     const double volt_0_norm = config.f("p/volt_0_norm");
     const double volt_1_norm = config.f("p/volt_1_norm");
-
+    const double alpha = config.f("p/alpha");
+    const double dx = config.f("p/dx");
+    const double dy = config.f("p/dy");
  
     // General field variables
 
@@ -191,8 +199,8 @@ int main(int argc, char* argv[])
 	for (state.step = state.step_offset; state.step < n_steps + state.step_offset; state.step++)
 	{ 
 		// Step 1.0: particle weighting
-        if(state.step % k_sub == 0) weight(p_i, state.n_active_i, wmesh_i, mesh_x, mesh_y, lpos_i);
-        weight(p_e, state.n_active_e, wmesh_e, mesh_x, mesh_y, lpos_e);
+        if(state.step % k_sub == 0) weight(p_i, state.n_active_i, wmesh_i, mesh_x, mesh_y, lpos_i, a_x, a_y, dx, dy);
+        weight(p_e, state.n_active_e, wmesh_e, mesh_x, mesh_y, lpos_e, a_x, a_y, dx, dy);
 
         // Step 2.0 integration of Poisson's equation
         solver.solve(phi_poisson, voltages, wmesh_i, wmesh_e);
@@ -209,24 +217,24 @@ int main(int argc, char* argv[])
         calculate_efield(efield_x, efield_y, phi, wmesh_i, wmesh_e, mesh_x, mesh_y, vmesh, electrode_mask);
 
         // Step 2.2: field weighting
-        if(state.step % k_sub == 0) electric_field_at_particles(efield_x_at_p_i, efield_y_at_p_i, efield_x, efield_y, p_i, state.n_active_i, mesh_x, mesh_y, lpos_i);
-        electric_field_at_particles(efield_x_at_p_e, efield_y_at_p_e, efield_x, efield_y, p_e, state.n_active_e, mesh_x, mesh_y, lpos_e);
+        if(state.step % k_sub == 0) electric_field_at_particles(efield_x_at_p_i, efield_y_at_p_i, efield_x, efield_y, p_i, state.n_active_i, mesh_x, mesh_y, lpos_i, a_x, a_y, dx, dy);
+        electric_field_at_particles(efield_x_at_p_e, efield_y_at_p_e, efield_x, efield_y, p_e, state.n_active_e, mesh_x, mesh_y, lpos_e, a_x, a_y, dx, dy);
 
         // Step 3: integration of equations of motion
-        if(state.step % k_sub == 0) move_i(p_i, state.n_active_i, efield_x_at_p_i, efield_y_at_p_i);
+        if(state.step % k_sub == 0) move_i(p_i, state.n_active_i, efield_x_at_p_i, efield_y_at_p_i, alpha, k_sub);
         move_e(p_e, state.n_active_e, efield_x_at_p_e, efield_y_at_p_e);
 
         // // Step 4: particle loss at boundaries
-        if(state.step % k_sub == 0) boundaries_ob_count(p_i, state.n_active_i, lpos_i, state.n_out_ob_i, state.n_out_thr_i);
-        boundaries_ob_count(p_e, state.n_active_e, lpos_e, state.n_out_ob_e, state.n_out_thr_e);
+        if(state.step % k_sub == 0) boundaries_ob_count(p_i, state.n_active_i, lpos_i, state.n_out_ob_i, state.n_out_thr_i, config);
+        boundaries_ob_count(p_e, state.n_active_e, lpos_e, state.n_out_ob_e, state.n_out_thr_e, config);
 
         // Step 5: particles injection
-        if(state.step % k_sub == 0) add_flux_particles(p_i, state.n_active_i, t_i, v_drift_i, m_i, n_inj_i, k_sub);
+        if(state.step % k_sub == 0) add_flux_particles(p_i, state.n_active_i, t_i, v_drift_i, m_i, n_inj_i, k_sub, dx, dy, dt, n_thruster, q);
         if(INJ_MODEL == "constant")       n_inj_el = n_inj_el;
         else if(INJ_MODEL == "balanced")  n_inj_el = balanced_injection(n_inj_el, 0.01, wmesh_i, wmesh_e, 0, 0, 0, n_thruster - 1);
         else if(INJ_MODEL == "pulsed")    n_inj_el = pulsed_injection(k_inj_el, v_sb, v_rf, t_el, omega_i, state.step);
-        else if(INJ_MODEL == "square")    n_inj_el = square_injection(4.0, freq, dt, sqr_dt, state.step);
-        add_flux_particles(p_e, state.n_active_e, t_el, v_drift_el, m_el, n_inj_el, 1);
+        else if(INJ_MODEL == "square")    n_inj_el = square_injection(4.0, freq, dt, sqr_dt, state.step, n_factor, i_i, q);
+        add_flux_particles(p_e, state.n_active_e, t_el, v_drift_el, m_el, n_inj_el, 1, dx, dy, dt, n_thruster, q);
 
         // Step 6: Monte-Carlo collisions
         if(MCC_COLL == "on"){

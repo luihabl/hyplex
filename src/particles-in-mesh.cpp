@@ -11,13 +11,12 @@
 
 #include "fmatrix.h"
 #include "fields.h"
-#include "config.h"
 
 #include <iostream>
 
 using namespace std;
 
-void weight(fmatrix & p, int & n_active, fmatrix & wmesh, fmatrix & mesh_x, fmatrix & mesh_y, imatrix & lpos)
+void weight(fmatrix & p, int & n_active, fmatrix & wmesh, fmatrix & mesh_x, fmatrix & mesh_y, imatrix & lpos, const double & a_x, const double & a_y, const double & dx, const double & dy)
 {
 	wmesh.set_zero();
 
@@ -32,6 +31,8 @@ void weight(fmatrix & p, int & n_active, fmatrix & wmesh, fmatrix & mesh_x, fmat
 	int left_index_x = 0;
 	int left_index_y = 0;
 
+	const int n_mesh_x = (int) mesh_x.n1;
+	const int n_mesh_y = (int) mesh_x.n2;
 	const int mesh_n2 = (int) mesh_x.n2;
 
 	for (int i = 0; i < n_active; i++)
@@ -49,14 +50,14 @@ void weight(fmatrix & p, int & n_active, fmatrix & wmesh, fmatrix & mesh_x, fmat
 
 		if(x_p < x_0_mesh || x_p > x_1_mesh)
 		{
-			lpos.val[i * 2 + 0] = left_index_x = logical_space(x_p, A_X, 1, N_MESH_X);
+			lpos.val[i * 2 + 0] = left_index_x = logical_space(x_p, a_x, 1, n_mesh_x);
 			x_0_mesh = mesh_x.val[left_index_x * mesh_n2 + left_index_y];
 			x_1_mesh = mesh_x.val[(left_index_x + 1) * mesh_n2 + left_index_y];
 		}
 		
 		if(y_p < y_0_mesh || y_p > y_1_mesh)
 		{
-			lpos.val[i * 2 + 1] = left_index_y = logical_space(y_p, A_Y, DY/DX, N_MESH_Y);
+			lpos.val[i * 2 + 1] = left_index_y = logical_space(y_p, a_y, dy/dx, n_mesh_y);
 			y_0_mesh = mesh_y.val[left_index_x * mesh_n2 + left_index_y];
 			y_1_mesh = mesh_y.val[left_index_x * mesh_n2 + (left_index_y + 1)];
 		}
@@ -68,13 +69,13 @@ void weight(fmatrix & p, int & n_active, fmatrix & wmesh, fmatrix & mesh_x, fmat
 	}
 }
 
-void electric_field_at_particles(fmatrix & efield_at_particles_x, fmatrix & efield_at_particles_y, fmatrix & efield_x, fmatrix & efield_y, fmatrix & p, const int n_active, fmatrix & mesh_x, fmatrix & mesh_y, imatrix & lpos)
+void electric_field_at_particles(fmatrix & efield_at_particles_x, fmatrix & efield_at_particles_y, fmatrix & efield_x, fmatrix & efield_y, fmatrix & p, const int n_active, fmatrix & mesh_x, fmatrix & mesh_y, imatrix & lpos, const double & a_x, const double & a_y, const double & dx, const double & dy)
 {
 
 	for (int i = 0; i < n_active; i++)
 	{
-		efield_at_particles_x.val[i] = field_at_position(efield_x, mesh_x, mesh_y, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0], lpos.val[i * 2 + 1]);
-		efield_at_particles_y.val[i] = field_at_position(efield_y, mesh_x, mesh_y, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0], lpos.val[i * 2 + 1]);
+		efield_at_particles_x.val[i] = field_at_position(efield_x, mesh_x, mesh_y, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0], lpos.val[i * 2 + 1], a_x, a_y, dx, dy);
+		efield_at_particles_y.val[i] = field_at_position(efield_y, mesh_x, mesh_y, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0], lpos.val[i * 2 + 1], a_x, a_y, dx, dy);
 	}
 	// double x_p = 0;
 	// double y_p = 0;
@@ -133,15 +134,17 @@ void electric_field_at_particles(fmatrix & efield_at_particles_x, fmatrix & efie
 	// }
 }
 
-double field_at_position(fmatrix & field, fmatrix & mesh_x, fmatrix & mesh_y, double x, double y, int lpos_x, int lpos_y){
+double field_at_position(fmatrix & field, fmatrix & mesh_x, fmatrix & mesh_y, double x, double y, int lpos_x, int lpos_y, const double & a_x, const double & a_y, const double & dx, const double & dy){
 
     const int mesh_n2 = (int) mesh_x.n2;
+	const int n_mesh_x = (int) mesh_x.n1;
+	const int n_mesh_y = (int) mesh_x.n2;
 
     double x_0_mesh = mesh_x.val[lpos_x * mesh_n2 + lpos_y];
 	double x_1_mesh = mesh_x.val[(lpos_x + 1) * mesh_n2 + lpos_y];
     if(x < x_0_mesh || x > x_1_mesh)
 	{
-		lpos_x = logical_space(x, A_X, 1, N_MESH_X);
+		lpos_x = logical_space(x, a_x, 1, n_mesh_x);
 		x_0_mesh = mesh_x.val[lpos_x * mesh_n2 + lpos_y];
 		x_1_mesh = mesh_x.val[(lpos_x + 1) * mesh_n2 + lpos_y];
 	}
@@ -150,7 +153,7 @@ double field_at_position(fmatrix & field, fmatrix & mesh_x, fmatrix & mesh_y, do
 	double y_1_mesh = mesh_y.val[lpos_x * mesh_n2 + (lpos_y + 1)];
 	if(y < y_0_mesh || y > y_1_mesh)
 	{
-		lpos_y = logical_space(y, A_Y, DY/DX, N_MESH_Y);
+		lpos_y = logical_space(y, a_y, dy/dx, n_mesh_y);
 		y_0_mesh = mesh_y.val[lpos_x * mesh_n2 + lpos_y];
 		y_1_mesh = mesh_y.val[lpos_x * mesh_n2 + (lpos_y + 1)];
 	}
@@ -164,7 +167,7 @@ double field_at_position(fmatrix & field, fmatrix & mesh_x, fmatrix & mesh_y, do
 }
 
 
-void energy_field(fmatrix & kefield, fmatrix & p, int & n_active, fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & wmesh, imatrix & lpos, double mass){
+void energy_field(fmatrix & kefield, fmatrix & p, int & n_active, fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & wmesh, imatrix & lpos, double mass, const double & dx, const double & dt, const double & q){
     
     kefield.set_zero();
     
@@ -183,7 +186,7 @@ void energy_field(fmatrix & kefield, fmatrix & p, int & n_active, fmatrix & mesh
     
     const int mesh_n1 = (int) mesh_x.n1;
     const int mesh_n2 = (int) mesh_x.n2;
-    const double factor = 0.5 * mass * (DX * DX) / (Q * DT * DT); // in eV
+    const double factor = 0.5 * mass * (dx * dx) / (q * dt * dt); // in eV
     
     for (int i = 0; i < n_active; i++)
     {
