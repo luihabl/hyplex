@@ -51,26 +51,22 @@ int main(int argc, char* argv[])
 
     // Loading variables from config
 
-    const int n_steps = config.i("time/n_steps");
-    const int k_sub = config.i("time/k_sub");
-    const int n_mesh_x = config.i("geometry/n_mesh_x");
-    const int n_mesh_y = config.i("geometry/n_mesh_y");
-    const int n_thruster = config.i("geometry/n_thruster");
-    const double a_x = config.f("geometry/a_x");
-    const double a_y = config.f("geometry/a_y");
-    const int n_max_particles = config.i("particles/n_max_particles");
-    const double m_el = config.f("electrons/m_el");
-    const double t_el = config.f("electrons/t_el");
-    const double v_drift_el = config.f("electrons/v_drift_el");
-    const double v_drift_i = config.f("ions/v_drift_i");
-    const double t_i = config.f("ions/t_i");
-    const double m_i = config.f("ugas/m_i");
-    const bool mcc_coll = config.b("neutrals/mcc_coll");
-    const double volt_0_norm = config.f("p/volt_0_norm");
-    const double volt_1_norm = config.f("p/volt_1_norm");
-    const double dx = config.f("p/dx");
-    const double dy = config.f("p/dy");
-    const string inj_model = config.s("electrons/inj_model");
+    const int n_steps           = config.i("time/n_steps");
+    const int k_sub             = config.i("time/k_sub");
+    const int n_mesh_x          = config.i("geometry/n_mesh_x");
+    const int n_mesh_y          = config.i("geometry/n_mesh_y");
+    const int n_thruster        = config.i("geometry/n_thruster");
+    const int n_max_particles   = config.i("particles/n_max_particles");
+    const double m_el           = config.f("electrons/m_el");
+    const double t_el           = config.f("electrons/t_el");
+    const double v_drift_el     = config.f("electrons/v_drift_el");
+    const double v_drift_i      = config.f("ions/v_drift_i");
+    const double t_i            = config.f("ions/t_i");
+    const double m_i            = config.f("ugas/m_i");
+    const double volt_0_norm    = config.f("p/volt_0_norm");
+    const double volt_1_norm    = config.f("p/volt_1_norm");
+    const bool mcc_coll         = config.b("neutrals/mcc_coll");
+    const string inj_model      = config.s("electrons/inj_model");
  
     // General field variables
 
@@ -125,19 +121,15 @@ int main(int argc, char* argv[])
     verbose_log("Initializing neutral variables");
     fmatrix dens_n          = fmatrix::zeros(n_mesh_x, n_mesh_y);
 
-    // ----------------------------- Mesh -------------------------------------
+    // ----------------------------- Operation objects -------------------------
     verbose_log("Initializing mesh");
 
     mesh_set mesh(config);
     mesh.init_mesh();
-
-    // ----------------------------- Field Ops ---------------------------------
     
     field_operations fields(config);
-
-    // ----------------------------- Particle Ops ------------------------------
-    
-    particle_operations pops(config);
+    pic_operations pic(config);
+    particle_operations pops(config, pic);
 
     // ----------------------------- Solver -----------------------------------
     verbose_log("Initializing solver");
@@ -170,7 +162,7 @@ int main(int argc, char* argv[])
 
     // ----------------------------- MCC --------------------------------------
     
-    mcc coll(config, pops);
+    mcc coll(config, pops, pic);
     coll.initialize_mcc(dens_n, mesh.v);
 
     // ----------------------------- Loading initial state -------------------
@@ -187,8 +179,8 @@ int main(int argc, char* argv[])
 	for (state.step = state.step_offset; state.step < n_steps + state.step_offset; state.step++)
 	{ 
 		// Step 1.0: particle weighting
-        if(state.step % k_sub == 0) weight(p_i, state.n_active_i, wmesh_i, mesh, lpos_i, a_x, a_y, dx, dy);
-        weight(p_e, state.n_active_e, wmesh_e, mesh, lpos_e, a_x, a_y, dx, dy);
+        if(state.step % k_sub == 0) pic.weight(p_i, state.n_active_i, wmesh_i, mesh, lpos_i);
+        pic.weight(p_e, state.n_active_e, wmesh_e, mesh, lpos_e);
 
         // Step 2.0 integration of Poisson's equation
         solver.solve(phi_poisson, voltages, wmesh_i, wmesh_e);
@@ -205,8 +197,8 @@ int main(int argc, char* argv[])
         fields.calculate_efield(efield_x, efield_y, phi, wmesh_i, wmesh_e, mesh, electrode_mask);
 
         // Step 2.2: field weighting
-        if(state.step % k_sub == 0) electric_field_at_particles(efield_x_at_p_i, efield_y_at_p_i, efield_x, efield_y, p_i, state.n_active_i, mesh, lpos_i, a_x, a_y, dx, dy);
-        electric_field_at_particles(efield_x_at_p_e, efield_y_at_p_e, efield_x, efield_y, p_e, state.n_active_e, mesh, lpos_e, a_x, a_y, dx, dy);
+        if(state.step % k_sub == 0) pic.electric_field_at_particles(efield_x_at_p_i, efield_y_at_p_i, efield_x, efield_y, p_i, state.n_active_i, mesh, lpos_i);
+        pic.electric_field_at_particles(efield_x_at_p_e, efield_y_at_p_e, efield_x, efield_y, p_e, state.n_active_e, mesh, lpos_e);
 
         // Step 3: integration of equations of motion
         if(state.step % k_sub == 0) pops.move_i(p_i, state.n_active_i, efield_x_at_p_i, efield_y_at_p_i);

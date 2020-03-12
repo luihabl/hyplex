@@ -14,12 +14,11 @@
 #include "input-output.h"
 
 
-mcc::mcc(configuration & config, particle_operations & _pops): pops(_pops)
+mcc::mcc(configuration & config, particle_operations & _pops, pic_operations & _pic): pops(_pops), pic(_pic)
 {
     n_exc = config.i("p/n_exc");
     e_exc = config.fs("ugas/e_exc");
     e_iz = config.f("ugas/e_iz");
-
 
     // Loading cross-sections
 
@@ -185,7 +184,7 @@ void mcc::collisions_e(fmatrix & p, int & n_active, imatrix & lpos, fmatrix & p_
 	{
 		i = particle_samples.val[k];
 		kinetic_energy = kinetic_energy_ev(p, i, m_el);
-        neutral_density = field_at_position(dens_n, mesh, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0], lpos.val[i * 2 + 1], a_x, a_y, dx, dy);
+        neutral_density = pic.field_at_position(dens_n, mesh, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0], lpos.val[i * 2 + 1]);
 		random_number_1 = r_unif();
 
 		// Elastic collision:
@@ -284,7 +283,7 @@ void mcc::collisions_i(fmatrix & p, int & n_active, imatrix & lpos, mesh_set & m
 	for (int k = 0; k < n_null; k++)
 	{
 		i = particle_samples.val[k];
-        neutral_density = field_at_position(dens_n, mesh, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0], lpos.val[i * 2 + 1], a_x, a_y, dx, dy);
+        neutral_density = pic.field_at_position(dens_n, mesh, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0], lpos.val[i * 2 + 1]);
         
         v_neutral = {r_norm() * (dt / dx) * sqrt(q * t_neutral / m_i),
                      r_norm() * (dt / dx) * sqrt(q * t_neutral / m_i),

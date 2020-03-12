@@ -5,6 +5,7 @@
 #include "configuration.h"
 #include "fields.h"
 #include "particles.h"
+#include "particles-in-mesh.h"
 
 
 struct mcc
@@ -30,8 +31,9 @@ struct mcc
     double p_null_e, p_null_i;
 
     particle_operations & pops;
+    pic_operations & pic;
 
-    mcc(configuration & config, particle_operations & pops);
+    mcc(configuration & config, particle_operations & pops, pic_operations & pic);
     ~mcc();
 
     double find_nu_prime_e(fmatrix & dens_n, fmatrix & vmesh);

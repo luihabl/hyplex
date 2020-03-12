@@ -19,7 +19,8 @@
 using namespace std;
 
 
-particle_operations::particle_operations(configuration & config){
+particle_operations::particle_operations(configuration & config, pic_operations & _pic): pic(_pic){
+
 
 	n_mesh_x = config.i("geometry/n_mesh_x");
 	n_mesh_y = config.i("geometry/n_mesh_y");
@@ -396,7 +397,7 @@ void particle_operations::find_phi_at_particles(fmatrix & phi_at_patricles, fmat
 		lx = lpos.val[out.val[n] * 2 + 0];
 		ly = lpos.val[out.val[n] * 2 + 1];
 
-		phi_at_patricles.val[n] = field_at_position(phi, mesh, x, y, lx, ly, a_x, a_y, dx, dy) / k_phi;
+		phi_at_patricles.val[n] = pic.field_at_position(phi, mesh, x, y, lx, ly) / k_phi;
 	}
 }
 

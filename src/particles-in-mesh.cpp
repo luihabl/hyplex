@@ -16,7 +16,23 @@
 
 using namespace std;
 
-void weight(fmatrix & p, int & n_active, fmatrix & wmesh, mesh_set & mesh, imatrix & lpos, const double & a_x, const double & a_y, const double & dx, const double & dy)
+
+pic_operations::pic_operations(configuration & config){
+
+	dx = config.f("p/dx");
+	dy = config.f("p/dy");
+	dt = config.f("time/dt");
+	a_x = config.f("geometry/a_x");
+	a_y = config.f("geometry/a_x");
+	q = config.f("physical/q");
+
+	n_mesh_x = config.i("geometry/n_mesh_x");
+	n_mesh_y = config.i("geometry/n_mesh_y");
+
+}
+
+
+void pic_operations::weight(fmatrix & p, int & n_active, fmatrix & wmesh, mesh_set & mesh, imatrix & lpos)
 {
 	wmesh.set_zero();
 
@@ -34,10 +50,7 @@ void weight(fmatrix & p, int & n_active, fmatrix & wmesh, mesh_set & mesh, imatr
 	int left_index_x = 0;
 	int left_index_y = 0;
 
-	const int n_mesh_x = (int) mesh_x.n1;
-	const int n_mesh_y = (int) mesh_x.n2;
 	const int mesh_n2 = (int) mesh_x.n2;
-
 
 	for (int i = 0; i < n_active; i++)
 	{
@@ -73,13 +86,13 @@ void weight(fmatrix & p, int & n_active, fmatrix & wmesh, mesh_set & mesh, imatr
 	}
 }
 
-void electric_field_at_particles(fmatrix & efield_at_particles_x, fmatrix & efield_at_particles_y, fmatrix & efield_x, fmatrix & efield_y, fmatrix & p, const int n_active, mesh_set & mesh, imatrix & lpos, const double & a_x, const double & a_y, const double & dx, const double & dy)
+void pic_operations::electric_field_at_particles(fmatrix & efield_at_particles_x, fmatrix & efield_at_particles_y, fmatrix & efield_x, fmatrix & efield_y, fmatrix & p, const int n_active, mesh_set & mesh, imatrix & lpos)
 {
 
 	for (int i = 0; i < n_active; i++)
 	{
-		efield_at_particles_x.val[i] = field_at_position(efield_x, mesh, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0], lpos.val[i * 2 + 1], a_x, a_y, dx, dy);
-		efield_at_particles_y.val[i] = field_at_position(efield_y, mesh, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0], lpos.val[i * 2 + 1], a_x, a_y, dx, dy);
+		efield_at_particles_x.val[i] = field_at_position(efield_x, mesh, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0], lpos.val[i * 2 + 1]);
+		efield_at_particles_y.val[i] = field_at_position(efield_y, mesh, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0], lpos.val[i * 2 + 1]);
 	}
 	// double x_p = 0;
 	// double y_p = 0;
@@ -138,7 +151,8 @@ void electric_field_at_particles(fmatrix & efield_at_particles_x, fmatrix & efie
 	// }
 }
 
-double field_at_position(fmatrix & field, mesh_set & mesh, double x, double y, int lpos_x, int lpos_y, const double & a_x, const double & a_y, const double & dx, const double & dy){
+double pic_operations::field_at_position(fmatrix & field, mesh_set & mesh, double x, double y, int lpos_x, int lpos_y)
+{
 
     const int mesh_n2 = (int) mesh.x.n2;
 	const int n_mesh_x = (int) mesh.nx;
@@ -171,7 +185,8 @@ double field_at_position(fmatrix & field, mesh_set & mesh, double x, double y, i
 }
 
 
-void energy_field(fmatrix & kefield, fmatrix & p, int & n_active, fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & wmesh, imatrix & lpos, double mass, const double & dx, const double & dt, const double & q){
+void pic_operations::energy_field(fmatrix & kefield, fmatrix & p, int & n_active, fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & wmesh, imatrix & lpos, double mass)
+{
     
     kefield.set_zero();
     
@@ -230,7 +245,7 @@ void energy_field(fmatrix & kefield, fmatrix & p, int & n_active, fmatrix & mesh
     }
 }
 
-void flux_field(fmatrix & ffield_x, fmatrix & ffield_y, fmatrix & p, int & n_active, fmatrix & mesh_x, fmatrix & mesh_y, imatrix & lpos){
+void pic_operations::flux_field(fmatrix & ffield_x, fmatrix & ffield_y, fmatrix & p, int & n_active, fmatrix & mesh_x, fmatrix & mesh_y, imatrix & lpos){
     
     ffield_x.set_zero();
     ffield_y.set_zero();
