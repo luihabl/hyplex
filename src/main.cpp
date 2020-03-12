@@ -110,17 +110,17 @@ int main(int argc, char* argv[])
     fmatrix wmesh_i_av      = fmatrix::zeros(n_mesh_x, n_mesh_y);
     
     unordered_map<string, fmatrix> series;
-    series["time"]          = fmatrix::zeros(n_steps);
-    series["v_cap"]         = fmatrix::zeros(n_steps);
-    series["n_active_e"]    = fmatrix::zeros(n_steps);
-    series["n_active_i"]    = fmatrix::zeros(n_steps);
+    series["time"]              = fmatrix::zeros(n_steps);
+    series["v_cap"]             = fmatrix::zeros(n_steps);
+    series["n_active_e"]        = fmatrix::zeros(n_steps);
+    series["n_active_i"]        = fmatrix::zeros(n_steps);
     series["I_out_ob_e"]        = fmatrix::zeros(n_steps);
     series["I_out_ob_i"]        = fmatrix::zeros(n_steps);
     series["I_out_thr_e"]       = fmatrix::zeros(n_steps);
     series["I_out_thr_i"]       = fmatrix::zeros(n_steps);
     series["I_in_thr_e"]        = fmatrix::zeros(n_steps);
     series["I_in_thr_i"]        = fmatrix::zeros(n_steps);
-    int n_points_series     = 0;
+    int n_points_series         = 0;
     
 	// Particle 1 - Electrons
     verbose_log("Initializing electrons variables");
@@ -149,7 +149,11 @@ int main(int argc, char* argv[])
 
     mesh_set mesh(config);
     mesh.init_mesh();
-    	
+
+    // ----------------------------- Field Ops ---------------------------------
+    
+    field_operations fields(config);
+
     // ----------------------------- Solver -----------------------------------
     verbose_log("Initializing solver");
 
@@ -160,7 +164,7 @@ int main(int argc, char* argv[])
     solver.solve(phi_laplace, voltages, wmesh_i, wmesh_e);
 
     voltages = {volt_1_norm, volt_0_norm, volt_1_norm, volt_1_norm};
-    sigma_laplace = sigma_from_phi(phi_laplace, mesh, wmesh_e, wmesh_i, electrode_mask, config);
+    sigma_laplace = fields.sigma_from_phi(phi_laplace, mesh, wmesh_e, wmesh_i, electrode_mask);
 
     // ----------------------------- DSMC -------------------------------------
     
@@ -183,7 +187,7 @@ int main(int argc, char* argv[])
     
     mcc coll(config);
     coll.initialize_mcc(dens_n, mesh.v);
-         
+
     // ----------------------------- Loading initial state -------------------
 
     if(config.s("simulation/initial_state") == "load")  load_state(p_e, p_i, state, config);
@@ -205,15 +209,15 @@ int main(int argc, char* argv[])
         solver.solve(phi_poisson, voltages, wmesh_i, wmesh_e);
         
         state.sigma_0 = state.sigma_1;
-        state.phi_zero = calculate_phi_zero(state.sigma_1, state.n_out_ob_i -  state.n_out_ob_e, state.q_cap, sigma_laplace, phi_poisson, mesh, wmesh_e, wmesh_i, electrode_mask, config);
+        state.phi_zero = fields.calculate_phi_zero(state.sigma_1, state.n_out_ob_i -  state.n_out_ob_e, state.q_cap, sigma_laplace, phi_poisson, mesh, wmesh_e, wmesh_i, electrode_mask);
         
-        state.sigma_1 = calculate_sigma(state.sigma_0, state.phi_zero, state.n_out_ob_i -  state.n_out_ob_e, state.q_cap, config);
-        state.q_cap = calculate_cap_charge(state.sigma_1, state.sigma_0, state.q_cap, state.n_out_ob_i -  state.n_out_ob_e, config);
+        state.sigma_1 = fields.calculate_sigma(state.sigma_0, state.phi_zero, state.n_out_ob_i -  state.n_out_ob_e, state.q_cap);
+        state.q_cap = fields.calculate_cap_charge(state.sigma_1, state.sigma_0, state.q_cap, state.n_out_ob_i -  state.n_out_ob_e);
 
         phi = phi_poisson + (state.phi_zero * phi_laplace);
 
         // Step 2.1: calculation of electric field
-        calculate_efield(efield_x, efield_y, phi, wmesh_i, wmesh_e, mesh, electrode_mask);
+        fields.calculate_efield(efield_x, efield_y, phi, wmesh_i, wmesh_e, mesh, electrode_mask);
 
         // Step 2.2: field weighting
         if(state.step % k_sub == 0) electric_field_at_particles(efield_x_at_p_i, efield_y_at_p_i, efield_x, efield_y, p_i, state.n_active_i, mesh, lpos_i, a_x, a_y, dx, dy);

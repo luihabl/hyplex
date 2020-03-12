@@ -110,17 +110,29 @@ double mesh_set::k3_y(size_t i, size_t j, int ioff, int joff){
 // ------------------------------------- field functions ---------------------------------------
 
 
+field_operations::field_operations(configuration & config){
 
-double ac_voltage_at_time(size_t i, double dt, double freq_hz, double amplitude, double phase, configuration & config)
-{
-	return amplitude * sin(2 * config.f("physical/pi") * freq_hz * dt * i + phase);
+	n_mesh_x = config.i("geometry/n_mesh_x");
+	n_mesh_y =  config.i("geometry/n_mesh_y");
+	eps_0 = config.f("physical/eps_0");
+	c_cap = config.f("boundaries/c_cap");
+	gamma = config.f("p/gamma");
+	k_q = config.f("p/k_q");
+	pi = config.f("physical/pi");
+	dt = config.f("time/dt");
+
+
 }
 
-void calculate_efield(fmatrix & efield_x, fmatrix & efield_y, fmatrix & phi, fmatrix & w_i, fmatrix & w_e, mesh_set & mesh, imatrix & electrode_mask)
+
+double field_operations::ac_voltage_at_time(size_t i, double freq_hz, double amplitude, double phase)
+{
+	return amplitude * sin(2 * pi * freq_hz * dt * i + phase);
+}
+
+void field_operations::calculate_efield(fmatrix & efield_x, fmatrix & efield_y, fmatrix & phi, fmatrix & w_i, fmatrix & w_e, mesh_set & mesh, imatrix & electrode_mask)
 {
 	int ip, im, jp, jm; //e_mask;
-	int n_mesh_x =  mesh.nx, n_mesh_y =  mesh.ny;
-	// double signal_x, signal_y;
 
 	for(int i = 0; i < n_mesh_x; i++){
         for(int j = 0; j < n_mesh_y; j++)
@@ -148,22 +160,17 @@ void calculate_efield(fmatrix & efield_x, fmatrix & efield_y, fmatrix & phi, fma
 }
 
 
-double calculate_phi_zero(double sigma_old, double n_in, double q_cap, double sigma_laplace, fmatrix & phi_poisson, mesh_set mesh, fmatrix & wmesh_e, fmatrix & wmesh_i, imatrix & electrode_mask, configuration & config){
+double field_operations::calculate_phi_zero(double sigma_old, double n_in, double q_cap, double sigma_laplace, fmatrix & phi_poisson, mesh_set mesh, fmatrix & wmesh_e, fmatrix & wmesh_i, imatrix & electrode_mask){
 
-	double sigma_poisson = sigma_from_phi(phi_poisson, mesh, wmesh_e, wmesh_i, electrode_mask, config);	
-	return (sigma_old + sigma_poisson - q_cap + config.f("p/k_q") * n_in) / (1 - sigma_laplace);
+	double sigma_poisson = sigma_from_phi(phi_poisson, mesh, wmesh_e, wmesh_i, electrode_mask);	
+	return (sigma_old + sigma_poisson - q_cap + k_q * n_in) / (1 - sigma_laplace);
 }
 
-double sigma_from_phi(fmatrix & phi, mesh_set & mesh, fmatrix & wmesh_e, fmatrix & wmesh_i, imatrix & electrode_mask, configuration & config){
+double field_operations::sigma_from_phi(fmatrix & phi, mesh_set & mesh, fmatrix & wmesh_e, fmatrix & wmesh_i, imatrix & electrode_mask){
 	
 	double sigma = 0, volume, dw, phi_xx, phi_yy;
 	double dx1, dx2, dy1, dy2;
 	int ip, im, jp, jm;
-	int n_mesh_x =  (int) mesh.nx, n_mesh_y =  (int) mesh.ny;
-
-	double eps_0 = config.f("physical/eps_0");
-	double c_cap = config.f("boundaries/c_cap");
-	double gamma = config.f("p/gamma");
 
 	for(int i = 0; i < n_mesh_x; i++){
 		for(int j = 0; j < n_mesh_y; j++){
@@ -197,12 +204,12 @@ double sigma_from_phi(fmatrix & phi, mesh_set & mesh, fmatrix & wmesh_e, fmatrix
 	return sigma;
 }
 
-double calculate_sigma(double sigma_old, double phi_zero, double n_in, double cap_charge, configuration & config){
-	return sigma_old - phi_zero - cap_charge + config.f("p/k_q") * n_in;
+double field_operations::calculate_sigma(double sigma_old, double phi_zero, double n_in, double cap_charge){
+	return sigma_old - phi_zero - cap_charge + k_q * n_in;
 }
 
-double calculate_cap_charge(double sigma_new, double sigma_old, double cap_charge_old, double n_in, configuration & config){
-	return sigma_new - sigma_old + cap_charge_old - config.f("p/k_q") * n_in;
+double field_operations::calculate_cap_charge(double sigma_new, double sigma_old, double cap_charge_old, double n_in){
+	return sigma_new - sigma_old + cap_charge_old - k_q * n_in;
 }
 
 
