@@ -19,14 +19,14 @@ using namespace std::chrono;
 using namespace std;
 // ------------------- constructors / destructor -------------------------
 
-rsolver::rsolver(fmatrix & _mesh_x, fmatrix & _mesh_y, fmatrix & _vmesh, int _n_neumann, int _n_dirichlet, configuration & _config): mesh_x(_mesh_x), mesh_y(_mesh_y), vmesh(_vmesh), config(_config){
+rsolver::rsolver(mesh_set & _mesh, int _n_neumann, int _n_dirichlet, configuration & _config): mesh(_mesh), config(_config){
 
     MPI_Init(NULL, NULL);
 
     n_neumann = _n_neumann;
     n_dirichlet = _n_dirichlet;
-    n_mesh_x = (int) _mesh_x.n1;
-    n_mesh_y = (int) _mesh_y.n2;
+    n_mesh_x = (int) _mesh.nx;
+    n_mesh_y = (int) _mesh.ny;
     n_input_dirichlet = 0;
     n_solve = 0;
 
@@ -40,12 +40,12 @@ rsolver::rsolver(fmatrix & _mesh_x, fmatrix & _mesh_y, fmatrix & _vmesh, int _n_
     inner_ur = {n_mesh_x - 2, n_mesh_y - 2};
 }
 
-rsolver::rsolver(fmatrix & _mesh_x, fmatrix & _mesh_y, fmatrix & _vmesh, configuration & _config): mesh_x(_mesh_x), mesh_y(_mesh_y), vmesh(_vmesh), config(_config){
+rsolver::rsolver(mesh_set & _mesh, configuration & _config): mesh(_mesh), config(_config){
 
     MPI_Init(NULL, NULL);
 
-    n_mesh_x = (int) _mesh_x.n1;
-    n_mesh_y = (int) _mesh_y.n2;
+    n_mesh_x = (int) _mesh.nx;
+    n_mesh_y = (int) _mesh.ny;
     n_input_dirichlet = 0;
     n_solve = 0;
 
@@ -161,12 +161,12 @@ void rsolver::set_inner_nodes(){
         for (int j = 0; j < n_mesh_y; j++) { 
             if(get_node_type(i, j) == 0){
 
-                double vol = vmesh.val[i * vmesh.n2 + j];
-                double d0 =   1/ (k1_x(mesh_x, i, j) * k2_x(mesh_x, i, j)) + 1/(k1_y(mesh_y, i, j) * k2_y(mesh_y, i, j));
-                double d1 = - 1/ (k1_x(mesh_x, i, j) * k3_x(mesh_x, i, j));
-                double d2 = - 1/ (k2_x(mesh_x, i, j) * k3_x(mesh_x, i, j));
-                double d3 = - 1/ (k1_y(mesh_y, i, j) * k3_y(mesh_y, i, j));
-                double d4 = - 1/ (k2_y(mesh_y, i, j) * k3_y(mesh_y, i, j)); 
+                double vol = mesh.v.val[i * mesh.v.n2 + j];
+                double d0 =   1/ (mesh.k1_x(i, j) * mesh.k2_x(i, j)) + 1/(mesh.k1_y(i, j) * mesh.k2_y(i, j));
+                double d1 = - 1/ (mesh.k1_x(i, j) * mesh.k3_x(i, j));
+                double d2 = - 1/ (mesh.k2_x(i, j) * mesh.k3_x(i, j));
+                double d3 = - 1/ (mesh.k1_y(i, j) * mesh.k3_y(i, j));
+                double d4 = - 1/ (mesh.k2_y(i, j) * mesh.k3_y(i, j)); 
                 double val[5] = {vol * d0, vol * d1, vol * d2, vol * d3, vol * d4};               
 
                 ll = {i, j};
@@ -208,46 +208,46 @@ void rsolver::set_neumann_nodes(){
                 // Neumann point in the x direction
                 if (get_node_type(i, j, stencil_offsets[2][0], stencil_offsets[2][1]) == -1) {
 
-                    d0 +=  1 / (k1_x(mesh_x, i, j) * k1_x(mesh_x, i, j));
-                    d1 = - 1 / (k1_x(mesh_x, i, j) * k1_x(mesh_x, i, j));
+                    d0 +=  1 / (mesh.k1_x(i, j) * mesh.k1_x(i, j));
+                    d1 = - 1 / (mesh.k1_x(i, j) * mesh.k1_x(i, j));
                     d2 =   0.0;
 
                 }
                 else if (get_node_type(i, j, stencil_offsets[1][0], stencil_offsets[1][1]) == -1) {
 
-                    d0 +=  1 / (k2_x(mesh_x, i, j) * k2_x(mesh_x, i, j));
+                    d0 +=  1 / (mesh.k2_x(i, j) * mesh.k2_x(i, j));
                     d1 =   0.0;
-                    d2 = - 1 / (k2_x(mesh_x, i, j) * k2_x(mesh_x, i, j));
+                    d2 = - 1 / (mesh.k2_x(i, j) * mesh.k2_x(i, j));
 
                 }
                 else {
-                    d0 +=  1 / (k1_x(mesh_x, i, j) * k2_x(mesh_x, i, j));
-                    d1 = - 1 / (k1_x(mesh_x, i, j) * k3_x(mesh_x, i, j));
-                    d2 = - 1 / (k2_x(mesh_x, i, j) * k3_x(mesh_x, i, j));
+                    d0 +=  1 / (mesh.k1_x(i, j) * mesh.k2_x(i, j));
+                    d1 = - 1 / (mesh.k1_x(i, j) * mesh.k3_x(i, j));
+                    d2 = - 1 / (mesh.k2_x(i, j) * mesh.k3_x(i, j));
                 }
                 
                 // Neumann point in the y direction
                 if (get_node_type(i, j, stencil_offsets[4][0], stencil_offsets[4][1]) == -1) {
 
-                    d0 +=  1 / (k1_y(mesh_y, i, j) * k1_y(mesh_y, i, j));
-                    d3 = - 1 / (k1_y(mesh_y, i, j) * k1_y(mesh_y, i, j));
+                    d0 +=  1 / (mesh.k1_y(i, j) * mesh.k1_y(i, j));
+                    d3 = - 1 / (mesh.k1_y(i, j) * mesh.k1_y(i, j));
                     d4 =   0.0;
 
                 }
                 else if (get_node_type(i, j, stencil_offsets[3][0], stencil_offsets[3][1]) == -1) {
 
-                    d0 +=  1 / (k2_y(mesh_y, i, j) * k2_y(mesh_y, i, j));
+                    d0 +=  1 / (mesh.k2_y(i, j) * mesh.k2_y(i, j));
                     d3 =   0.0;
-                    d4 = - 1 / (k2_y(mesh_y, i, j) * k2_y(mesh_y, i, j));
+                    d4 = - 1 / (mesh.k2_y(i, j) * mesh.k2_y(i, j));
                     
                 }
                 else {
-                    d0 +=  1 / (k1_y(mesh_y, i, j) * k2_y(mesh_y, i, j));
-                    d3 = - 1 / (k1_y(mesh_y, i, j) * k3_y(mesh_y, i, j));
-                    d4 = - 1 / (k2_y(mesh_y, i, j) * k3_y(mesh_y, i, j));
+                    d0 +=  1 / (mesh.k1_y(i, j) * mesh.k2_y(i, j));
+                    d3 = - 1 / (mesh.k1_y(i, j) * mesh.k3_y(i, j));
+                    d4 = - 1 / (mesh.k2_y(i, j) * mesh.k3_y(i, j));
                 }
                 
-                double vol = vmesh.val[i * vmesh.n2 + j];
+                double vol = mesh.v.val[i * mesh.v.n2 + j];
                 double val[5] = {vol * d0, vol * d1, vol * d2, vol * d3, vol * d4};
                 
                 ll = {i, j};
@@ -263,16 +263,16 @@ void rsolver::add_dirichlet_input(int i, int j, int stencil, int n_bc){
 
     switch(stencil){
         case 1: 
-            dirichlet_input.val[n_input_dirichlet * 4 + 3] = vmesh.val[i * vmesh.n2 + j] / (k1_x(mesh_x, i, j) * k3_x(mesh_x, i, j));
+            dirichlet_input.val[n_input_dirichlet * 4 + 3] = mesh.v.val[i * mesh.v.n2 + j] / (mesh.k1_x(i, j) * mesh.k3_x(i, j));
             break;
         case 2: 
-            dirichlet_input.val[n_input_dirichlet * 4 + 3] = vmesh.val[i * vmesh.n2 + j] / (k2_x(mesh_x, i, j) * k3_x(mesh_x, i, j));
+            dirichlet_input.val[n_input_dirichlet * 4 + 3] = mesh.v.val[i * mesh.v.n2 + j] / (mesh.k2_x(i, j) * mesh.k3_x(i, j));
             break;
         case 3: 
-            dirichlet_input.val[n_input_dirichlet * 4 + 3] = vmesh.val[i * vmesh.n2 + j] / (k1_y(mesh_y, i, j) * k3_y(mesh_y, i, j));
+            dirichlet_input.val[n_input_dirichlet * 4 + 3] = mesh.v.val[i * mesh.v.n2 + j] / (mesh.k1_y(i, j) * mesh.k3_y(i, j));
             break;
         case 4: 
-            dirichlet_input.val[n_input_dirichlet * 4 + 3] = vmesh.val[i * vmesh.n2 + j] / (k2_y(mesh_y, i, j) * k3_y(mesh_y, i, j));
+            dirichlet_input.val[n_input_dirichlet * 4 + 3] = mesh.v.val[i * mesh.v.n2 + j] / (mesh.k2_y(i, j) * mesh.k3_y(i, j));
             break;
         default:
             cout << "stencil error in dirichlet bc" << endl;
@@ -346,7 +346,7 @@ bool rsolver::in_box(int i, int j, int ill, int jll, int iur, int jur){
 }
 
 
-void setup_rsolver(rsolver & solver, fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & vmesh, imatrix & electrode_mask){
+void setup_rsolver(rsolver & solver, mesh_set & mesh, imatrix & electrode_mask){
     
     int n_dirichlet = 0, n_neumann = 0;
 

@@ -99,9 +99,9 @@ int main(int argc, char* argv[])
     fmatrix phi_poisson     = fmatrix::zeros(n_mesh_x, n_mesh_y);
 	fmatrix efield_x        = fmatrix::zeros(n_mesh_x, n_mesh_y);
     fmatrix efield_y        = fmatrix::zeros(n_mesh_x, n_mesh_y);
-    fmatrix mesh_x          = fmatrix::zeros(n_mesh_x, n_mesh_y);
-    fmatrix mesh_y          = fmatrix::zeros(n_mesh_x, n_mesh_y);
-    fmatrix vmesh           = fmatrix::zeros(n_mesh_x, n_mesh_y);
+    // fmatrix mesh_x          = fmatrix::zeros(n_mesh_x, n_mesh_y);
+    // fmatrix mesh_y          = fmatrix::zeros(n_mesh_x, n_mesh_y);
+    // fmatrix vmesh           = fmatrix::zeros(n_mesh_x, n_mesh_y);
     imatrix electrode_mask  = imatrix::zeros(n_mesh_x, n_mesh_y);
     fmatrix voltages        = fmatrix::zeros(4);
     double sigma_laplace;
@@ -150,20 +150,21 @@ int main(int argc, char* argv[])
 
     // ----------------------------- Mesh -------------------------------------
     verbose_log("Initializing mesh");
-    init_mesh(mesh_x,  mesh_y, config);
-    init_volume_mesh(vmesh, mesh_x, mesh_y);
+
+    mesh_set mesh(config);
+    mesh.init_mesh();
     	
     // ----------------------------- Solver -----------------------------------
     verbose_log("Initializing solver");
 
-    rsolver solver(mesh_x, mesh_y, vmesh, config);
-    setup_rsolver(solver, mesh_x, mesh_y, vmesh, electrode_mask);
+    rsolver solver(mesh, config);
+    setup_rsolver(solver, mesh, electrode_mask);
 
     voltages = {1, 0, 1, 1};
     solver.solve(phi_laplace, voltages, wmesh_i, wmesh_e);
 
     voltages = {volt_1_norm, volt_0_norm, volt_1_norm, volt_1_norm};
-    sigma_laplace = sigma_from_phi(phi_laplace, mesh_x, mesh_y, wmesh_e, wmesh_e, vmesh, electrode_mask, config);
+    sigma_laplace = sigma_from_phi(phi_laplace, mesh, wmesh_e, wmesh_i, electrode_mask, config);
 
     // ----------------------------- DSMC -------------------------------------
     
@@ -171,7 +172,7 @@ int main(int argc, char* argv[])
 
     if (expm_neutral == "dsmc"){
         verbose_log(" ---- Starting DSMC loop ---- ");
-        run_dsmc(mesh_x, mesh_y, vmesh, dens_n, config, "dens_n" + job_suffix + ".exdir");
+        run_dsmc(mesh, dens_n, config, "dens_n" + job_suffix + ".exdir");
     }
     else if (expm_neutral == "constant") {
         verbose_log(" ---- Setting constant neutral density ---- ");
@@ -185,7 +186,7 @@ int main(int argc, char* argv[])
     // ----------------------------- MCC --------------------------------------
     
     mcc coll(config);
-    coll.initialize_mcc(dens_n, vmesh);
+    coll.initialize_mcc(dens_n, mesh.v);
          
     // ----------------------------- Loading initial state -------------------
 
@@ -201,14 +202,14 @@ int main(int argc, char* argv[])
 	for (state.step = state.step_offset; state.step < n_steps + state.step_offset; state.step++)
 	{ 
 		// Step 1.0: particle weighting
-        if(state.step % k_sub == 0) weight(p_i, state.n_active_i, wmesh_i, mesh_x, mesh_y, lpos_i, a_x, a_y, dx, dy);
-        weight(p_e, state.n_active_e, wmesh_e, mesh_x, mesh_y, lpos_e, a_x, a_y, dx, dy);
+        if(state.step % k_sub == 0) weight(p_i, state.n_active_i, wmesh_i, mesh, lpos_i, a_x, a_y, dx, dy);
+        weight(p_e, state.n_active_e, wmesh_e, mesh, lpos_e, a_x, a_y, dx, dy);
 
         // Step 2.0 integration of Poisson's equation
         solver.solve(phi_poisson, voltages, wmesh_i, wmesh_e);
         
         state.sigma_0 = state.sigma_1;
-        state.phi_zero = calculate_phi_zero(state.sigma_1, state.n_out_ob_i -  state.n_out_ob_e, state.q_cap, sigma_laplace, phi_poisson, mesh_x, mesh_y, wmesh_e, wmesh_i, vmesh, electrode_mask, config);
+        state.phi_zero = calculate_phi_zero(state.sigma_1, state.n_out_ob_i -  state.n_out_ob_e, state.q_cap, sigma_laplace, phi_poisson, mesh, wmesh_e, wmesh_i, electrode_mask, config);
         
         state.sigma_1 = calculate_sigma(state.sigma_0, state.phi_zero, state.n_out_ob_i -  state.n_out_ob_e, state.q_cap, config);
         state.q_cap = calculate_cap_charge(state.sigma_1, state.sigma_0, state.q_cap, state.n_out_ob_i -  state.n_out_ob_e, config);
@@ -216,11 +217,11 @@ int main(int argc, char* argv[])
         phi = phi_poisson + (state.phi_zero * phi_laplace);
 
         // Step 2.1: calculation of electric field
-        calculate_efield(efield_x, efield_y, phi, wmesh_i, wmesh_e, mesh_x, mesh_y, vmesh, electrode_mask);
+        calculate_efield(efield_x, efield_y, phi, wmesh_i, wmesh_e, mesh, electrode_mask);
 
         // Step 2.2: field weighting
-        if(state.step % k_sub == 0) electric_field_at_particles(efield_x_at_p_i, efield_y_at_p_i, efield_x, efield_y, p_i, state.n_active_i, mesh_x, mesh_y, lpos_i, a_x, a_y, dx, dy);
-        electric_field_at_particles(efield_x_at_p_e, efield_y_at_p_e, efield_x, efield_y, p_e, state.n_active_e, mesh_x, mesh_y, lpos_e, a_x, a_y, dx, dy);
+        if(state.step % k_sub == 0) electric_field_at_particles(efield_x_at_p_i, efield_y_at_p_i, efield_x, efield_y, p_i, state.n_active_i, mesh, lpos_i, a_x, a_y, dx, dy);
+        electric_field_at_particles(efield_x_at_p_e, efield_y_at_p_e, efield_x, efield_y, p_e, state.n_active_e, mesh, lpos_e, a_x, a_y, dx, dy);
 
         // Step 3: integration of equations of motion
         if(state.step % k_sub == 0) move_i(p_i, state.n_active_i, efield_x_at_p_i, efield_y_at_p_i, alpha, k_sub);
@@ -240,8 +241,8 @@ int main(int argc, char* argv[])
 
         // Step 6: Monte-Carlo collisions
         if(mcc_coll){
-            if(state.step % k_sub == 0) coll.collisions_i(p_i, state.n_active_i, lpos_i, mesh_x, mesh_y, dens_n);
-            coll.collisions_e(p_e, state.n_active_e, lpos_e, p_i, state.n_active_i, lpos_i, mesh_x, mesh_y, dens_n);
+            if(state.step % k_sub == 0) coll.collisions_i(p_i, state.n_active_i, lpos_i, mesh, dens_n);
+            coll.collisions_e(p_e, state.n_active_e, lpos_e, p_i, state.n_active_i, lpos_i, mesh, dens_n);
         }
         
         //  ----------------------------- Diagnostics -------------------------
@@ -251,7 +252,7 @@ int main(int argc, char* argv[])
         if(state.step % 10000 == 0) 
         {
             save_state(p_e, p_i, state, config, job_suffix);
-            save_fields_snapshot(phi, wmesh_e, wmesh_i, vmesh, state, config, job_suffix);
+            save_fields_snapshot(phi, wmesh_e, wmesh_i, mesh.v, state, config, job_suffix);
         }
 
         // if(state.step % 1 == 0){
@@ -307,7 +308,7 @@ int main(int argc, char* argv[])
 
     // ----------------------------- Saving outputs ---------------------------
     save_state(p_e, p_i, state, config, job_suffix);
-    save_fields_snapshot(phi, wmesh_e, wmesh_i, vmesh, state, config, job_suffix);
+    save_fields_snapshot(phi, wmesh_e, wmesh_i, mesh.v, state, config, job_suffix);
     save_series(series, n_points_series, state, config, job_suffix);
 
     // ----------------------------- Finalizing -------------------------------

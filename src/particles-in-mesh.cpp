@@ -16,9 +16,12 @@
 
 using namespace std;
 
-void weight(fmatrix & p, int & n_active, fmatrix & wmesh, fmatrix & mesh_x, fmatrix & mesh_y, imatrix & lpos, const double & a_x, const double & a_y, const double & dx, const double & dy)
+void weight(fmatrix & p, int & n_active, fmatrix & wmesh, mesh_set & mesh, imatrix & lpos, const double & a_x, const double & a_y, const double & dx, const double & dy)
 {
 	wmesh.set_zero();
+
+	fmatrix & mesh_x = mesh.x;
+	fmatrix & mesh_y = mesh.y;
 
 	double x_p = 0;
 	double y_p = 0;
@@ -34,6 +37,7 @@ void weight(fmatrix & p, int & n_active, fmatrix & wmesh, fmatrix & mesh_x, fmat
 	const int n_mesh_x = (int) mesh_x.n1;
 	const int n_mesh_y = (int) mesh_x.n2;
 	const int mesh_n2 = (int) mesh_x.n2;
+
 
 	for (int i = 0; i < n_active; i++)
 	{
@@ -69,13 +73,13 @@ void weight(fmatrix & p, int & n_active, fmatrix & wmesh, fmatrix & mesh_x, fmat
 	}
 }
 
-void electric_field_at_particles(fmatrix & efield_at_particles_x, fmatrix & efield_at_particles_y, fmatrix & efield_x, fmatrix & efield_y, fmatrix & p, const int n_active, fmatrix & mesh_x, fmatrix & mesh_y, imatrix & lpos, const double & a_x, const double & a_y, const double & dx, const double & dy)
+void electric_field_at_particles(fmatrix & efield_at_particles_x, fmatrix & efield_at_particles_y, fmatrix & efield_x, fmatrix & efield_y, fmatrix & p, const int n_active, mesh_set & mesh, imatrix & lpos, const double & a_x, const double & a_y, const double & dx, const double & dy)
 {
 
 	for (int i = 0; i < n_active; i++)
 	{
-		efield_at_particles_x.val[i] = field_at_position(efield_x, mesh_x, mesh_y, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0], lpos.val[i * 2 + 1], a_x, a_y, dx, dy);
-		efield_at_particles_y.val[i] = field_at_position(efield_y, mesh_x, mesh_y, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0], lpos.val[i * 2 + 1], a_x, a_y, dx, dy);
+		efield_at_particles_x.val[i] = field_at_position(efield_x, mesh, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0], lpos.val[i * 2 + 1], a_x, a_y, dx, dy);
+		efield_at_particles_y.val[i] = field_at_position(efield_y, mesh, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0], lpos.val[i * 2 + 1], a_x, a_y, dx, dy);
 	}
 	// double x_p = 0;
 	// double y_p = 0;
@@ -134,28 +138,28 @@ void electric_field_at_particles(fmatrix & efield_at_particles_x, fmatrix & efie
 	// }
 }
 
-double field_at_position(fmatrix & field, fmatrix & mesh_x, fmatrix & mesh_y, double x, double y, int lpos_x, int lpos_y, const double & a_x, const double & a_y, const double & dx, const double & dy){
+double field_at_position(fmatrix & field, mesh_set & mesh, double x, double y, int lpos_x, int lpos_y, const double & a_x, const double & a_y, const double & dx, const double & dy){
 
-    const int mesh_n2 = (int) mesh_x.n2;
-	const int n_mesh_x = (int) mesh_x.n1;
-	const int n_mesh_y = (int) mesh_x.n2;
+    const int mesh_n2 = (int) mesh.x.n2;
+	const int n_mesh_x = (int) mesh.nx;
+	const int n_mesh_y = (int) mesh.ny;
 
-    double x_0_mesh = mesh_x.val[lpos_x * mesh_n2 + lpos_y];
-	double x_1_mesh = mesh_x.val[(lpos_x + 1) * mesh_n2 + lpos_y];
+    double x_0_mesh = mesh.x.val[lpos_x * mesh_n2 + lpos_y];
+	double x_1_mesh = mesh.x.val[(lpos_x + 1) * mesh_n2 + lpos_y];
     if(x < x_0_mesh || x > x_1_mesh)
 	{
 		lpos_x = logical_space(x, a_x, 1, n_mesh_x);
-		x_0_mesh = mesh_x.val[lpos_x * mesh_n2 + lpos_y];
-		x_1_mesh = mesh_x.val[(lpos_x + 1) * mesh_n2 + lpos_y];
+		x_0_mesh = mesh.x.val[lpos_x * mesh_n2 + lpos_y];
+		x_1_mesh = mesh.x.val[(lpos_x + 1) * mesh_n2 + lpos_y];
 	}
 	
-    double y_0_mesh = mesh_y.val[lpos_x * mesh_n2 + lpos_y];
-	double y_1_mesh = mesh_y.val[lpos_x * mesh_n2 + (lpos_y + 1)];
+    double y_0_mesh = mesh.y.val[lpos_x * mesh_n2 + lpos_y];
+	double y_1_mesh = mesh.y.val[lpos_x * mesh_n2 + (lpos_y + 1)];
 	if(y < y_0_mesh || y > y_1_mesh)
 	{
 		lpos_y = logical_space(y, a_y, dy/dx, n_mesh_y);
-		y_0_mesh = mesh_y.val[lpos_x * mesh_n2 + lpos_y];
-		y_1_mesh = mesh_y.val[lpos_x * mesh_n2 + (lpos_y + 1)];
+		y_0_mesh = mesh.y.val[lpos_x * mesh_n2 + lpos_y];
+		y_1_mesh = mesh.y.val[lpos_x * mesh_n2 + (lpos_y + 1)];
 	}
 
     double field_val = field.val[lpos_x * mesh_n2 + lpos_y]             * (x_1_mesh - x) * (y_1_mesh - y);

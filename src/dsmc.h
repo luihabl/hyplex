@@ -3,7 +3,8 @@
 
 #include "fmatrix.h"
 #include "configuration.h"
+#include "fields.h"
 
-void run_dsmc(fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & vmesh, fmatrix & dens_n, configuration & config, string output_name);
+void run_dsmc(mesh_set & mesh, fmatrix & dens_n, configuration & config, string output_name);
 
 #endif

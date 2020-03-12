@@ -140,7 +140,7 @@ double mcc::kinetic_energy_ev(const fmatrix & p, const int & i, double const & m
 
 // ------------------------------ Electron collisions ------------------------------------
 
-void mcc::collisions_e(fmatrix & p, int & n_active, imatrix & lpos, fmatrix & p_i, int & n_active_i, imatrix & lpos_i, fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & dens_n)
+void mcc::collisions_e(fmatrix & p, int & n_active, imatrix & lpos, fmatrix & p_i, int & n_active_i, imatrix & lpos_i, mesh_set mesh, fmatrix & dens_n)
 {   
     
 	imatrix particle_samples;
@@ -166,7 +166,7 @@ void mcc::collisions_e(fmatrix & p, int & n_active, imatrix & lpos, fmatrix & p_
 	{
 		i = particle_samples.val[k];
 		kinetic_energy = kinetic_energy_ev(p, i, m_el);
-        neutral_density = field_at_position(dens_n, mesh_x, mesh_y, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0], lpos.val[i * 2 + 1], a_x, a_y, dx, dy);
+        neutral_density = field_at_position(dens_n, mesh, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0], lpos.val[i * 2 + 1], a_x, a_y, dx, dy);
 		random_number_1 = r_unif();
 
 		// Elastic collision:
@@ -244,7 +244,7 @@ void mcc::electron_ionization_collision(fmatrix & p, const int & i, const double
 
 // ------------------------------ Ion collisions ------------------------------------
 
-void mcc::collisions_i(fmatrix & p, int & n_active, imatrix & lpos, fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & dens_n)
+void mcc::collisions_i(fmatrix & p, int & n_active, imatrix & lpos, mesh_set & mesh, fmatrix & dens_n)
 {
 
 	imatrix particle_samples;
@@ -265,7 +265,7 @@ void mcc::collisions_i(fmatrix & p, int & n_active, imatrix & lpos, fmatrix & me
 	for (int k = 0; k < n_null; k++)
 	{
 		i = particle_samples.val[k];
-        neutral_density = field_at_position(dens_n, mesh_x, mesh_y, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0], lpos.val[i * 2 + 1], a_x, a_y, dx, dy);
+        neutral_density = field_at_position(dens_n, mesh, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0], lpos.val[i * 2 + 1], a_x, a_y, dx, dy);
         
         v_neutral = {r_norm() * (dt / dx) * sqrt(q * t_neutral / m_i),
                      r_norm() * (dt / dx) * sqrt(q * t_neutral / m_i),

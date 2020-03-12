@@ -10,7 +10,7 @@
 #include "input-output.h"
 
 
-void run_dsmc(fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & vmesh, fmatrix & dens_n, configuration & config, string output_name){
+void run_dsmc(mesh_set & mesh, fmatrix & dens_n, configuration & config, string output_name){
     
     int n_active_n = 0;
     
@@ -37,7 +37,7 @@ void run_dsmc(fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & vmesh, fmatrix & den
         add_flux_particles(p_n, n_active_n, t_neutral, 0, m_i, n_inj_n, k_sub_dsmc, dx, dy, dt, n_thruster, q);
 
         if(i > n_steps_dsmc - n_average_dsmc){
-            weight(p_n, n_active_n, wmesh_n, mesh_x, mesh_y, lpos_n, a_x, a_y, dx, dy);
+            weight(p_n, n_active_n, wmesh_n, mesh, lpos_n, a_x, a_y, dx, dy);
             average_field(wmesh_n_av, wmesh_n, i - (n_steps_dsmc - n_average_dsmc));
         }
         
@@ -47,7 +47,7 @@ void run_dsmc(fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & vmesh, fmatrix & den
     }
 
     wmesh_n = (config.f("particles/n_factor_dsmc") / config.f("particles/n_factor")) * wmesh_n_av;
-    dens_n = (4.0 / pow(config.f("p/dx"), 2)) *  config.f("particles/n_factor") * wmesh_n / vmesh;
+    dens_n = (4.0 / pow(config.f("p/dx"), 2)) *  config.f("particles/n_factor") * wmesh_n / mesh.v;
 
     save_fmatrix(dens_n, config.s("project/output_path") + output_name, "dens_n");
 }

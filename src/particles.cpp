@@ -310,7 +310,7 @@ void boundaries_e(fmatrix & p, int & n_active, imatrix & lpos, int n_out_i, conf
 	}
 }
 
-void boundaries_e_cap(fmatrix & p, int & n_active, imatrix & lpos, int & n_out_e, double v_cap, fmatrix & phi, fmatrix & mesh_x, fmatrix & mesh_y, configuration & config){
+void boundaries_e_cap(fmatrix & p, int & n_active, imatrix & lpos, int & n_out_e, double v_cap, fmatrix & phi, mesh_set & mesh, configuration & config){
 	n_out_e = 0;
 	
 	int n_out = 0;
@@ -351,7 +351,7 @@ void boundaries_e_cap(fmatrix & p, int & n_active, imatrix & lpos, int & n_out_e
 		}
 	}
 
-	find_phi_at_particles(phi_at_p, phi, mesh_x, mesh_y, out, n_out, p, n_active, lpos, a_x, a_y, dx, dy, k_phi);
+	find_phi_at_particles(phi_at_p, phi, mesh, out, n_out, p, n_active, lpos, a_x, a_y, dx, dy, k_phi);
 	for (int n = n_out - 1; n >= 0; n--){
 		
 		x = p.val[out.val[n] * 6 + 0];
@@ -366,7 +366,7 @@ void boundaries_e_cap(fmatrix & p, int & n_active, imatrix & lpos, int & n_out_e
 		in_sym = (y <= 0) && (x >= 0) && (x <= x_max);
 
 		if(in_sym || (!is_crt && !in_thr)){
-			reflect_particle(p, n_active, out.val[n], x, y, vx, vy, mesh_x.n1, mesh_x.n2, dx, dy);
+			reflect_particle(p, n_active, out.val[n], x, y, vx, vy, mesh.nx, mesh.ny, dx, dy);
 		} else {
 			remove_particle(p, n_active, out.val[n], lpos);
 			if(!in_thr) n_out_e += 1;
@@ -374,15 +374,12 @@ void boundaries_e_cap(fmatrix & p, int & n_active, imatrix & lpos, int & n_out_e
 	}
 }
 
-void find_phi_at_particles(fmatrix & phi_at_patricles, fmatrix & phi, fmatrix & mesh_x, fmatrix & mesh_y, imatrix & out, 
+void find_phi_at_particles(fmatrix & phi_at_patricles, fmatrix & phi, mesh_set & mesh, imatrix & out, 
 						   int n_out, fmatrix & p, int n_active, imatrix & lpos, const double & a_x, const double & a_y, const double & dx, const double & dy, const double & k_phi){
 	
 
-	const int n_mesh_x = (int) mesh_x.n1;
-	const int n_mesh_y = (int) mesh_x.n2;
-
-	const double x_max = ((double) n_mesh_x - 1);
-	const double y_max = ((double) n_mesh_y - 1) * (dy / dx);
+	const double x_max = ((double) mesh.nx - 1);
+	const double y_max = ((double) mesh.ny - 1) * (dy / dx);
 	
 	double x, y;
 	int lx, ly;
@@ -394,7 +391,7 @@ void find_phi_at_particles(fmatrix & phi_at_patricles, fmatrix & phi, fmatrix & 
 		lx = lpos.val[out.val[n] * 2 + 0];
 		ly = lpos.val[out.val[n] * 2 + 1];
 
-		phi_at_patricles.val[n] = field_at_position(phi, mesh_x, mesh_y, x, y, lx, ly, a_x, a_y, dx, dy) / k_phi;
+		phi_at_patricles.val[n] = field_at_position(phi, mesh, x, y, lx, ly, a_x, a_y, dx, dy) / k_phi;
 	}
 }
 

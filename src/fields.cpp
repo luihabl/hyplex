@@ -16,39 +16,110 @@
 #include "num-tools.h"
 #include "configuration.h"
 
-/**
- Calculates a sinusoidal voltage level in time
 
- @param i step index
- @param dt time step
- @param freq_hz frequency in Hertz
- @param amplitude amplitude of the wave
- @param phase phase of the wave
- @return voltage at a given time
- */
+
+mesh_set::mesh_set(configuration & config)
+{
+	nx = config.i("geometry/n_mesh_x");
+	ny = config.i("geometry/n_mesh_y");
+	nt = config.i("geometry/n_thruster");
+
+	a_x = config.f("geometry/a_x"); 
+	a_y = config.f("geometry/a_y"); 
+	
+	dx = config.f("p/dx"); 
+	dy = config.f("p/dy"); 
+	
+	x = fmatrix::zeros(nx, ny);
+	y = fmatrix::zeros(nx, ny);
+	v = fmatrix::zeros(nx, ny); 
+}
+
+
+void mesh_set::init_mesh()
+{
+	// spatial mesh
+	for (size_t i = 0; i < x.n1; i++) {
+		for (size_t j = 0; j < x.n2; j++) {
+			x.val[i * x.n2 + j] = physical_space(i, a_x, 1, nx);
+			y.val[i * y.n2 + j] = physical_space(j, a_y, dy/dx, ny);
+		}	
+	}
+
+	// volume mesh
+	size_t ip, im, jp, jm;
+	for(size_t i = 0; i < v.n1; i++){
+		for(size_t j = 0; j < v.n2; j++){
+			
+			ip = clamp_n(0, (int) x.n1 - 1, (int) i + 1);
+			im = clamp_n(0, (int) x.n1 - 1, (int) i - 1);
+			jp = clamp_n(0, (int) y.n2 - 1, (int) j + 1);
+			jm = clamp_n(0, (int) y.n2 - 1, (int) j - 1);
+		
+
+			v.val[i * v.n2 + j] = (x.val[ip * x.n2 + j] - x.val[im * x.n2 + j]) * 
+										  (y.val[i * y.n2 + jp] - y.val[i * y.n2 + jm]);
+		}	
+	}
+}
+
+
+
+double mesh_set::k1_x(size_t i, size_t j, int ioff, int joff){
+	i += ioff;
+	j += joff;
+	return x.val[i * x.n2 + j] - x.val[(i - 1) * x.n2 + j];
+}
+
+
+double mesh_set::k2_x(size_t i, size_t j, int ioff, int joff){
+	i += ioff;
+	j += joff;
+	return x.val[(i + 1) * x.n2 + j] - x.val[i * x.n2 + j];
+}
+
+
+double mesh_set::k3_x(size_t i, size_t j, int ioff, int joff){
+	i += ioff;
+	j += joff;
+	return x.val[(i + 1) * x.n2 + j] - x.val[(i - 1) * x.n2 + j];
+}
+
+
+double mesh_set::k1_y(size_t i, size_t j, int ioff, int joff){
+	i += ioff;
+	j += joff;
+	return y.val[i * y.n2 + j] - y.val[i * y.n2 + (j - 1)];
+}
+
+
+double mesh_set::k2_y(size_t i, size_t j, int ioff, int joff){
+	i += ioff;
+	j += joff;
+	return y.val[i * y.n2 + (j + 1)] - y.val[i * y.n2 + j];
+}
+
+
+double mesh_set::k3_y(size_t i, size_t j, int ioff, int joff){
+	i += ioff;
+	j += joff;
+	return y.val[i * y.n2 + (j + 1)] - y.val[i * y.n2 + (j - 1)];
+}
+
+
+// ------------------------------------- field functions ---------------------------------------
+
+
+
 double ac_voltage_at_time(size_t i, double dt, double freq_hz, double amplitude, double phase, configuration & config)
 {
 	return amplitude * sin(2 * config.f("physical/pi") * freq_hz * dt * i + phase);
 }
 
-/**
- Calculates the electric field at every node in the mesh in the X and Y directions. For the calculation it uses a CDS with charge correction on the Dirichlet boundaries.
-
- @param efield_x array holding the electric field in the X direction (output)
- @param efield_y array holding the electric field in the Y direction (output)
- @param phi array holding the electric potential
- @param w_i array holding the particle weights of ions
- @param w_e array holding the particle weights of electrons
- @param mesh_x mesh coordinates in the X direction
- @param mesh_y mesh coordinates in the Y direction
- @param vmesh volume mesh
- @todo still needs a correction for non-uniform meshes
- @todo correction for space charge
- */
-void calculate_efield(fmatrix & efield_x, fmatrix & efield_y, fmatrix & phi, fmatrix & w_i, fmatrix & w_e, fmatrix & mesh_x , fmatrix & mesh_y, fmatrix & vmesh, imatrix & electrode_mask)
+void calculate_efield(fmatrix & efield_x, fmatrix & efield_y, fmatrix & phi, fmatrix & w_i, fmatrix & w_e, mesh_set & mesh, imatrix & electrode_mask)
 {
 	int ip, im, jp, jm; //e_mask;
-	int n_mesh_x =  (int) mesh_x.n1, n_mesh_y =  (int) mesh_y.n2;
+	int n_mesh_x =  mesh.nx, n_mesh_y =  mesh.ny;
 	// double signal_x, signal_y;
 
 	for(int i = 0; i < n_mesh_x; i++){
@@ -60,8 +131,8 @@ void calculate_efield(fmatrix & efield_x, fmatrix & efield_y, fmatrix & phi, fma
 			jp = clamp_n(0, n_mesh_y - 1, j + 1);
 			jm = clamp_n(0, n_mesh_y - 1, j - 1);
 
-			efield_x.val[i * n_mesh_y + j] = (phi.val[im * n_mesh_y + j] - phi.val[ip * n_mesh_y + j]) / (mesh_x.val[ip * n_mesh_y + j] - mesh_x.val[im * n_mesh_y + j]);
-			efield_y.val[i * n_mesh_y + j] = (phi.val[i * n_mesh_y + jm] - phi.val[i * n_mesh_y + jp]) / (mesh_y.val[i * n_mesh_y + jp] - mesh_y.val[i * n_mesh_y + jm]);
+			efield_x.val[i * n_mesh_y + j] = (phi.val[im * n_mesh_y + j] - phi.val[ip * n_mesh_y + j]) / (mesh.x.val[ip * n_mesh_y + j] - mesh.x.val[im * n_mesh_y + j]);
+			efield_y.val[i * n_mesh_y + j] = (phi.val[i * n_mesh_y + jm] - phi.val[i * n_mesh_y + jp]) / (mesh.y.val[i * n_mesh_y + jp] - mesh.y.val[i * n_mesh_y + jm]);
 
 			// Problem with correction of the electric field: gives number of electrons different from xoopic
 			// e_mask = electrode_mask.val[i * n_mesh_y + j];
@@ -77,18 +148,18 @@ void calculate_efield(fmatrix & efield_x, fmatrix & efield_y, fmatrix & phi, fma
 }
 
 
-double calculate_phi_zero(double sigma_old, double n_in, double q_cap, double sigma_laplace, fmatrix & phi_poisson, fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vmesh, imatrix & electrode_mask, configuration & config){
+double calculate_phi_zero(double sigma_old, double n_in, double q_cap, double sigma_laplace, fmatrix & phi_poisson, mesh_set mesh, fmatrix & wmesh_e, fmatrix & wmesh_i, imatrix & electrode_mask, configuration & config){
 
-	double sigma_poisson = sigma_from_phi(phi_poisson, mesh_x, mesh_y, wmesh_e, wmesh_i, vmesh, electrode_mask, config);	
+	double sigma_poisson = sigma_from_phi(phi_poisson, mesh, wmesh_e, wmesh_i, electrode_mask, config);	
 	return (sigma_old + sigma_poisson - q_cap + config.f("p/k_q") * n_in) / (1 - sigma_laplace);
 }
 
-double sigma_from_phi(fmatrix & phi, fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vmesh, imatrix & electrode_mask, configuration & config){
+double sigma_from_phi(fmatrix & phi, mesh_set & mesh, fmatrix & wmesh_e, fmatrix & wmesh_i, imatrix & electrode_mask, configuration & config){
 	
 	double sigma = 0, volume, dw, phi_xx, phi_yy;
 	double dx1, dx2, dy1, dy2;
 	int ip, im, jp, jm;
-	int n_mesh_x =  (int) mesh_x.n1, n_mesh_y =  (int) mesh_y.n2;
+	int n_mesh_x =  (int) mesh.nx, n_mesh_y =  (int) mesh.ny;
 
 	double eps_0 = config.f("physical/eps_0");
 	double c_cap = config.f("boundaries/c_cap");
@@ -105,18 +176,18 @@ double sigma_from_phi(fmatrix & phi, fmatrix & mesh_x, fmatrix & mesh_y, fmatrix
 
                 dw = wmesh_i.val[i * n_mesh_y + j] - wmesh_e.val[i * n_mesh_y + j];
 
-				dx1 = mesh_x.val[i * n_mesh_y + j] - mesh_x.val[im * n_mesh_y + j];
-				dx2 = mesh_x.val[ip * n_mesh_y + j] - mesh_x.val[i * n_mesh_y + j];
+				dx1 = mesh.x.val[i * n_mesh_y + j] - mesh.x.val[im * n_mesh_y + j];
+				dx2 = mesh.x.val[ip * n_mesh_y + j] - mesh.x.val[i * n_mesh_y + j];
 				if (im == i || ip == i) dx1 = dx2 = dx1 + dx2;
 
-				dy1 = mesh_y.val[i * n_mesh_y + j] - mesh_y.val[i * n_mesh_y + jm];
-				dy2 = mesh_y.val[i * n_mesh_y + jp] - mesh_y.val[i * n_mesh_y + j];
+				dy1 = mesh.y.val[i * n_mesh_y + j] - mesh.y.val[i * n_mesh_y + jm];
+				dy2 = mesh.y.val[i * n_mesh_y + jp] - mesh.y.val[i * n_mesh_y + j];
 				if (jm ==  j || jp == j) dy1 = dy2 = dy1 + dy2;
 
 				phi_xx = phi.val[ip * n_mesh_y + j]/((dx1 + dx2)*dx2) - phi.val[i * n_mesh_y + j]/(dx1*dx2) + phi.val[im * n_mesh_y + j]/((dx1 + dx2)*dx1);
 				phi_yy = phi.val[i * n_mesh_y + jp]/((dy1 + dy2)*dy2) - phi.val[i * n_mesh_y + j]/(dy1*dy2) + phi.val[i * n_mesh_y + jm]/((dy1 + dy2)*dy1);
 
-				volume = vmesh.val[i * n_mesh_y + j];
+				volume = mesh.v.val[i * n_mesh_y + j];
 
                 sigma += (eps_0 / c_cap) * volume * (phi_xx + phi_yy + gamma * dw / volume);
 			}
@@ -135,51 +206,6 @@ double calculate_cap_charge(double sigma_new, double sigma_old, double cap_charg
 }
 
 
-void init_mesh(fmatrix & mesh_x, fmatrix & mesh_y, configuration & config)
-{
-	int n_mesh_x = config.i("geometry/n_mesh_x");
-	int n_mesh_y = config.i("geometry/n_mesh_y");
-	double a_x = config.f("geometry/a_x");
-	double a_y = config.f("geometry/a_y");
-
-	double dx = config.f("p/dx");
-	double dy = config.f("p/dy");
-	for (size_t i = 0; i < mesh_x.n1; i++) {
-		for (size_t j = 0; j < mesh_x.n2; j++) {
-			
-			mesh_x.val[i * mesh_x.n2 + j] = physical_space(i, a_x, 1, n_mesh_x);
-			mesh_y.val[i * mesh_y.n2 + j] = physical_space(j, a_y, dy/dx, n_mesh_y);
-		
-		}	
-	}
-}
-
-
-/**
- Initializes a mesh containing the values of the volume for each node.
-
- @param vmesh volume mesh array
- @param mesh_x array of x coordinates of the mesh
- @param mesh_y array of y coordinates of the mesh
- */
-void init_volume_mesh(fmatrix & vmesh, fmatrix & mesh_x, fmatrix & mesh_y){
-	size_t ip, im, jp, jm;
-	for(size_t i = 0; i < vmesh.n1; i++){
-		for(size_t j = 0; j < vmesh.n2; j++){
-			
-			ip = clamp_n(0, (int) mesh_x.n1 - 1, (int) i + 1);
-			im = clamp_n(0, (int) mesh_x.n1 - 1, (int) i - 1);
-			jp = clamp_n(0, (int) mesh_y.n2 - 1, (int) j + 1);
-			jm = clamp_n(0, (int) mesh_y.n2 - 1, (int) j - 1);
-		
-
-			vmesh.val[i * vmesh.n2 + j] = (mesh_x.val[ip * mesh_x.n2 + j] - mesh_x.val[im * mesh_x.n2 + j]) * 
-										  (mesh_y.val[i * mesh_y.n2 + jp] - mesh_y.val[i * mesh_y.n2 + jm]);
-		}	
-	}
-}
-
-
 double physical_space(double logical_position, double a, double b, double n_mesh){
 	return b * ((a / (n_mesh - 1)) * pow(logical_position, 2) + (1 - a) * logical_position);
 }
@@ -190,43 +216,3 @@ int logical_space(float physical_position, float a, float b, float n_mesh){
 }
 
 
-double k1_x(fmatrix & mesh_x, size_t i, size_t j, int ioff, int joff){
-	i += ioff;
-	j += joff;
-	return mesh_x.val[i * mesh_x.n2 + j] - mesh_x.val[(i - 1) * mesh_x.n2 + j];
-}
-
-
-double k2_x(fmatrix & mesh_x, size_t i, size_t j, int ioff, int joff){
-	i += ioff;
-	j += joff;
-	return mesh_x.val[(i + 1) * mesh_x.n2 + j] - mesh_x.val[i * mesh_x.n2 + j];
-}
-
-
-double k3_x(fmatrix & mesh_x, size_t i, size_t j, int ioff, int joff){
-	i += ioff;
-	j += joff;
-	return mesh_x.val[(i + 1) * mesh_x.n2 + j] - mesh_x.val[(i - 1) * mesh_x.n2 + j];
-}
-
-
-double k1_y(fmatrix & mesh_y, size_t i, size_t j, int ioff, int joff){
-	i += ioff;
-	j += joff;
-	return mesh_y.val[i * mesh_y.n2 + j] - mesh_y.val[i * mesh_y.n2 + (j - 1)];
-}
-
-
-double k2_y(fmatrix & mesh_y, size_t i, size_t j, int ioff, int joff){
-	i += ioff;
-	j += joff;
-	return mesh_y.val[i * mesh_y.n2 + (j + 1)] - mesh_y.val[i * mesh_y.n2 + j];
-}
-
-
-double k3_y(fmatrix & mesh_y, size_t i, size_t j, int ioff, int joff){
-	i += ioff;
-	j += joff;
-	return mesh_y.val[i * mesh_y.n2 + (j + 1)] - mesh_y.val[i * mesh_y.n2 + (j - 1)];
-}
