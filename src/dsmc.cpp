@@ -13,7 +13,8 @@
 void run_dsmc(mesh_set & mesh, fmatrix & dens_n, configuration & config, string output_name){
     
     int n_active_n = 0;
-    
+    particle_operations pops(config);
+
     fmatrix p_n             = fmatrix::zeros(config.i("particles/n_max_particles"), 6);
     imatrix lpos_n          = imatrix::zeros(config.i("particles/n_max_particles"), 2);
     fmatrix wmesh_n         = fmatrix::zeros(config.i("geometry/n_mesh_x"), config.i("geometry/n_mesh_y"));
@@ -22,9 +23,6 @@ void run_dsmc(mesh_set & mesh, fmatrix & dens_n, configuration & config, string 
     const int n_steps_dsmc = config.i("time/n_steps_dsmc");
     const int n_average_dsmc = config.i("time/n_average_dsmc");
     const int k_sub_dsmc = config.i("time/k_sub_dsmc");
-    const int n_thruster = config.i("geometry/n_thruster");
-    const double q = config.f("physical/q");
-    const double dt = config.f("time/dt");
     const double t_neutral = config.f("neutrals/t_neutral");
     const double m_i = config.f("ugas/m_i");
     const double n_inj_n = config.f("p/n_inj_n");
@@ -34,15 +32,15 @@ void run_dsmc(mesh_set & mesh, fmatrix & dens_n, configuration & config, string 
     const double dy = config.f("p/dy");
     
     for (int i = 0; i < n_steps_dsmc; i++){
-        add_flux_particles(p_n, n_active_n, t_neutral, 0, m_i, n_inj_n, k_sub_dsmc, dx, dy, dt, n_thruster, q);
+        pops.add_flux_particles(p_n, n_active_n, t_neutral, 0, m_i, n_inj_n, k_sub_dsmc);
 
         if(i > n_steps_dsmc - n_average_dsmc){
             weight(p_n, n_active_n, wmesh_n, mesh, lpos_n, a_x, a_y, dx, dy);
             average_field(wmesh_n_av, wmesh_n, i - (n_steps_dsmc - n_average_dsmc));
         }
         
-        move_n(p_n, n_active_n, k_sub_dsmc);
-        boundaries_n(p_n, n_active_n, lpos_n, config);
+        pops.move_n(p_n, n_active_n, k_sub_dsmc);
+        pops.boundaries_n(p_n, n_active_n, lpos_n);
         print_dsmc_info(i, n_active_n, 1000, n_steps_dsmc);    
     }
 

@@ -4,6 +4,7 @@
 #include "fmatrix.h"
 #include "configuration.h"
 #include "fields.h"
+#include "particles.h"
 
 
 struct mcc
@@ -24,12 +25,13 @@ struct mcc
     double dt, dx, dy, a_x, a_y, m_i, m_el, q, pi, t_neutral;
     int k_sub;
 
-
     //mcc variables
     double nu_prime_e, nu_prime_i;
     double p_null_e, p_null_i;
 
-    mcc(configuration & config);
+    particle_operations & pops;
+
+    mcc(configuration & config, particle_operations & pops);
     ~mcc();
 
     double find_nu_prime_e(fmatrix & dens_n, fmatrix & vmesh);

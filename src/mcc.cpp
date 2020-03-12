@@ -14,7 +14,7 @@
 #include "input-output.h"
 
 
-mcc::mcc(configuration & config)
+mcc::mcc(configuration & config, particle_operations & _pops): pops(_pops)
 {
     n_exc = config.i("p/n_exc");
     e_exc = config.fs("ugas/e_exc");
@@ -213,10 +213,10 @@ void mcc::collisions_e(fmatrix & p, int & n_active, imatrix & lpos, fmatrix & p_
         freq_ratio_1 += collision_frequency(neutral_density, interp(ionization_cs, kinetic_energy), kinetic_energy, m_el) / nu_prime_e;
 		if (random_number_1 > freq_ratio_0 && random_number_1 <= freq_ratio_1 && kinetic_energy >= e_iz)
 		{
-            int new_electron_index = add_particle_copy(p, n_active, lpos, i);
+            int new_electron_index = pops.add_particle_copy(p, n_active, lpos, i);
             electron_ionization_collision(p, i, kinetic_energy, e_iz);
             electron_ionization_collision(p, new_electron_index, kinetic_energy, e_iz);
-            add_maxwellian_particle_at_position(p_i, n_active_i, lpos_i, t_neutral, m_i, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0] , lpos.val[i * 2 + 1], dt, dx, q); // <========== particle is added here
+            pops.add_maxwellian_particle_at_position(p_i, n_active_i, lpos_i, t_neutral, m_i, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0] , lpos.val[i * 2 + 1]); // <========== particle is added here
 			continue;
 		}
 	}

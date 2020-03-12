@@ -18,9 +18,43 @@
 
 using namespace std;
 
+
+particle_operations::particle_operations(configuration & config){
+
+	n_mesh_x = config.i("geometry/n_mesh_x");
+	n_mesh_y = config.i("geometry/n_mesh_y");
+	n_thruster = config.i("geometry/n_thruster");
+	a_x = config.f("geometry/a_x");
+	a_y = config.f("geometry/a_x");
+
+	dx = config.f("p/dx");
+	dy = config.f("p/dy");
+	dt = config.f("time/dt");
+
+	temp_e = config.f("electrons/t_el");
+	m_el = config.f("electrons/m_el");
+	q = config.f("physical/q");
+
+	k_inj = config.f("p/k_inj_el");
+	v_sb = config.f("thruster/v_sb");
+	v_rf = config.f("thruster/v_rf");
+	freq = config.f("thruster/freq");
+	duty_cycle = config.f("electrons/sqr_duty_cycle");
+	
+	n_factor = config.f("particles/n_factor");
+	k_sub = config.i("time/k_sub");
+	i_i = config.f("ions/i_i");
+	alpha = config.f("p/alpha");
+	omega_i = config.f("p/omega_i");
+	k_phi = config.f("p/k_phi");
+
+	c_cap = config.f("boundaries/c_cap");
+}
+
+
 //  ----------------------------- Particle Creation ---------------------------
 
-void add_maxwellian_particles(fmatrix & p, int & n_active, const double temperature, const double mass, const size_t n_add, const double & dx, const double & dy, const double & dt, const int & n_mesh_x,  const int & n_mesh_y, const double & q)
+void particle_operations::add_maxwellian_particles(fmatrix & p, int & n_active, const double temperature, const double mass, const size_t n_add)
 {
 	double v_temperature = sqrt(q * temperature / mass);
 
@@ -36,7 +70,7 @@ void add_maxwellian_particles(fmatrix & p, int & n_active, const double temperat
 	n_active += n_add;
 }
 
-void add_flux_particles(fmatrix & p, int & n_active, const double temperature, const double v_drift, const double mass, const double n_add, double k_sub, const double & dx, const double & dy, const double & dt, const int & n_thruster, const double & q){
+void particle_operations::add_flux_particles(fmatrix & p, int & n_active, const double temperature, const double v_drift, const double mass, const double n_add, double k_sub){
 	
 	double f_n_add = floor(k_sub * n_add);
 	int n_new = (r_unif() <= (k_sub * n_add - f_n_add) ?  f_n_add + 1 : f_n_add);
@@ -58,7 +92,7 @@ void add_flux_particles(fmatrix & p, int & n_active, const double temperature, c
 	n_active += n_new;
 }
 
-void add_maxwellian_flux_particles(fmatrix & p, int & n_active, const double temperature, const double v_drift, const double mass, const double n_add, double k_sub, const double & dx, const double & dy, const double & dt, const int & n_thruster, const double & q){
+void particle_operations::add_maxwellian_flux_particles(fmatrix & p, int & n_active, const double temperature, const double v_drift, const double mass, const double n_add, double k_sub){
 	
 	double f_n_add = floor(k_sub * n_add);
 	int n_new = (r_unif() < (k_sub * n_add - f_n_add) ?  f_n_add + 1 : f_n_add);
@@ -81,7 +115,7 @@ void add_maxwellian_flux_particles(fmatrix & p, int & n_active, const double tem
 	n_active += n_new;
 }
 
-void add_maxwellian_particle_at_position(fmatrix & p, int & n_active, imatrix & lpos, const double temperature, const double mass, double x_pos, double y_pos, int lpos_x, int lpos_y, const double & dt, const double & dx, const double & q)
+void particle_operations::add_maxwellian_particle_at_position(fmatrix & p, int & n_active, imatrix & lpos, const double temperature, const double mass, double x_pos, double y_pos, int lpos_x, int lpos_y)
 {
     double v_temperature = sqrt(q * temperature / mass);
     
@@ -97,7 +131,7 @@ void add_maxwellian_particle_at_position(fmatrix & p, int & n_active, imatrix & 
     n_active += 1;
 }
 
-int add_particle_copy(fmatrix & p, int & n_active, imatrix & lpos, const int & i)
+int particle_operations::add_particle_copy(fmatrix & p, int & n_active, imatrix & lpos, const int & i)
 {
     p.val[n_active * 6 + 0] = p.val[i * 6 + 0];
     p.val[n_active * 6 + 1] = p.val[i * 6 + 1];
@@ -115,7 +149,7 @@ int add_particle_copy(fmatrix & p, int & n_active, imatrix & lpos, const int & i
     return copied_position;
 }
 
-double balanced_injection(double old_n_inj, double rate_constant, fmatrix & wmesh_i, fmatrix & wmesh_e, int ill, int jll, int iur, int jur){
+double particle_operations::balanced_injection(double old_n_inj, double rate_constant, fmatrix & wmesh_i, fmatrix & wmesh_e, int ill, int jll, int iur, int jur){
 
 	double dw = 0;
 	const int mesh_n2 = (int) wmesh_i.n2;
@@ -133,29 +167,26 @@ double balanced_injection(double old_n_inj, double rate_constant, fmatrix & wmes
 	return new_n_inj > 0 ? new_n_inj : 0;
 }
 
-double pulsed_injection(double k_inj, double v_sb, double v_rf, double temp_e, double omega_i, int i){
+double particle_operations::pulsed_injection(int i){
 	return k_inj *  exp(- (v_sb + v_rf * sin(omega_i * (double) i)) / temp_e);
 }
 
-double square_injection(double alpha, double freq, double dt, double duty_cycle, int i, double n_factor, double i_i, double q){
+double particle_operations::square_injection(int i){
+
+	double alpha_i_i = 4.0;
+
 	double n_period = round(1 / (freq * dt));
 	double n_0 = round((duty_cycle) / (freq * dt));
 	
 	if(i % (int) n_period > (int) (n_period - n_0)){ //if square injection does not work, check this
-		return (alpha / duty_cycle) * (dt / (q * n_factor)) * i_i;
+		return (alpha_i_i / duty_cycle) * (dt / (q * n_factor)) * i_i;
 	}
 	return 0;
 }
 
 //  ----------------------------- Boundaries ----------------------------------
 
-void boundaries_n(fmatrix & p, int & n_active, imatrix & lpos, configuration & config){
-    
-	const int n_mesh_x = config.i("geometry/n_mesh_x");
-	const int n_mesh_y = config.i("geometry/n_mesh_y");
-	const int n_thruster = config.i("geometry/n_thruster");
-	const double dx = config.f("p/dx");
-	const double dy = config.f("p/dy");
+void particle_operations::boundaries_n(fmatrix & p, int & n_active, imatrix & lpos){
 	
 	int n_remove = 0;
     imatrix tbremoved((size_t) (n_active * 0.5) + 150); 
@@ -192,14 +223,8 @@ void boundaries_n(fmatrix & p, int & n_active, imatrix & lpos, configuration & c
     }
 }
 
-void boundaries_ob_count(fmatrix & p, int & n_active, imatrix & lpos, int & n_removed_ob, int & n_removed_thr, configuration & config)
+void particle_operations::boundaries_ob_count(fmatrix & p, int & n_active, imatrix & lpos, int & n_removed_ob, int & n_removed_thr)
 {
-	const int n_mesh_x = config.i("geometry/n_mesh_x");
-	const int n_mesh_y = config.i("geometry/n_mesh_y");
-	const int n_thruster = config.i("geometry/n_thruster");
-	const double dx = config.f("p/dx");
-	const double dy = config.f("p/dy");
-
 	n_removed_ob = 0;
     n_removed_thr = 0;
 	int n_remove = 0;
@@ -247,14 +272,8 @@ void boundaries_ob_count(fmatrix & p, int & n_active, imatrix & lpos, int & n_re
 }
 
 
-void boundaries_e(fmatrix & p, int & n_active, imatrix & lpos, int n_out_i, configuration & config)
+void particle_operations::boundaries_e(fmatrix & p, int & n_active, imatrix & lpos, int n_out_i)
 {
-	const int n_mesh_x = config.i("geometry/n_mesh_x");
-	const int n_mesh_y = config.i("geometry/n_mesh_y");
-	const int n_thruster = config.i("geometry/n_thruster");
-	const double dx = config.i("p/dx");
-	const double dy = config.i("p/dy");
-	
 
 	int n_out = 0;
 	static imatrix out(100000); 
@@ -303,32 +322,20 @@ void boundaries_e(fmatrix & p, int & n_active, imatrix & lpos, int n_out_i, conf
 		in_sym = (y <= 0) && (x >= 0) && (x <= x_max);
 
 		if(in_sym || (!is_crt && !in_thr)){
-			reflect_particle(p, n_active, out.val[n], x, y, vx, vy, n_mesh_x, n_mesh_y, dx, dy);
+			reflect_particle(p, n_active, out.val[n], x, y, vx, vy);
 		} else {
 			remove_particle(p, n_active, out.val[n], lpos);
 		} 
 	}
 }
 
-void boundaries_e_cap(fmatrix & p, int & n_active, imatrix & lpos, int & n_out_e, double v_cap, fmatrix & phi, mesh_set & mesh, configuration & config){
+void particle_operations::boundaries_e_cap(fmatrix & p, int & n_active, imatrix & lpos, int & n_out_e, double v_cap, fmatrix & phi, mesh_set & mesh){
 	n_out_e = 0;
 	
 	int n_out = 0;
 	static imatrix out(100000); 
 
 	static fmatrix phi_at_p(100000);
-	
-	const int n_mesh_x = config.i("geometry/n_mesh_x");
-    const int n_mesh_y = config.i("geometry/n_mesh_y");
-	const int n_thruster = config.i("geometry/n_thruster");
-	const double m_el = config.f("electrons/m_el");
-    const double dt = config.f("time/dt");
-	const double q = config.f("physical/q");
-    const double dx = config.f("p/dx");
-    const double dy = config.f("p/dy");
-	const double a_x = config.f("geometry/a_x");
-    const double a_y = config.f("geometry/a_y");
-	const double k_phi = config.f("p/k_phi");
 
 	double e_factor = 0.5 * m_el * dx * dx / (dt * dt * q);
 
@@ -351,7 +358,7 @@ void boundaries_e_cap(fmatrix & p, int & n_active, imatrix & lpos, int & n_out_e
 		}
 	}
 
-	find_phi_at_particles(phi_at_p, phi, mesh, out, n_out, p, n_active, lpos, a_x, a_y, dx, dy, k_phi);
+	find_phi_at_particles(phi_at_p, phi, mesh, out, n_out, p, n_active, lpos);
 	for (int n = n_out - 1; n >= 0; n--){
 		
 		x = p.val[out.val[n] * 6 + 0];
@@ -366,7 +373,7 @@ void boundaries_e_cap(fmatrix & p, int & n_active, imatrix & lpos, int & n_out_e
 		in_sym = (y <= 0) && (x >= 0) && (x <= x_max);
 
 		if(in_sym || (!is_crt && !in_thr)){
-			reflect_particle(p, n_active, out.val[n], x, y, vx, vy, mesh.nx, mesh.ny, dx, dy);
+			reflect_particle(p, n_active, out.val[n], x, y, vx, vy);
 		} else {
 			remove_particle(p, n_active, out.val[n], lpos);
 			if(!in_thr) n_out_e += 1;
@@ -374,12 +381,10 @@ void boundaries_e_cap(fmatrix & p, int & n_active, imatrix & lpos, int & n_out_e
 	}
 }
 
-void find_phi_at_particles(fmatrix & phi_at_patricles, fmatrix & phi, mesh_set & mesh, imatrix & out, 
-						   int n_out, fmatrix & p, int n_active, imatrix & lpos, const double & a_x, const double & a_y, const double & dx, const double & dy, const double & k_phi){
+void particle_operations::find_phi_at_particles(fmatrix & phi_at_patricles, fmatrix & phi, mesh_set & mesh, imatrix & out, int n_out, fmatrix & p, int n_active, imatrix & lpos){
 	
-
-	const double x_max = ((double) mesh.nx - 1);
-	const double y_max = ((double) mesh.ny - 1) * (dy / dx);
+	const double x_max = ((double) n_mesh_x - 1);
+	const double y_max = ((double) n_mesh_y - 1) * (dy / dx);
 	
 	double x, y;
 	int lx, ly;
@@ -395,11 +400,11 @@ void find_phi_at_particles(fmatrix & phi_at_patricles, fmatrix & phi, mesh_set &
 	}
 }
 
-double cap_voltage(double voltage, int n_out_e, int n_out_i, double n_factor, double q, double c_cap){
+double particle_operations::cap_voltage(double voltage, int n_out_e, int n_out_i){
 	return voltage + (n_factor * q / c_cap) * (n_out_i - n_out_e);
 }
 
-double find_e_crit(int n_out_i, imatrix & out, int n_out, fmatrix & p, int n_active){
+double particle_operations::find_e_crit(int n_out_i, imatrix & out, int n_out, fmatrix & p, int n_active){
 
 	static fmatrix energy(10000);
 	double vx, vy, vz;
@@ -424,8 +429,7 @@ double find_e_crit(int n_out_i, imatrix & out, int n_out, fmatrix & p, int n_act
 	}
 }
 
-void reflect_particle(fmatrix & p, int & n_active, int i, double x, double y, double vx, double vy, int n_mesh_x,
-						 int n_mesh_y, double dx, double dy)
+void particle_operations::reflect_particle(fmatrix & p, int & n_active, int i, double x, double y, double vx, double vy)
 {
 	static const double x_max = ((double) n_mesh_x - 1);
 	static const double y_max = ((double) n_mesh_y - 1) * (dy / dx);
@@ -449,7 +453,7 @@ void reflect_particle(fmatrix & p, int & n_active, int i, double x, double y, do
 }
 
 
-void remove_particle(fmatrix & p, int & n_active, int i, imatrix & lpos)
+void particle_operations::remove_particle(fmatrix & p, int & n_active, int i, imatrix & lpos)
 {
 	// for (size_t j = 0; j < 6; j++)
 	// {
@@ -474,7 +478,7 @@ void remove_particle(fmatrix & p, int & n_active, int i, imatrix & lpos)
 
 //  ----------------------------- Particle Movement ---------------------------
 
-void move_e(fmatrix & p, int & n_active, fmatrix & electric_field_at_particles_x, fmatrix & electric_field_at_particles_y)
+void particle_operations::move_e(fmatrix & p, int & n_active, fmatrix & electric_field_at_particles_x, fmatrix & electric_field_at_particles_y)
 {
     for (int i = 0; i < n_active; i++)
     {
@@ -485,7 +489,7 @@ void move_e(fmatrix & p, int & n_active, fmatrix & electric_field_at_particles_x
     }
 }
 
-void move_i(fmatrix & p, int & n_active, fmatrix & electric_field_at_particles_x, fmatrix & electric_field_at_particles_y, const double & alpha, const double & k_sub)
+void particle_operations::move_i(fmatrix & p, int & n_active, fmatrix & electric_field_at_particles_x, fmatrix & electric_field_at_particles_y)
 {
     for (int i = 0; i < n_active; i++)
     {
@@ -496,7 +500,7 @@ void move_i(fmatrix & p, int & n_active, fmatrix & electric_field_at_particles_x
     }
 }
 
-void move_n(fmatrix & p, int & n_active, double k_sub)
+void particle_operations::move_n(fmatrix & p, int & n_active, double k_sub)
 {
     for (int i = 0; i < n_active; i++)
     {
