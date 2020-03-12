@@ -7,7 +7,6 @@
 #include <string>
 #include <unordered_map>
 
-#include "cross-sections.h"
 #include "fields.h"
 #include "fmatrix.h"
 #include "fmath.h"
@@ -42,7 +41,7 @@ int main(int argc, char* argv[])
 
     
     // load_config_file(config_path);   
-    load_cross_sections(config);
+    // load_cross_sections(config);
     
 
     // ------------------- Variable initialization ----------------------------
@@ -99,9 +98,6 @@ int main(int argc, char* argv[])
     fmatrix phi_poisson     = fmatrix::zeros(n_mesh_x, n_mesh_y);
 	fmatrix efield_x        = fmatrix::zeros(n_mesh_x, n_mesh_y);
     fmatrix efield_y        = fmatrix::zeros(n_mesh_x, n_mesh_y);
-    // fmatrix mesh_x          = fmatrix::zeros(n_mesh_x, n_mesh_y);
-    // fmatrix mesh_y          = fmatrix::zeros(n_mesh_x, n_mesh_y);
-    // fmatrix vmesh           = fmatrix::zeros(n_mesh_x, n_mesh_y);
     imatrix electrode_mask  = imatrix::zeros(n_mesh_x, n_mesh_y);
     fmatrix voltages        = fmatrix::zeros(4);
     double sigma_laplace;
@@ -312,6 +308,6 @@ int main(int argc, char* argv[])
     save_series(series, n_points_series, state, config, job_suffix);
 
     // ----------------------------- Finalizing -------------------------------
-    delete_cross_sections_arrays();
+    // delete_cross_sections_arrays();
 	return 0;
 }

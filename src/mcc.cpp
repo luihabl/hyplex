@@ -11,12 +11,30 @@
 #include "particles.h"
 #include "random-numbers.h"
 #include "particles-in-mesh.h"
-#include "cross-sections.h"
-
+#include "input-output.h"
 
 
 mcc::mcc(configuration & config)
 {
+    n_exc = config.i("p/n_exc");
+    e_exc = config.fs("ugas/e_exc");
+    e_iz = config.f("ugas/e_iz");
+
+
+    // Loading cross-sections
+
+    tmatrix<string> exc_path = config.ss("ugas/exc_path");
+
+    elastic_cs = load_csv(config.s("project/cross_sections_path") + config.s("ugas/els_path"));
+    ionization_cs = load_csv(config.s("project/cross_sections_path") + config.s("ugas/iz_path"));
+
+    excitation_cs = new fmatrix[n_exc];
+    for(int i = 0; i < n_exc; i++) excitation_cs[i] = load_csv(config.s("project/cross_sections_path") + exc_path.val[i]);
+    
+    isotropic_cs = load_csv(config.s("project/cross_sections_path") + config.s("ugas/iso_path"));
+    backscattering_cs = load_csv(config.s("project/cross_sections_path") + config.s("ugas/bs_path"));
+
+    // Loading other parameters
 
     dt = config.f("time/dt");
     k_sub = config.i("time/k_sub");
@@ -28,11 +46,12 @@ mcc::mcc(configuration & config)
     m_el = config.f("electrons/m_el");
     q = config.f("physical/q");
     pi = config.f("physical/pi");
-    e_iz = config.f("ugas/e_iz");
+    
     t_neutral = config.f("neutrals/t_neutral");
-    n_exc = config.i("p/n_exc");
-    e_exc = config.fs("ugas/e_exc");
+}
 
+mcc::~mcc(){
+    delete[] excitation_cs;
 }
 
 
@@ -46,7 +65,7 @@ void mcc::initialize_mcc(fmatrix & dens_n, fmatrix & vmesh){
 
 // --------------------------------- Initial parameters for the MCC ----------------------------------
 
-double calc_total_cs(double energy, int n_exc){
+double mcc::calc_total_cs(double energy, int n_exc){
     double total_cs;
     total_cs = interp(elastic_cs, energy);
     total_cs += interp(ionization_cs, energy);

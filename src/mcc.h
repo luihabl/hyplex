@@ -9,23 +9,35 @@
 struct mcc
 {
     
+    // cross-sections
+    fmatrix elastic_cs;
+    fmatrix ionization_cs;
+    fmatrix* excitation_cs;
+    fmatrix isotropic_cs;
+    fmatrix backscattering_cs;
+
+    double e_iz;
+    fmatrix e_exc;
+    int n_exc;
 
     // configuration variables
-    double dt, dx, dy, a_x, a_y, m_i, m_el, q, pi, e_iz, t_neutral, n_exc;
+    double dt, dx, dy, a_x, a_y, m_i, m_el, q, pi, t_neutral;
     int k_sub;
-    fmatrix e_exc;
+
 
     //mcc variables
     double nu_prime_e, nu_prime_i;
     double p_null_e, p_null_i;
 
     mcc(configuration & config);
+    ~mcc();
 
     double find_nu_prime_e(fmatrix & dens_n, fmatrix & vmesh);
     double find_nu_prime_i(fmatrix & dens_n, fmatrix & vmesh);
     double p_null(double nu_prime, double k_sub);
     double collision_frequency(double neutral_density, double cross_section, double kinetic_energy_ev, double mass);
     double kinetic_energy_ev(const fmatrix & p, const int & i, double const & mass);
+    double calc_total_cs(double energy, int n_exc);
 
     fmatrix isotropic_scatter(fmatrix & p, const int & i, double chi);
 
@@ -39,7 +51,6 @@ struct mcc
     void collisions_i(fmatrix & p, int & n_active, imatrix & lpos, mesh_set & mesh, fmatrix & dens_n);
 
 };
-
 
 
 
