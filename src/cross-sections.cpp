@@ -5,7 +5,6 @@
 
 #include "fmatrix.h"
 #include "input-output.h"
-#include "config.h"
 #include "configuration.h"
 
 
@@ -39,6 +38,6 @@ void load_cross_sections(configuration & config){
 
 void delete_cross_sections_arrays(){
     delete[] excitation_cs;
-    delete[] E_EXC_PATH;
-    delete[] E_EXC;
+    // delete[] E_EXC_PATH;
+    // delete[] E_EXC;
 }

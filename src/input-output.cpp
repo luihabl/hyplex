@@ -13,13 +13,11 @@
 #include "fmath.h"
 
 #include "state-info.h"
-// #include "h5io.h"
-// #include "H5Cpp.h"
 #include "exdir.h"
+#include "configuration.h"
 
 using namespace std;
 using namespace std::chrono;
-// using namespace H5;
 
 void verbose_log(string message){
     #ifdef VERBOSE
@@ -41,29 +39,29 @@ void print_dsmc_info(int i, int n_active_n, int step_interval, int n_steps){
     }
 }
 
-void print_info(state_info state, int step_interval)
+void print_info(state_info state, int step_interval, configuration & config)
 {
     static high_resolution_clock::time_point t0;
     if(state.step==state.step_offset) t0 = high_resolution_clock::now();
     if ((state.step + 1) % step_interval == 0 || state.step == 0)
     {
-        printf("[%05.2f%%] ", (double) (100.0 * (state.step + 1 - state.step_offset) / N_STEPS));
+        printf("[%05.2f%%] ", (double) (100.0 * (state.step + 1 - state.step_offset) / config.i("time/n_steps")));
         printf("Step: %-8d ", state.step + 1);
         printf("Active electrons: %-8d ", state.n_active_e);
         printf("Active ions: %-8d ", state.n_active_i);
-        printf("Cap. voltage: %.4f V   ", state.phi_zero / K_PHI);
+        printf("Cap. voltage: %.4f V   ", state.phi_zero / config.f("p/k_phi"));
         printf("Loop time: %.2f ms ", (double) duration_cast<microseconds>(high_resolution_clock::now() - t0).count() / (1e3 * step_interval));
         printf("\n");
         t0 = high_resolution_clock::now();
     }
 }
 
-void print_initial_info(double p_null_e, double p_null_i)
+void print_initial_info(double p_null_e, double p_null_i, configuration & config)
 {
     verbose_log("\n ---- Simulation parameters ----");
-    printf("Grid size:\t\t (%d, %d)\n", N_MESH_X, N_MESH_Y);
-    printf("Number of steps:\t %d\n", N_STEPS);
-    printf("Gas:\t\t\t %s\n", GAS_NAME.c_str());
+    printf("Grid size:\t\t (%d, %d)\n", config.i("geometry/n_mesh_x"), config.i("geometry/n_mesh_y"));
+    printf("Number of steps:\t %d\n", config.i("time/n_steps"));
+    printf("Gas:\t\t\t %s\n", config.s("ions/gas_name").c_str());
     printf("P Null (e):\t\t %.4e\n", p_null_e);
     printf("P Null (I):\t\t %.4e\n\n", p_null_i);
 }
@@ -103,24 +101,27 @@ fmatrix load_csv(string file_path, char delim, int cols)
     return data;
 }
 
-void save_state(fmatrix & p_e, fmatrix & p_i, state_info & state, string suffix){
+void save_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration & config, string suffix){
     
-    
-    fmatrix p_e_corrected = DX * p_e;
+    const double dx = config.f("p/dx");
+    const double dt = config.f("time/dt");
+    string output_path = config.s("project/output_path");
+
+    fmatrix p_e_corrected = dx * p_e;
     for(int i = 0; i < state.n_active_e; i++){
-        p_e_corrected.val[i * 6 + 3] = p_e_corrected.val[i * 6 + 3] / DT;
-        p_e_corrected.val[i * 6 + 4] = p_e_corrected.val[i * 6 + 4] / DT;
-        p_e_corrected.val[i * 6 + 5] = p_e_corrected.val[i * 6 + 5] / DT;
+        p_e_corrected.val[i * 6 + 3] = p_e_corrected.val[i * 6 + 3] / dt;
+        p_e_corrected.val[i * 6 + 4] = p_e_corrected.val[i * 6 + 4] / dt;
+        p_e_corrected.val[i * 6 + 5] = p_e_corrected.val[i * 6 + 5] / dt;
     }
 
-    fmatrix p_i_corrected =  DX * p_i;
+    fmatrix p_i_corrected =  dx * p_i;
     for(int i = 0; i < state.n_active_i; i++){
-        p_i_corrected.val[i * 6 + 3] = p_i_corrected.val[i * 6 + 3] / DT;
-        p_i_corrected.val[i * 6 + 4] = p_i_corrected.val[i * 6 + 4] / DT;
-        p_i_corrected.val[i * 6 + 5] = p_i_corrected.val[i * 6 + 5] / DT;
+        p_i_corrected.val[i * 6 + 3] = p_i_corrected.val[i * 6 + 3] / dt;
+        p_i_corrected.val[i * 6 + 4] = p_i_corrected.val[i * 6 + 4] / dt;
+        p_i_corrected.val[i * 6 + 5] = p_i_corrected.val[i * 6 + 5] / dt;
     }
 
-    exdir file(OUTPUT_PATH + "state" + suffix + ".exdir");
+    exdir file(output_path + "state" + suffix + ".exdir");
    
     p_i_corrected.n1 = state.n_active_i;
     file.write_dataset("/p_i", p_i_corrected);
@@ -129,8 +130,8 @@ void save_state(fmatrix & p_e, fmatrix & p_i, state_info & state, string suffix)
     file.write_dataset("/p_e", p_e_corrected);
 
     map<string, double> state_attrs_double = {
-        {"Time [s]", (double) state.step * DT},
-        {"Capacitor voltage [V]", state.phi_zero / K_PHI},
+        {"Time [s]", (double) state.step * dt},
+        {"Capacitor voltage [V]", state.phi_zero / config.f("p/k_phi")},
         {"Capacitor charge [norm. C]", state.q_cap},
         {"Surface charge density [norm. C/m^2]", state.sigma_1}
     };
@@ -150,13 +151,14 @@ void save_state(fmatrix & p_e, fmatrix & p_i, state_info & state, string suffix)
     verbose_log("Saved state");
 }
 
-void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state, string filename){
+void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration & config, string filename){
 
-    // H5File file(INPUT_PATH + "state.h5", H5F_ACC_RDONLY);
-    exdir file(INPUT_PATH + filename);
+    string input_path = config.s("project/input_path");
+    double dx = config.f("p/dx");
+    double dt = config.f("time/dt");
 
-    // DataSet p_i_dataset = file.openDataSet("p_i");
-    // DataSet p_e_dataset = file.openDataSet("p_e");
+
+    exdir file(input_path + filename);
 
     YAML::Node attrs;
     file.read_all_attributes("/", attrs);
@@ -171,37 +173,24 @@ void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state, string filenam
     state.n_active_e = attrs["Active electrons"].as<int>();
     state.n_out_ob_e = attrs["Removed electron"].as<int>();
 
-    // read_attribute(file, "Step", state.step_offset);
-    // read_attribute(file, "Capacitor charge [norm. C]", state.q_cap);
-    // read_attribute(file, "Surface charge density [norm. C/m^2]", state.sigma_1);
-    
-    // read_attribute(p_i_dataset, "Active ions", state.n_active_i);
-    // read_attribute(p_i_dataset, "Removed ions", state.n_out_ob_i);
-
-    // read_attribute(p_e_dataset, "Active electrons", state.n_active_e);
-    // read_attribute(p_e_dataset, "Removed electrons", state.n_out_ob_e);
-
     fmatrix p_i_load = fmatrix::zeros(state.n_active_i, 6);
     fmatrix p_e_load = fmatrix::zeros(state.n_active_e, 6);
 
     file.read_dataset("/p_e", p_e_load);
     file.read_dataset("/p_i", p_i_load);
 
-    // p_i_dataset.read(p_i_load.val, PredType::NATIVE_DOUBLE);
-    // p_e_dataset.read(p_e_load.val, PredType::NATIVE_DOUBLE);
-
-    p_e_load = p_e_load / DX;
+    p_e_load = p_e_load / dx;
     for(int i = 0; i < state.n_active_e; i++){
-        p_e_load.val[i * 6 + 3] = p_e_load.val[i * 6 + 3] * DT;
-        p_e_load.val[i * 6 + 4] = p_e_load.val[i * 6 + 4] * DT;
-        p_e_load.val[i * 6 + 5] = p_e_load.val[i * 6 + 5] * DT;
+        p_e_load.val[i * 6 + 3] = p_e_load.val[i * 6 + 3] * dt;
+        p_e_load.val[i * 6 + 4] = p_e_load.val[i * 6 + 4] * dt;
+        p_e_load.val[i * 6 + 5] = p_e_load.val[i * 6 + 5] * dt;
     }
 
-    p_i_load = p_i_load / DX;
+    p_i_load = p_i_load / dx;
     for(int i = 0; i < state.n_active_i; i++){
-        p_i_load.val[i * 6 + 3] = p_i_load.val[i * 6 + 3] * DT;
-        p_i_load.val[i * 6 + 4] = p_i_load.val[i * 6 + 4] * DT;
-        p_i_load.val[i * 6 + 5] = p_i_load.val[i * 6 + 5] * DT;
+        p_i_load.val[i * 6 + 3] = p_i_load.val[i * 6 + 3] * dt;
+        p_i_load.val[i * 6 + 4] = p_i_load.val[i * 6 + 4] * dt;
+        p_i_load.val[i * 6 + 5] = p_i_load.val[i * 6 + 5] * dt;
     }
 
     for(int i=0; i < state.n_active_i * 6; i++) p_i.val[i] = p_i_load.val[i];
@@ -210,31 +199,41 @@ void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state, string filenam
     verbose_log("Loaded state: Step: " + to_string(state.step_offset) + " Active electrons: " + to_string(state.n_active_e) + " Active ions: " + to_string(state.n_active_i));
 }
 
-void save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vmesh, state_info & state, string suffix){
+void save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vmesh, state_info & state, configuration & config, string suffix)
+{
     
-    exdir file(OUTPUT_PATH + "fields" + suffix + ".exdir");
+    exdir file(config.s("project/output_path") + "fields" + suffix + ".exdir");
 
-    file.write_attribute("/", "Time [s]", (double) state.step * DT);
+    double dx = config.f("p/dx");
+    double dt = config.f("time/dt");
+    double q = config.f("physical/q");
+    double m_el = config.f("electrons/m_el");
+    double n_factor = config.f("particles/n_factor");
+
+    file.write_attribute("/", "Time [s]", (double) state.step * dt);
     file.write_attribute("/", "Step", (double) state.step);
 
 
-    fmatrix phi_corrected = phi * (M_EL * pow(DX, 2))/(Q * pow(DT, 2));
+    fmatrix phi_corrected = phi * (m_el * pow(dx, 2))/(q * pow(dt, 2));
     file.write_dataset("/phi", phi_corrected);
 
-    fmatrix dens_e = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_e / vmesh;
+    fmatrix dens_e = (4 / pow(dx, 2)) *  n_factor * wmesh_e / vmesh;
     file.write_dataset("/dens_e", dens_e);
 
-    fmatrix dens_i = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_i / vmesh;
+    fmatrix dens_i = (4 / pow(dx, 2)) *  n_factor * wmesh_i / vmesh;
     file.write_dataset("/dens_i", dens_i);
 
     verbose_log("Saved fields snapshot");
 }
 
-void save_series(unordered_map<string, fmatrix> & series, int & n_points, state_info state, string suffix){
+void save_series(unordered_map<string, fmatrix> & series, int & n_points, state_info state, configuration & config, string suffix)
+{
     
-    exdir file(OUTPUT_PATH + "series" + suffix + ".exdir");
+    exdir file(config.s("project/output_path") + "series" + suffix + ".exdir");
+
+    double dt = config.f("time/dt");
     
-    file.write_attribute("/", "Time [s]", (double) state.step * DT);
+    file.write_attribute("/", "Time [s]", (double) state.step * dt);
     file.write_attribute("/", "Step", (double) state.step);
 
     map<string, fmatrix>::iterator cursor;
@@ -248,14 +247,17 @@ void save_series(unordered_map<string, fmatrix> & series, int & n_points, state_
     verbose_log("Saved time series");
 }
 
-void save_field_series(fmatrix & field, state_info state, double conversion_constant, string suffix){
+void save_field_series(fmatrix & field, state_info state, configuration & config, double conversion_constant, string suffix)
+{
 
-    exdir file(OUTPUT_PATH + "fseries" + suffix + ".exdir");
+    exdir file(config.s("project/output_path") + "fseries" + suffix + ".exdir");
+
+    double dt = config.f("time/dt");
     
     fmatrix field_corrected = conversion_constant * field;
 
     file.write_dataset("/" + to_string(state.step), field_corrected);
-    file.write_attribute("/" + to_string(state.step), "Time [s]", (double) state.step * DT);
+    file.write_attribute("/" + to_string(state.step), "Time [s]", (double) state.step * dt);
 }
 
 void save_fmatrix(fmatrix & m, string filename, string dataname){

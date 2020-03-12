@@ -51,7 +51,7 @@ particles:
   n_max_particles: !int 5e6                   #Maximum number of particles in the array []
 
 neutrals:
-  expm_neutral: !string "dsmc"                   #Expansion model of neutral flow: 'dsmc', 'constant' or 'load'
+  expm_neutral: !string "constant"                   #Expansion model of neutral flow: 'dsmc', 'constant' or 'load'
   mcc_coll: !bool false                          #Toggle MCC collisions: 'on' or 'off'
   t_neutral: !double 0.02585                     #Temperature of neutral gas [eV]
   n_neutral: !double 4.82e18                     #Density of neutral gas [m^-3]

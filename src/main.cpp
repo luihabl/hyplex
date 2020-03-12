@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
     configuration config("input/config/config.yaml");
 
     
-    load_config_file(config_path);   
+    // load_config_file(config_path);   
     load_cross_sections(config);
     
 
@@ -75,12 +75,14 @@ int main(int argc, char* argv[])
     const double m_el = config.f("electrons/m_el");
     const double t_el = config.f("electrons/t_el");
     const double v_drift_el = config.f("electrons/v_drift_el");
+    const string inj_model = config.s("electrons/inj_model");
 
     const double v_drift_i = config.f("ions/v_drift_i");
     const double t_i = config.f("ions/t_i");
     const double i_i = config.f("ions/i_i");
 
     const double m_i = config.f("ugas/m_i");
+    const bool mcc_coll = config.b("neutrals/mcc_coll");
 
     const double k_inj_el = config.f("p/k_inj_el");
     const double omega_i = config.f("p/omega_i");
@@ -165,15 +167,17 @@ int main(int argc, char* argv[])
 
     // ----------------------------- DSMC -------------------------------------
     
-    if (EXPM_NEUTRAL == "dsmc"){
+    string expm_neutral = config.s("neutrals/expm_neutral");
+
+    if (expm_neutral == "dsmc"){
         verbose_log(" ---- Starting DSMC loop ---- ");
         run_dsmc(mesh_x, mesh_y, vmesh, dens_n, config, "dens_n" + job_suffix + ".exdir");
     }
-    else if (EXPM_NEUTRAL == "constant") {
+    else if (expm_neutral == "constant") {
         verbose_log(" ---- Setting constant neutral density ---- ");
-        dens_n.set_all(N_NEUTRAL);
+        dens_n.set_all(config.f("neutrals/n_neutral"));
     } 
-    else if (EXPM_NEUTRAL == "load") {
+    else if (expm_neutral == "load") {
         verbose_log(" ---- Loading neutral density field ---- ");
         load_fmatrix(dens_n, config.s("project/input_path") + "dens_n.exdir", "dens_n");
     }
@@ -187,12 +191,12 @@ int main(int argc, char* argv[])
          
     // ----------------------------- Loading initial state -------------------
 
-    if(INITIAL_STATE == "load")  load_state(p_e, p_i, state);
+    if(config.s("simulation/initial_state") == "load")  load_state(p_e, p_i, state, config);
 
 	// ----------------------------- Main loop --------------------------------
 
     // Printing initial information
-    print_initial_info(p_null_e, p_null_i);
+    print_initial_info(p_null_e, p_null_i, config);
 
     verbose_log(" ---- Starting main loop ---- ");
     auto start = high_resolution_clock::now();
@@ -230,26 +234,26 @@ int main(int argc, char* argv[])
 
         // Step 5: particles injection
         if(state.step % k_sub == 0) add_flux_particles(p_i, state.n_active_i, t_i, v_drift_i, m_i, n_inj_i, k_sub, dx, dy, dt, n_thruster, q);
-        if(INJ_MODEL == "constant")       n_inj_el = n_inj_el;
-        else if(INJ_MODEL == "balanced")  n_inj_el = balanced_injection(n_inj_el, 0.01, wmesh_i, wmesh_e, 0, 0, 0, n_thruster - 1);
-        else if(INJ_MODEL == "pulsed")    n_inj_el = pulsed_injection(k_inj_el, v_sb, v_rf, t_el, omega_i, state.step);
-        else if(INJ_MODEL == "square")    n_inj_el = square_injection(4.0, freq, dt, sqr_dt, state.step, n_factor, i_i, q);
+        if(inj_model == "constant")       n_inj_el = n_inj_el;
+        else if(inj_model == "balanced")  n_inj_el = balanced_injection(n_inj_el, 0.01, wmesh_i, wmesh_e, 0, 0, 0, n_thruster - 1);
+        else if(inj_model == "pulsed")    n_inj_el = pulsed_injection(k_inj_el, v_sb, v_rf, t_el, omega_i, state.step);
+        else if(inj_model == "square")    n_inj_el = square_injection(4.0, freq, dt, sqr_dt, state.step, n_factor, i_i, q);
         add_flux_particles(p_e, state.n_active_e, t_el, v_drift_el, m_el, n_inj_el, 1, dx, dy, dt, n_thruster, q);
 
         // Step 6: Monte-Carlo collisions
-        if(MCC_COLL == "on"){
-            if(state.step % K_SUB == 0) collisions_i(p_i, state.n_active_i, lpos_i, mesh_x, mesh_y, dens_n, p_null_i, nu_prime_i, config);
+        if(mcc_coll){
+            if(state.step % k_sub == 0) collisions_i(p_i, state.n_active_i, lpos_i, mesh_x, mesh_y, dens_n, p_null_i, nu_prime_i, config);
             collisions_e(p_e, state.n_active_e, lpos_e, p_i, state.n_active_i, lpos_i, mesh_x, mesh_y, dens_n, p_null_e, nu_prime_e, config);
         }
         
         //  ----------------------------- Diagnostics -------------------------
 
-        print_info(state, 100);
+        print_info(state, 100, config);
 
         if(state.step % 10000 == 0) 
         {
-            save_state(p_e, p_i, state, job_suffix);
-            save_fields_snapshot(phi, wmesh_e, wmesh_i, vmesh, state, job_suffix);
+            save_state(p_e, p_i, state, config, job_suffix);
+            save_fields_snapshot(phi, wmesh_e, wmesh_i, vmesh, state, config, job_suffix);
         }
 
         // if(state.step % 1 == 0){
@@ -304,9 +308,9 @@ int main(int argc, char* argv[])
     std::cout << "Total execution duration: " << (double) duration.count() / (1.0e6 * 60) << " min" << endl;
 
     // ----------------------------- Saving outputs ---------------------------
-    save_state(p_e, p_i, state, job_suffix);
-    save_fields_snapshot(phi, wmesh_e, wmesh_i, vmesh, state, job_suffix);
-    save_series(series, n_points_series, state, job_suffix);
+    save_state(p_e, p_i, state, config, job_suffix);
+    save_fields_snapshot(phi, wmesh_e, wmesh_i, vmesh, state, config, job_suffix);
+    save_series(series, n_points_series, state, config, job_suffix);
 
     // ----------------------------- Finalizing -------------------------------
     delete_cross_sections_arrays();
