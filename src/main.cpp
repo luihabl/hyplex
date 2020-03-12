@@ -184,10 +184,8 @@ int main(int argc, char* argv[])
 
     // ----------------------------- MCC --------------------------------------
     
-    double nu_prime_e       = find_nu_prime_e(dens_n, vmesh, config);
-    double p_null_e         = p_null(nu_prime_e, dt);
-    double nu_prime_i       = find_nu_prime_i(dens_n, vmesh, config);
-    double p_null_i         = p_null(nu_prime_i, dt * (double) k_sub);
+    mcc coll(config);
+    coll.initialize_mcc(dens_n, vmesh);
          
     // ----------------------------- Loading initial state -------------------
 
@@ -196,7 +194,7 @@ int main(int argc, char* argv[])
 	// ----------------------------- Main loop --------------------------------
 
     // Printing initial information
-    print_initial_info(p_null_e, p_null_i, config);
+    print_initial_info(coll.p_null_e, coll.p_null_i, config);
 
     verbose_log(" ---- Starting main loop ---- ");
     auto start = high_resolution_clock::now();
@@ -242,8 +240,8 @@ int main(int argc, char* argv[])
 
         // Step 6: Monte-Carlo collisions
         if(mcc_coll){
-            if(state.step % k_sub == 0) collisions_i(p_i, state.n_active_i, lpos_i, mesh_x, mesh_y, dens_n, p_null_i, nu_prime_i, config);
-            collisions_e(p_e, state.n_active_e, lpos_e, p_i, state.n_active_i, lpos_i, mesh_x, mesh_y, dens_n, p_null_e, nu_prime_e, config);
+            if(state.step % k_sub == 0) coll.collisions_i(p_i, state.n_active_i, lpos_i, mesh_x, mesh_y, dens_n);
+            coll.collisions_e(p_e, state.n_active_e, lpos_e, p_i, state.n_active_i, lpos_i, mesh_x, mesh_y, dens_n);
         }
         
         //  ----------------------------- Diagnostics -------------------------
