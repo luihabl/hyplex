@@ -6,7 +6,7 @@
 #include "HYPRE_struct_ls.h"
 #include "fmatrix.h"
 #include "fields.h"
-#include "config.h"
+#include "configuration.h"
 
 class rsolver{
     
@@ -22,6 +22,7 @@ public:
     imatrix              ll, ur, inner_ll, inner_ur;
     fmatrix              dirichlet_input;
     fmatrix &            mesh_x, mesh_y, vmesh;
+    configuration &      config;
     int                  n_mesh_x, n_mesh_y, n_solve;
     int                  n_dirichlet, n_input_dirichlet, n_neumann;
     
@@ -43,8 +44,8 @@ public:
     
 public:
     // constructors and destructors
-    rsolver(fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & vmesh, int n_neumann, int n_dirichlet);
-    rsolver(fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & vmesh);
+    rsolver(fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & vmesh, int n_neumann, int n_dirichlet, configuration & config);
+    rsolver(fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & vmesh, configuration & config);
     ~rsolver();
     
     // public methods

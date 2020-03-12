@@ -13,8 +13,8 @@
 #include <cmath>
 
 #include "fmatrix.h"
-#include "config.h"
 #include "num-tools.h"
+#include "configuration.h"
 
 /**
  Calculates a sinusoidal voltage level in time
@@ -26,9 +26,9 @@
  @param phase phase of the wave
  @return voltage at a given time
  */
-double ac_voltage_at_time(size_t i, double dt, double freq_hz, double amplitude, double phase)
+double ac_voltage_at_time(size_t i, double dt, double freq_hz, double amplitude, double phase, configuration & config)
 {
-	return amplitude * sin(2 * PI * freq_hz * dt * i + phase);
+	return amplitude * sin(2 * config.f("physical/pi") * freq_hz * dt * i + phase);
 }
 
 /**
@@ -77,19 +77,23 @@ void calculate_efield(fmatrix & efield_x, fmatrix & efield_y, fmatrix & phi, fma
 }
 
 
-double calculate_phi_zero(double sigma_old, double n_in, double q_cap, double sigma_laplace, fmatrix & phi_poisson, fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vmesh, imatrix & electrode_mask){
+double calculate_phi_zero(double sigma_old, double n_in, double q_cap, double sigma_laplace, fmatrix & phi_poisson, fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vmesh, imatrix & electrode_mask, configuration & config){
 
-	double sigma_poisson = sigma_from_phi(phi_poisson, mesh_x, mesh_y, wmesh_e, wmesh_i, vmesh, electrode_mask);	
-	return (sigma_old + sigma_poisson - q_cap + K_Q * n_in) / (1 - sigma_laplace);
+	double sigma_poisson = sigma_from_phi(phi_poisson, mesh_x, mesh_y, wmesh_e, wmesh_i, vmesh, electrode_mask, config);	
+	return (sigma_old + sigma_poisson - q_cap + config.f("p/k_q") * n_in) / (1 - sigma_laplace);
 }
 
-double sigma_from_phi(fmatrix & phi, fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vmesh, imatrix & electrode_mask){
+double sigma_from_phi(fmatrix & phi, fmatrix & mesh_x, fmatrix & mesh_y, fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vmesh, imatrix & electrode_mask, configuration & config){
 	
 	double sigma = 0, volume, dw, phi_xx, phi_yy;
 	double dx1, dx2, dy1, dy2;
 	int ip, im, jp, jm;
 	int n_mesh_x =  (int) mesh_x.n1, n_mesh_y =  (int) mesh_y.n2;
-	
+
+	double eps_0 = config.f("physical/eps_0");
+	double c_cap = config.f("boundaries/c_cap");
+	double gamma = config.f("p/gamma");
+
 	for(int i = 0; i < n_mesh_x; i++){
 		for(int j = 0; j < n_mesh_y; j++){
 			if(electrode_mask.val[i * n_mesh_y + j] == 1){
@@ -114,7 +118,7 @@ double sigma_from_phi(fmatrix & phi, fmatrix & mesh_x, fmatrix & mesh_y, fmatrix
 
 				volume = vmesh.val[i * n_mesh_y + j];
 
-                sigma += (EPS_0 / C_CAP) * volume * (phi_xx + phi_yy + GAMMA * dw / volume);
+                sigma += (eps_0 / c_cap) * volume * (phi_xx + phi_yy + gamma * dw / volume);
 			}
 		}
 	}
@@ -122,22 +126,29 @@ double sigma_from_phi(fmatrix & phi, fmatrix & mesh_x, fmatrix & mesh_y, fmatrix
 	return sigma;
 }
 
-double calculate_sigma(double sigma_old, double phi_zero, double n_in, double cap_charge){
-	return sigma_old - phi_zero - cap_charge + K_Q * n_in;
+double calculate_sigma(double sigma_old, double phi_zero, double n_in, double cap_charge, configuration & config){
+	return sigma_old - phi_zero - cap_charge + config.f("p/k_q") * n_in;
 }
 
-double calculate_cap_charge(double sigma_new, double sigma_old, double cap_charge_old, double n_in){
-	return sigma_new - sigma_old + cap_charge_old - K_Q * n_in;
+double calculate_cap_charge(double sigma_new, double sigma_old, double cap_charge_old, double n_in, configuration & config){
+	return sigma_new - sigma_old + cap_charge_old - config.f("p/k_q") * n_in;
 }
 
 
-void init_mesh(fmatrix & mesh_x, fmatrix & mesh_y, double a_x, double a_y, int n_mesh_x, int n_mesh_y)
+void init_mesh(fmatrix & mesh_x, fmatrix & mesh_y, configuration & config)
 {
+	int n_mesh_x = config.i("geometry/n_mesh_x");
+	int n_mesh_y = config.i("geometry/n_mesh_y");
+	double a_x = config.f("geometry/a_x");
+	double a_y = config.f("geometry/a_y");
+
+	double dx = config.f("p/dx");
+	double dy = config.f("p/dy");
 	for (size_t i = 0; i < mesh_x.n1; i++) {
 		for (size_t j = 0; j < mesh_x.n2; j++) {
 			
 			mesh_x.val[i * mesh_x.n2 + j] = physical_space(i, a_x, 1, n_mesh_x);
-			mesh_y.val[i * mesh_y.n2 + j] = physical_space(j, a_y, DY/DX, n_mesh_y);
+			mesh_y.val[i * mesh_y.n2 + j] = physical_space(j, a_y, dy/dx, n_mesh_y);
 		
 		}	
 	}

@@ -81,16 +81,16 @@ void add_maxwellian_flux_particles(fmatrix & p, int & n_active, const double tem
 	n_active += n_new;
 }
 
-void add_maxwellian_particle_at_position(fmatrix & p, int & n_active, imatrix & lpos, const double temperature, const double mass, double x_pos, double y_pos, int lpos_x, int lpos_y)
+void add_maxwellian_particle_at_position(fmatrix & p, int & n_active, imatrix & lpos, const double temperature, const double mass, double x_pos, double y_pos, int lpos_x, int lpos_y, const double & dt, const double & dx, const double & q)
 {
-    double v_temperature = sqrt(Q * temperature / mass);
+    double v_temperature = sqrt(q * temperature / mass);
     
     p.val[n_active * 6 + 0] = x_pos;
     p.val[n_active * 6 + 1] = y_pos;
     p.val[n_active * 6 + 2] = 0.0;
-    p.val[n_active * 6 + 3] = (DT / DX) * r_norm(0.0, v_temperature);
-    p.val[n_active * 6 + 4] = (DT / DX) * r_norm(0.0, v_temperature);
-    p.val[n_active * 6 + 5] = (DT / DX) * r_norm(0.0, v_temperature);
+    p.val[n_active * 6 + 3] = (dt / dx) * r_norm(0.0, v_temperature);
+    p.val[n_active * 6 + 4] = (dt / dx) * r_norm(0.0, v_temperature);
+    p.val[n_active * 6 + 5] = (dt / dx) * r_norm(0.0, v_temperature);
 	lpos.val[n_active * 2 + 0] = lpos_x;
 	lpos.val[n_active * 2 + 1] = lpos_y;
 

@@ -1,5 +1,5 @@
-#ifndef CONFIGC_H
-#define CONFIGC_H
+#ifndef CONFIGURATION_H
+#define CONFIGURATION_H
 
 #include <string>
 #include <unordered_map>

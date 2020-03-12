@@ -8,7 +8,7 @@
 #include "HYPRE_struct_ls.h"
 #include "fmatrix.h"
 #include "fields.h"
-#include "config.h"
+#include "configuration.h"
 
 #define SOLVER_PRINT_LEVEL 0
 #define SOLVER_TOLERANCE 1e-6
@@ -19,7 +19,7 @@ using namespace std::chrono;
 using namespace std;
 // ------------------- constructors / destructor -------------------------
 
-rsolver::rsolver(fmatrix & _mesh_x, fmatrix & _mesh_y, fmatrix & _vmesh, int _n_neumann, int _n_dirichlet): mesh_x(_mesh_x), mesh_y(_mesh_y), vmesh(_vmesh){
+rsolver::rsolver(fmatrix & _mesh_x, fmatrix & _mesh_y, fmatrix & _vmesh, int _n_neumann, int _n_dirichlet, configuration & _config): mesh_x(_mesh_x), mesh_y(_mesh_y), vmesh(_vmesh), config(_config){
 
     MPI_Init(NULL, NULL);
 
@@ -40,7 +40,7 @@ rsolver::rsolver(fmatrix & _mesh_x, fmatrix & _mesh_y, fmatrix & _vmesh, int _n_
     inner_ur = {n_mesh_x - 2, n_mesh_y - 2};
 }
 
-rsolver::rsolver(fmatrix & _mesh_x, fmatrix & _mesh_y, fmatrix & _vmesh): mesh_x(_mesh_x), mesh_y(_mesh_y), vmesh(_vmesh){
+rsolver::rsolver(fmatrix & _mesh_x, fmatrix & _mesh_y, fmatrix & _vmesh, configuration & _config): mesh_x(_mesh_x), mesh_y(_mesh_y), vmesh(_vmesh), config(_config){
 
     MPI_Init(NULL, NULL);
 
@@ -296,13 +296,13 @@ int rsolver::dirichlet_boundary_number(int i, int j){
 // ------------------- solving --------------------------------
 
 void rsolver::solve(fmatrix & solution, fmatrix & voltages, fmatrix & w_i, fmatrix & w_e){
-
+    double gamma = config.f("p/gamma");
     for(int i = 0; i < n_mesh_x; i++)
         for(int j = 0; j < n_mesh_y; j++){
             if(get_node_type(i, j) == 0 || get_node_type(i, j) == 2)
             {   
                 ll = {i, j};
-                HYPRE_StructVectorSetValues(hypre_b, ll.val, GAMMA * (w_i.val[i * w_i.n2 + j] - w_e.val[i * w_e.n2 + j]));
+                HYPRE_StructVectorSetValues(hypre_b, ll.val, gamma * (w_i.val[i * w_i.n2 + j] - w_e.val[i * w_e.n2 + j]));
                 HYPRE_StructVectorSetValues(hypre_x, ll.val, 0.0);
             } 
         }
@@ -350,24 +350,24 @@ void setup_rsolver(rsolver & solver, fmatrix & mesh_x, fmatrix & mesh_y, fmatrix
     
     int n_dirichlet = 0, n_neumann = 0;
 
-    if(OB_TYPE == "dirichlet"){
+    if(solver.config.s("boundaries/ob_type") == "dirichlet"){
         n_dirichlet = 3;
         n_neumann   = 2;
     }
-    if(OB_TYPE == "neumann"){
+    if(solver.config.s("boundaries/ob_type") == "neumann"){
         n_dirichlet = 1;
         n_neumann   = 4;
     }
 
     solver.late_init(n_neumann, n_dirichlet);
     
-    imatrix box_thruster        = {0, 0, 0, N_THRUSTER - 1};
-    imatrix box_top_thruster    = {0, N_THRUSTER, 0, N_MESH_Y - 2};
-    imatrix box_ob_top          = {0, N_MESH_Y - 1, N_MESH_X - 2, N_MESH_Y - 1};
-    imatrix box_ob_right        = {N_MESH_X - 1, 0, N_MESH_X - 1, N_MESH_Y - 1};
-    imatrix box_sym             = {1, 0, N_MESH_X - 2, 0};
+    imatrix box_thruster        = {0, 0, 0, solver.config.i("geometry/n_thruster") - 1};
+    imatrix box_top_thruster    = {0, solver.config.i("geometry/n_thruster"), 0, solver.config.i("geometry/n_mesh_y") - 2};
+    imatrix box_ob_top          = {0, solver.config.i("geometry/n_mesh_y") - 1, solver.config.i("geometry/n_mesh_x") - 2, solver.config.i("geometry/n_mesh_y") - 1};
+    imatrix box_ob_right        = {solver.config.i("geometry/n_mesh_x") - 1, 0, solver.config.i("geometry/n_mesh_x") - 1, solver.config.i("geometry/n_mesh_y") - 1};
+    imatrix box_sym             = {1, 0, solver.config.i("geometry/n_mesh_x") - 2, 0};
 
-    if(OB_TYPE == "neumann"){
+    if(solver.config.s("boundaries/ob_type") == "neumann"){
         solver.set_dirichlet_box(box_thruster, 0);
         solver.set_neumann_box(box_top_thruster, 0);
         solver.set_neumann_box(box_ob_top, 1);
@@ -375,7 +375,7 @@ void setup_rsolver(rsolver & solver, fmatrix & mesh_x, fmatrix & mesh_y, fmatrix
         solver.set_neumann_box(box_sym, 3);
     }
 
-    if(OB_TYPE == "dirichlet"){
+    if(solver.config.s("boundaries/ob_type") == "dirichlet"){
         
         solver.set_neumann_box(box_sym, 0);
         solver.set_neumann_box(box_top_thruster, 1);

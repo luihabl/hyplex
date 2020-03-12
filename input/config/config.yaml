@@ -78,7 +78,6 @@ helium:
     - 19.82                             #First excitation energy [eV]
     - 20.61                             #Second excitation energy [eV]                        
   e_iz: !double 24.59                            #Ionization energy [eV]
-  n_exc: !int 2                               #Number of excited states considered (1 or 2)
   els_path: !string "He/Elastic_He.csv"          #Path to elastic cross section
   exc_path: !string                        #Path to elastic cross section
     - "He/Excitation1_He.csv"
@@ -92,8 +91,7 @@ xenon:
   e_exc: !double
     - 8.32                               #First excitation energy [eV]                         
   e_iz: !double 12.13                            #Ionization energy [eV]
-  n_exc: !int 1                               #Number of excited states considered
-  els_path: "Xe/Elastic_Xe.csv"          #Path to elastic cross section
+  els_path: !string "Xe/Elastic_Xe.csv"          #Path to elastic cross section
   exc_path: !string                      #Path to first excitation cross section
     - "Xe/Excitation1_Xe.csv"      
   iz_path: !string "Xe/Ionization_Xe.csv"          #Path ionization cross section

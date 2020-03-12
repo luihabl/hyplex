@@ -1,4 +1,4 @@
-#include "config-class.h"
+#include "configuration.h"
 
 #include <iomanip>
 #include <typeinfo>
@@ -14,46 +14,10 @@
 #define TAG_DOUBLE "!double"
 #define TAG_INT "!int"
 #define TAG_BOOL "!bool"
+#define ERROR_MSG(Map) "ERROR: Key not found in Configuration." #Map ": "
 
 template<typename T> using dict = unordered_map<string, T>;
 template<typename T> using dict_seq = unordered_map<string, tmatrix<T>>;
-
-
-
-template<typename T>
-void configuration::select_gas_on_map(unordered_map<string, T> & map){
-    
-    string gas_name = s("ions/gas_name");
-
-    for (auto const& n : map) {
-        string key = n.first;
-        T value = n.second;
-
-        if (key.find(gas_name) != string::npos) {
-            
-            string key1 = key.substr(0, key.find("/"));
-            size_t len = key1.length();
-
-            key.erase(key.begin() + 0, key.begin() + len + 1);       
-
-            map["ugas/" + key] = value;
-        }
-    }
-}
-
-
-
-
-void configuration::select_gas(){
-    select_gas_on_map(_map_double);
-    select_gas_on_map(_map_int);
-    select_gas_on_map(_map_string);
-    select_gas_on_map(_map_bool);
-    select_gas_on_map(_map_seq_double);
-    select_gas_on_map(_map_seq_int);
-    select_gas_on_map(_map_seq_string);
-    select_gas_on_map(_map_seq_bool);
-}
 
 
 void configuration::calculate_parameters(){
@@ -82,7 +46,7 @@ void configuration::calculate_parameters(){
     _map_double[calc_key + "n_inj_i"] = f("ions/i_i") * dt / (q * n_factor);
     _map_double[calc_key + "n_inj_n"] = (1 - f("thruster/eta_p")) * (4.477962e17 * f("thruster/mfc")) * dt / f("particles/n_factor_dsmc");
     
-    // // ---- norm constants ----
+    // ---- norm constants ----
 
     double pi = f("physical/pi");
 
@@ -96,9 +60,54 @@ void configuration::calculate_parameters(){
     _map_double[calc_key + "rf_period_i"] = round(2 * pi / f(calc_key + "omega_i"));
 
     _map_double[calc_key + "k_inj_el"] =  f(calc_key + "n_inj_i") * sqrt(f("ugas/m_i") / (2 * pi * m_el));
+
+    // ---- cross-sections ----
+    tmatrix<string> exc_path = ss("ugas/exc_path");
+    _map_int[calc_key + "n_exc"] = exc_path.n1;
 }
 
 
+
+
+template<typename T>
+void configuration::select_gas_on_map(unordered_map<string, T> & map){
+    
+    unordered_map<string, T> map_temp;
+
+
+    string gas_name = s("ions/gas_name");
+
+    for (auto const& n : map) {
+        string key = n.first;
+        T value = n.second;
+
+        string root_key = key.substr(0, key.find("/"));
+
+        if (root_key == gas_name) {
+            size_t root_key_len = root_key.length();
+            key.erase(key.begin() + 0, key.begin() + root_key_len + 1);
+            map_temp["ugas/" + key] = value;
+        }
+    }
+
+    for (auto const& n : map_temp) {;
+        map[n.first] = n.second;
+    }
+}
+
+
+
+
+void configuration::select_gas(){
+    select_gas_on_map(_map_double);
+    select_gas_on_map(_map_int);
+    select_gas_on_map(_map_string);
+    select_gas_on_map(_map_bool);
+    select_gas_on_map(_map_seq_double);
+    select_gas_on_map(_map_seq_int);
+    select_gas_on_map(_map_seq_string);
+    select_gas_on_map(_map_seq_bool);
+}
 
 configuration::configuration(string filename)
 {
@@ -129,42 +138,90 @@ void configuration::flatten_map(YAML::Node node, string parent_key)
 
 int configuration::i(string key)
 {
-    return _map_int.at(key);
+    try{
+        return _map_int.at(key);
+    }
+    catch (const out_of_range & e){
+        cerr << ERROR_MSG(_map_int) + key << endl;
+        abort();
+    }
 }
 
 double configuration::f(string key)
 {
-    return _map_double.at(key);
+    try{
+        return _map_double.at(key);
+    }
+    catch (const out_of_range & e){
+        cerr << ERROR_MSG(_map_double) + key << endl;
+        abort();
+    }
 }
 
 string configuration::s(string key)
 {
-    return _map_string.at(key);
+    try{
+        return _map_string.at(key);
+    }
+    catch (const out_of_range & e){
+        cerr << ERROR_MSG(_map_string) + key << endl;
+        abort();
+    }
 }
 
 bool configuration::b(string key)
 {
-    return _map_bool.at(key);
+    try{
+        return _map_bool.at(key);
+    }
+    catch (const out_of_range & e){
+        cerr << ERROR_MSG(_map_bool) + key << endl;
+        abort();
+    }
 }
 
 tmatrix<int> configuration::is(string key)
 {
-    return _map_seq_int.at(key);
+    try{
+        return _map_seq_int.at(key);
+    }
+    catch (const out_of_range & e){
+        cerr << ERROR_MSG(_map_seq_int) + key << endl;
+        abort();
+    }
 }
 
 tmatrix<double> configuration::fs(string key)
 {
-    return _map_seq_double.at(key);
+    try{
+        return _map_seq_double.at(key);
+    }
+    catch (const out_of_range & e){
+        cerr << ERROR_MSG(_map_seq_double) + key << endl;
+        abort();
+    }
 }
 
 tmatrix<string> configuration::ss(string key)
 {
-    return _map_seq_string.at(key);
+    try{
+        return _map_seq_string.at(key);
+    }
+    catch (const out_of_range & e){
+        cerr << ERROR_MSG(_map_seq_string) + key << endl;
+        abort();
+    }
 }
 
 tmatrix<bool> configuration::bs(string key)
 {
-    return _map_seq_bool.at(key);
+    try{
+        return _map_seq_bool.at(key);
+    }
+    catch (const out_of_range & e){
+        cerr << ERROR_MSG(_map_seq_bool) + key << endl;
+        abort();
+    }
 }
 
 

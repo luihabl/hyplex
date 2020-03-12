@@ -2,8 +2,9 @@
 #define CROSS_SECTIONS_H
 
 #include "fmatrix.h"
+#include "configuration.h"
 
-void load_cross_sections();
+void load_cross_sections(configuration & config);
 void delete_cross_sections_arrays();
 
 // e-I cross sections
