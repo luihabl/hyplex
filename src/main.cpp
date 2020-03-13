@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
     string job_suffix = arg.get("name", "");
     string config_path = arg.get("config", CONFIG_PATH);
 
-    configuration config("input/config/config.yaml");
+    configuration config(config_path);
 
     // ------------------- Variable initialization ----------------------------
     
