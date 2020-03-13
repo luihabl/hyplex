@@ -22,7 +22,7 @@
 #include "arg-parser.h"
 #include "configuration.h"
 
-#define CONFIG_PATH "input/config/config.ini"
+#define CONFIG_PATH "input/config/config.yaml"
 
 using namespace std;
 using namespace std::chrono;
@@ -38,11 +38,6 @@ int main(int argc, char* argv[])
     string config_path = arg.get("config", CONFIG_PATH);
 
     configuration config("input/config/config.yaml");
-
-    
-    // load_config_file(config_path);   
-    // load_cross_sections(config);
-    
 
     // ------------------- Variable initialization ----------------------------
     

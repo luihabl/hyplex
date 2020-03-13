@@ -9,23 +9,12 @@
 
 using namespace std;
 
-template<typename T> using dict = unordered_map<string, T>;
-template<typename T> using dict_seq = unordered_map<string, tmatrix<T>>;
-
 class configuration {
 
     private:
         
-        dict<double>        _map_double;
-        dict<int>           _map_int;
-        dict<string>        _map_string;
-        dict<bool>          _map_bool;
-
-        dict_seq<double>    _map_seq_double;
-        dict_seq<int>       _map_seq_int;
-        dict_seq<string>    _map_seq_string;
-        dict_seq<bool>      _map_seq_bool;
-
+        unordered_map<string, string> _m;
+        unordered_map<string, smatrix> _ms;
 
         void set_value(YAML::Node node, string key);
         void set_sequence(YAML::Node node, string key);
@@ -37,8 +26,8 @@ class configuration {
     public:
         configuration(string filename);
         void print_all();
-        template<typename T> void print_map(dict<T> & map);
-        template<typename T> void print_seq(dict_seq<T> & map);
+        void print_m();
+        void print_ms();
         
         int     i(string key);
         double  f(string key);
@@ -50,13 +39,16 @@ class configuration {
         tmatrix<string>  ss(string key);
         tmatrix<bool>    bs(string key);
 
+        template<typename T> void set(string key, T val);
+        template<typename T> void set_seq(string key, tmatrix<T> seq);
+
 };
 
-
-int get_int(YAML::Node node);
-bool get_bool(YAML::Node node);
-double get_double(YAML::Node node);
-string get_string(YAML::Node node);
 string lowercase(string s);
+template <typename T, typename U> tmatrix<T> convert_seq(smatrix & in, U func);
+bool to_bool(string str_val);
+double to_double(string str_val);
+int to_int(string str_val);
+string pass_string(string str_val);
 
 #endif

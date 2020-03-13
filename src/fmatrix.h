@@ -4,6 +4,8 @@
 #include <iostream>
 #include <initializer_list>
 #include <cmath>
+#include <string>
+
 using namespace std;
 
 // tmatrix stants for template matrix
@@ -288,6 +290,7 @@ double tmatrix<T>::min(){
 
 typedef tmatrix<double> fmatrix;  //fmatrix stants for floating-point matrix
 typedef tmatrix<int> imatrix;     //imatrix stants for integer matrix
+typedef tmatrix<string> smatrix;     //imatrix stants for integer matrix
 
 #endif
 
