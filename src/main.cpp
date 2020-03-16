@@ -45,13 +45,15 @@ int main(int argc, char* argv[])
     verbose_log("Initializing general variables");
 
     // Loading variables from config
-
+    
     const int n_steps           = config.i("time/n_steps");
     const int k_sub             = config.i("time/k_sub");
     const int n_mesh_x          = config.i("geometry/n_mesh_x");
     const int n_mesh_y          = config.i("geometry/n_mesh_y");
     const int n_thruster        = config.i("geometry/n_thruster");
     const int n_max_particles   = config.i("particles/n_max_particles");
+    const double dt             = config.f("time/dt");
+    const double q              = config.f("physical/q");
     const double m_el           = config.f("electrons/m_el");
     const double t_el           = config.f("electrons/t_el");
     const double v_drift_el     = config.f("electrons/v_drift_el");
@@ -60,6 +62,8 @@ int main(int argc, char* argv[])
     const double m_i            = config.f("ugas/m_i");
     const double volt_0_norm    = config.f("p/volt_0_norm");
     const double volt_1_norm    = config.f("p/volt_1_norm");
+    const double k_phi          = config.f("p/k_phi");
+    const double n_factor       = config.f("particles/n_factor");
     const bool mcc_coll         = config.b("neutrals/mcc_coll");
     const string inj_model      = config.s("electrons/inj_model");
  
@@ -221,30 +225,30 @@ int main(int argc, char* argv[])
 
         print_info(state, 100, config);
 
-        if(state.step % 10000 == 0) 
+         if(state.step % 1 == 0){
+             series["time"].val[n_points_series] = state.step * dt;
+             series["v_cap"].val[n_points_series] = state.phi_zero / k_phi;
+             series["n_active_i"].val[n_points_series] = state.n_active_i;
+             series["n_active_e"].val[n_points_series] = state.n_active_e;
+            
+             series["I_out_ob_e"].val[n_points_series] = state.n_out_ob_e * n_factor * q / dt;
+             series["I_out_ob_i"].val[n_points_series] = state.n_out_ob_i * n_factor * q / dt;
+             series["I_out_thr_e"].val[n_points_series] = state.n_out_thr_e * n_factor * q / dt;
+             series["I_out_thr_i"].val[n_points_series] = state.n_out_thr_i * n_factor * q / dt;
+             series["I_in_thr_e"].val[n_points_series] = n_inj_el * n_factor * q / dt;
+             series["I_in_thr_i"].val[n_points_series] = n_inj_i * n_factor * q / dt;
+             n_points_series += 1;
+         }
+        
+        if(state.step % 10000 == 0)
         {
             save_state(p_e, p_i, state, config, job_suffix);
             save_fields_snapshot(phi, wmesh_e, wmesh_i, mesh.v, state, config, job_suffix);
         }
 
-        // if(state.step % 1 == 0){
-        //     series["time"].val[n_points_series] = state.step * DT;
-        //     series["v_cap"].val[n_points_series] = state.phi_zero / K_PHI;
-        //     series["n_active_i"].val[n_points_series] = state.n_active_i;
-        //     series["n_active_e"].val[n_points_series] = state.n_active_e;
-            
-        //     series["I_out_ob_e"].val[n_points_series] = state.n_out_ob_e * N_FACTOR * Q / DT;
-        //     series["I_out_ob_i"].val[n_points_series] = state.n_out_ob_i * N_FACTOR * Q / DT;
-        //     series["I_out_thr_e"].val[n_points_series] = state.n_out_thr_e * N_FACTOR * Q / DT;
-        //     series["I_out_thr_i"].val[n_points_series] = state.n_out_thr_i * N_FACTOR * Q / DT;
-        //     series["I_in_thr_e"].val[n_points_series] = n_inj_e * N_FACTOR * Q / DT;
-        //     series["I_in_thr_i"].val[n_points_series] = n_inj_i * N_FACTOR * Q / DT;
-        //     n_points_series += 1;
-        // }
-
-        // if(state.step % 50000 == 0) {
-        //     save_series(series, n_points_series, state, "");
-        // }
+         if(state.step % 50000 == 0) {
+             save_series(series, n_points_series, state, config, job_suffix);
+         }
         
         //  if(state.step % 1 == 0) {
         //     fmatrix dens_i = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_i / vmesh;

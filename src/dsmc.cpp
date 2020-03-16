@@ -42,7 +42,7 @@ void run_dsmc(mesh_set & mesh, fmatrix & dens_n, configuration & config, string 
     }
 
     wmesh_n = (config.f("particles/n_factor_dsmc") / config.f("particles/n_factor")) * wmesh_n_av;
-    dens_n = (4.0 / pow(config.f("p/dx"), 2)) *  config.f("particles/n_factor") * wmesh_n / mesh.v;
+    dens_n = (4.0 / pow(config.f("geometry/dx"), 2)) *  config.f("particles/n_factor") * wmesh_n / mesh.v;
 
     save_fmatrix(dens_n, config.s("project/output_path") + output_name, "dens_n");
 }

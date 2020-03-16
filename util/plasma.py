@@ -39,3 +39,10 @@ def balanced_currents(n_0, t_e_ev, area, m_i, mach):
     j_i = e * n_0 * mach *v_bohm(t_e_ev, m_i)
     j_e = j_i * np.sqrt(m_i / (2 * pi * m_e)) / mach
     return (j_i* area, j_e * area)
+    
+def particle_per_cell(current, dx, nx, ny, v, n_factor):
+    return (current * dx * np.sqrt(nx**2 + ny**2)) / (e * v * nx * ny * n_factor)
+    
+def particle_per_cell_2(current, dx, nx, ny, v, n_factor):
+    return (current * dx) / (e * v * ny * n_factor)
+    

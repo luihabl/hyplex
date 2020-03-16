@@ -37,8 +37,8 @@ mcc::mcc(configuration & config, particle_operations & _pops, pic_operations & _
 
     dt = config.f("time/dt");
     k_sub = config.i("time/k_sub");
-    dx = config.f("p/dx");
-    dy = config.f("p/dy");
+    dx = config.f("geometry/dx");
+    dy = config.f("geometry/dy");
     a_x = config.f("geometry/a_x");
     a_y = config.f("geometry/a_y");
     m_i = config.f("ugas/m_i");

@@ -28,8 +28,8 @@ particle_operations::particle_operations(configuration & config, pic_operations 
 	a_x = config.f("geometry/a_x");
 	a_y = config.f("geometry/a_x");
 
-	dx = config.f("p/dx");
-	dy = config.f("p/dy");
+	dx = config.f("geometry/dx");
+	dy = config.f("geometry/dy");
 	dt = config.f("time/dt");
 
 	temp_e = config.f("electrons/t_el");

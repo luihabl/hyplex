@@ -18,11 +18,14 @@ void configuration::calculate_parameters(){
     string calc_key = "p/";
 
     // ---- dx, dy -----
-    double dx = f("geometry/l_x") / ((double) i("geometry/n_mesh_x") - 1); 
-    double dy = f("geometry/l_y") / ((double) i("geometry/n_mesh_y") - 1);
+    double dx = f("geometry/dx");
+    double dy = f("geometry/dy");
+    
+    double l_x = dx * ((double) i("geometry/n_mesh_x") - 1);
+    double l_y = dy * ((double) i("geometry/n_mesh_y") - 1);
 
-    set(calc_key + "dx", dx);
-    set(calc_key + "dy", dy);
+    set(calc_key + "l_x", l_x);
+    set(calc_key + "l_y", l_y);
 
     // ---- voltages ----
     double dt = f("time/dt");
@@ -215,7 +218,7 @@ void configuration::set_value(YAML::Node node, string key)
 
 void configuration::set_sequence(YAML::Node node, string key){
 
-    int size = node.size();
+    int size = (int) node.size();
     
     smatrix seq(size);
     for (int i = 0; i < size; i++) 
@@ -294,10 +297,10 @@ string pass_string(string str_val){
 template <typename T, typename U> 
 tmatrix<T> convert_seq(smatrix & in, U func)
 {
-    int size = in.n1 * in.n2 * in.n3;
+    size_t size = in.n1 * in.n2 * in.n3;
     tmatrix<T> out(size);
 
-    for(int i=0; i < size; i++){
+    for(size_t i=0; i < size; i++){
         out.val[i] = func(in.val[i]);
     }
 

@@ -27,8 +27,8 @@ mesh_set::mesh_set(configuration & config)
 	a_x = config.f("geometry/a_x"); 
 	a_y = config.f("geometry/a_y"); 
 	
-	dx = config.f("p/dx"); 
-	dy = config.f("p/dy"); 
+	dx = config.f("geometry/dx");
+	dy = config.f("geometry/dy"); 
 	
 	x = fmatrix::zeros(nx, ny);
 	y = fmatrix::zeros(nx, ny);

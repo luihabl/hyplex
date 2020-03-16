@@ -103,7 +103,7 @@ fmatrix load_csv(string file_path, char delim, int cols)
 
 void save_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration & config, string suffix){
     
-    const double dx = config.f("p/dx");
+    const double dx = config.f("geometry/dx");
     const double dt = config.f("time/dt");
     string output_path = config.s("project/output_path");
 
@@ -154,7 +154,7 @@ void save_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration 
 void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration & config, string filename){
 
     string input_path = config.s("project/input_path");
-    double dx = config.f("p/dx");
+    double dx = config.f("geometry/dx");
     double dt = config.f("time/dt");
 
 
@@ -204,7 +204,7 @@ void save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, f
     
     exdir file(config.s("project/output_path") + "fields" + suffix + ".exdir");
 
-    double dx = config.f("p/dx");
+    double dx = config.f("geometry/dx");
     double dt = config.f("time/dt");
     double q = config.f("physical/q");
     double m_el = config.f("electrons/m_el");

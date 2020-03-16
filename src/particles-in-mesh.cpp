@@ -19,8 +19,8 @@ using namespace std;
 
 pic_operations::pic_operations(configuration & config){
 
-	dx = config.f("p/dx");
-	dy = config.f("p/dy");
+	dx = config.f("geometry/dx");
+	dy = config.f("geometry/dy");
 	dt = config.f("time/dt");
 	a_x = config.f("geometry/a_x");
 	a_y = config.f("geometry/a_x");
