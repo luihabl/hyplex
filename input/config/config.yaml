@@ -17,8 +17,8 @@ physical:
 geometry:
   dx: 0.1662e-3                             # Spatial step in x [m]
   dy: 0.1662e-3                             # Spatial step in y [m]
-  n_mesh_x: 1024                            # Number of grid points in the x direction []
-  n_mesh_y: 256                             # Number of grid points in the y direction []
+  n_mesh_x: 256                            # Number of grid points in the x direction []
+  n_mesh_y: 64                             # Number of grid points in the y direction []
   n_thruster: 17                            # Number of nodes that represent the thruster []
   a_x: 0.0                                  # Grid distorsion coefficient in the x direction []
   a_y: 0.0                                  # Grid distorsion coefficient in the y direction []
@@ -46,9 +46,9 @@ thruster:
   v_rf: 1000.0                              # Amplitude of the RF signal [V]
 
 particles:
-  n_factor: 1.7e5                             # Macro-particle weight factor (i.e. how many particles one macro-particle represents) []
+  n_factor: 5e5                             # Macro-particle weight factor (i.e. how many particles one macro-particle represents) []
   n_factor_dsmc: 5e8                        # Macro-particle weight factor for neutrals []
-  n_max_particles: 5e7                      # Maximum number of particles in the array []
+  n_max_particles: 1e7                      # Maximum number of particles in the array []
 
 neutrals:
   expm_neutral: "constant"                  # Expansion model of neutral flow: 'dsmc', 'constant' or 'load'

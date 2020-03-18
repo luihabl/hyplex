@@ -9,6 +9,7 @@
 #include <iomanip>
 #include <unordered_map>
 #include "fmatrix.h"
+#include "fields.h"
 #include "state-info.h"
 #include "input-output.h"
 #include "configuration.h"
@@ -22,7 +23,7 @@ void print_dsmc_info(int i, int n_active_n, int step_interval, int n_steps);
 
 void save_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration & config, string suffix);
 void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration & config, string filename="state.exdir");
-void save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vmesh, state_info & state, configuration & config, string suffix);
+void save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, mesh_set & mesh, state_info & state, configuration & config, string suffix);
 void save_fmatrix(fmatrix & m, string filename, string dataname);
 void load_fmatrix(fmatrix & m, string filename, string dataname);
 void save_series(unordered_map<string, fmatrix> & series, int & n_points, state_info state, configuration & config, string suffix);

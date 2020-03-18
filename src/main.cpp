@@ -243,7 +243,7 @@ int main(int argc, char* argv[])
         if(state.step % 10000 == 0)
         {
             save_state(p_e, p_i, state, config, job_suffix);
-            save_fields_snapshot(phi, wmesh_e, wmesh_i, mesh.v, state, config, job_suffix);
+            save_fields_snapshot(phi, wmesh_e, wmesh_i, mesh, state, config, job_suffix);
         }
 
          if(state.step % 50000 == 0) {
@@ -284,7 +284,7 @@ int main(int argc, char* argv[])
 
     // ----------------------------- Saving outputs ---------------------------
     save_state(p_e, p_i, state, config, job_suffix);
-    save_fields_snapshot(phi, wmesh_e, wmesh_i, mesh.v, state, config, job_suffix);
+    save_fields_snapshot(phi, wmesh_e, wmesh_i, mesh, state, config, job_suffix);
     save_series(series, n_points_series, state, config, job_suffix);
 
     // ----------------------------- Finalizing -------------------------------

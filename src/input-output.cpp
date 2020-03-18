@@ -15,6 +15,7 @@
 #include "state-info.h"
 #include "exdir.h"
 #include "configuration.h"
+#include "fields.h"
 
 using namespace std;
 using namespace std::chrono;
@@ -106,27 +107,30 @@ void save_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration 
     const double dx = config.f("geometry/dx");
     const double dt = config.f("time/dt");
     string output_path = config.s("project/output_path");
-
-    fmatrix p_e_corrected = dx * p_e;
+    
+    fmatrix p_e_corrected(state.n_active_e, 6);
     for(int i = 0; i < state.n_active_e; i++){
-        p_e_corrected.val[i * 6 + 3] = p_e_corrected.val[i * 6 + 3] / dt;
-        p_e_corrected.val[i * 6 + 4] = p_e_corrected.val[i * 6 + 4] / dt;
-        p_e_corrected.val[i * 6 + 5] = p_e_corrected.val[i * 6 + 5] / dt;
+        p_e_corrected.val[i * 6 + 0] = p_e.val[i * 6 + 3] * dx;
+        p_e_corrected.val[i * 6 + 1] = p_e.val[i * 6 + 4] * dx;
+        p_e_corrected.val[i * 6 + 2] = p_e.val[i * 6 + 5] * dx;
+        p_e_corrected.val[i * 6 + 3] = p_e.val[i * 6 + 3] * dx / dt;
+        p_e_corrected.val[i * 6 + 4] = p_e.val[i * 6 + 4] * dx / dt;
+        p_e_corrected.val[i * 6 + 5] = p_e.val[i * 6 + 5] * dx / dt;
     }
 
-    fmatrix p_i_corrected =  dx * p_i;
-    for(int i = 0; i < state.n_active_i; i++){
-        p_i_corrected.val[i * 6 + 3] = p_i_corrected.val[i * 6 + 3] / dt;
-        p_i_corrected.val[i * 6 + 4] = p_i_corrected.val[i * 6 + 4] / dt;
-        p_i_corrected.val[i * 6 + 5] = p_i_corrected.val[i * 6 + 5] / dt;
+    fmatrix p_i_corrected(state.n_active_i, 6);
+    for(int i = 0; i < state.n_active_e; i++){
+        p_i_corrected.val[i * 6 + 0] = p_i.val[i * 6 + 3] * dx;
+        p_i_corrected.val[i * 6 + 1] = p_i.val[i * 6 + 4] * dx;
+        p_i_corrected.val[i * 6 + 2] = p_i.val[i * 6 + 5] * dx;
+        p_i_corrected.val[i * 6 + 3] = p_i.val[i * 6 + 3] * dx / dt;
+        p_i_corrected.val[i * 6 + 4] = p_i.val[i * 6 + 4] * dx / dt;
+        p_i_corrected.val[i * 6 + 5] = p_i.val[i * 6 + 5] * dx / dt;
     }
 
     exdir file(output_path + "state" + suffix + ".exdir");
    
-    p_i_corrected.n1 = state.n_active_i;
     file.write_dataset("/p_i", p_i_corrected);
-
-    p_e_corrected.n1 = state.n_active_e;
     file.write_dataset("/p_e", p_e_corrected);
 
     map<string, double> state_attrs_double = {
@@ -135,6 +139,7 @@ void save_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration 
         {"Capacitor charge [norm. C]", state.q_cap},
         {"Surface charge density [norm. C/m^2]", state.sigma_1}
     };
+    
 
     file.write_attribute("/", state_attrs_double);
 
@@ -199,7 +204,7 @@ void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration 
     verbose_log("Loaded state: Step: " + to_string(state.step_offset) + " Active electrons: " + to_string(state.n_active_e) + " Active ions: " + to_string(state.n_active_i));
 }
 
-void save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vmesh, state_info & state, configuration & config, string suffix)
+void save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, mesh_set & mesh, state_info & state, configuration & config, string suffix)
 {
     
     exdir file(config.s("project/output_path") + "fields" + suffix + ".exdir");
@@ -217,12 +222,18 @@ void save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, f
     fmatrix phi_corrected = phi * (m_el * pow(dx, 2))/(q * pow(dt, 2));
     file.write_dataset("/phi", phi_corrected);
 
-    fmatrix dens_e = (4 / pow(dx, 2)) *  n_factor * wmesh_e / vmesh;
+    fmatrix dens_e = (4 / pow(dx, 2)) *  n_factor * wmesh_e / mesh.v;
     file.write_dataset("/dens_e", dens_e);
 
-    fmatrix dens_i = (4 / pow(dx, 2)) *  n_factor * wmesh_i / vmesh;
+    fmatrix dens_i = (4 / pow(dx, 2)) *  n_factor * wmesh_i / mesh.v;
     file.write_dataset("/dens_i", dens_i);
-
+    
+    file.create_group("/mesh");
+    file.write_dataset("/mesh/mesh_x", mesh.x);
+    file.write_dataset("/mesh/mesh_y", mesh.y);
+    file.write_attribute("/mesh", "a_x", mesh.a_x);
+    file.write_attribute("/mesh", "a_y", mesh.a_y);
+    
     verbose_log("Saved fields snapshot");
 }
 
@@ -235,8 +246,6 @@ void save_series(unordered_map<string, fmatrix> & series, int & n_points, state_
     
     file.write_attribute("/", "Time [s]", (double) state.step * dt);
     file.write_attribute("/", "Step", (double) state.step);
-
-    map<string, fmatrix>::iterator cursor;
 
     for (auto & element : series)
     {

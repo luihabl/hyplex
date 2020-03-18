@@ -46,3 +46,7 @@ def particle_per_cell(current, dx, nx, ny, v, n_factor):
 def particle_per_cell_2(current, dx, nx, ny, v, n_factor):
     return (current * dx) / (e * v * ny * n_factor)
     
+    
+def physical_space(i, a, L, N):
+    return (a * L / (N - 1)**2) * i**2 + ((1 - a) * L / (N - 1)) * i
+    
