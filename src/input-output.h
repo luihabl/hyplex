@@ -13,6 +13,7 @@
 #include "state-info.h"
 #include "input-output.h"
 #include "configuration.h"
+#include "exdir.h"
 
 using namespace std;
 
@@ -24,8 +25,6 @@ void print_dsmc_info(int i, int n_active_n, int step_interval, int n_steps);
 void save_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration & config, string suffix);
 void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration & config, string filename="state.exdir");
 void save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, mesh_set & mesh, state_info & state, configuration & config, string suffix);
-void save_fmatrix(fmatrix & m, string filename, string dataname);
-void load_fmatrix(fmatrix & m, string filename, string dataname);
 void save_series(unordered_map<string, fmatrix> & series, int & n_points, state_info state, configuration & config, string suffix);
 void save_field_series(fmatrix & field, state_info state, configuration & config, double conversion_constant, string suffix);
 
@@ -58,14 +57,32 @@ void save_to_csv(tmatrix<T> & m, string output_path, string name = "out.csv", in
 
 
 template <class T>
-void print_fmatrix(tmatrix<T> & phi){
-    for(size_t i = 0; i < phi.n1; i++){
-        for(size_t j = 0; j < phi.n2; j++){
-            printf("%-7.2f", (double) phi.val[i * phi.n2 + j]);
+void print_fmatrix(tmatrix<T> & m, int n1_max=-1, int n2_max=-1){
+    n1_max = n1_max < 0 ? m.n1 : n1_max;
+    n2_max = n2_max < 0 ? m.n2 : n2_max;
+    
+    for(size_t i = 0; i < n1_max; i++){
+        for(size_t j = 0; j < n2_max; j++){
+            printf("%.2e  ", (double) m.val[i * m.n2 + j]);
         }
         cout << endl << endl;
     }
 }
+
+template <class T>
+void save_fmatrix(tmatrix<T> & m, string filename, string dataname){
+    exdir file(filename);
+    file.write_dataset(dataname, m);
+    verbose_log("Saved " + filename + dataname);
+}
+
+template <class T>
+void load_fmatrix(tmatrix<T> & m, string filename, string dataname){
+    exdir file(filename);
+    file.read_dataset(dataname, m);
+    verbose_log("Loaded " + filename + dataname);
+}
+
 
 #endif
 

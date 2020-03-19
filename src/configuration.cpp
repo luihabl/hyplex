@@ -13,19 +13,20 @@
 #define ERROR_MSG(Map, Type) "ERROR: Key not found in Configuration." #Map "(" Type "): "
 
 
+
 void configuration::calculate_parameters(){
 
     string calc_key = "p/";
 
     // ---- dx, dy -----
-    double dx = f("geometry/dx");
-    double dy = f("geometry/dy");
+//    double dx = f("geometry/dx");
+//    double dy = f("geometry/dy");
     
-    double l_x = dx * ((double) i("geometry/n_mesh_x") - 1);
-    double l_y = dy * ((double) i("geometry/n_mesh_y") - 1);
+    double dx = f("geometry/l_x") / ((double) i("geometry/n_mesh_x") - 1);
+    double dy = f("geometry/l_y") / ((double) i("geometry/n_mesh_y") - 1);
 
-    set(calc_key + "l_x", l_x);
-    set(calc_key + "l_y", l_y);
+    set("geometry/dx", dx);
+    set("geometry/dy", dy);
 
     // ---- voltages ----
     double dt = f("time/dt");
@@ -60,33 +61,6 @@ void configuration::calculate_parameters(){
     smatrix exc_path = ss("ugas/exc_path");
     set(calc_key + "n_exc", (int) exc_path.n1);
 }
-
-
-template<typename T>
-void configuration::select_gas_on_map(unordered_map<string, T> & map){
-    
-    unordered_map<string, T> map_temp;
-
-    string gas_name = s("ions/gas_name");
-
-    for (auto const& n : map) {
-        string key = n.first;
-        T value = n.second;
-
-        string root_key = key.substr(0, key.find("/"));
-
-        if (root_key == gas_name) {
-            size_t root_key_len = root_key.length();
-            key.erase(key.begin() + 0, key.begin() + root_key_len + 1);
-            map_temp["ugas/" + key] = value;
-        }
-    }
-
-    for (auto const& n : map_temp) {;
-        map[n.first] = n.second;
-    }
-}
-
 
 
 
@@ -226,30 +200,6 @@ void configuration::set_sequence(YAML::Node node, string key){
     _ms[key] = seq;
 }
 
-template<typename T> 
-void configuration::set(string key, T val)
-{
-    if(typeid(T) == typeid(string)){
-        _m[key] = val;
-    }
-    else
-    {
-        _m[key] = to_string(val);
-    }
-}
-
-template<typename T> 
-void configuration::set_seq(string key, tmatrix<T> seq)
-{
-    if(typeid(T) == typeid(string)){
-        _ms[key] = seq;
-    }
-    else
-    {
-        _ms[key] = convert_seq<T>(_ms[key], to_string);
-    }
-}
-
 
 string lowercase(string s)
 {
@@ -294,18 +244,6 @@ string pass_string(string str_val){
 }
 
 
-template <typename T, typename U> 
-tmatrix<T> convert_seq(smatrix & in, U func)
-{
-    size_t size = in.n1 * in.n2 * in.n3;
-    tmatrix<T> out(size);
-
-    for(size_t i=0; i < size; i++){
-        out.val[i] = func(in.val[i]);
-    }
-
-    return out;
-}
 
 
 void configuration::print_m(){

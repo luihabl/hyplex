@@ -162,7 +162,7 @@ void field_operations::calculate_efield(fmatrix & efield_x, fmatrix & efield_y, 
 
 double field_operations::calculate_phi_zero(double sigma_old, double n_in, double q_cap, double sigma_laplace, fmatrix & phi_poisson, mesh_set mesh, fmatrix & wmesh_e, fmatrix & wmesh_i, imatrix & electrode_mask){
 
-	double sigma_poisson = sigma_from_phi(phi_poisson, mesh, wmesh_e, wmesh_i, electrode_mask);	
+	double sigma_poisson = sigma_from_phi(phi_poisson, mesh, wmesh_e, wmesh_i, electrode_mask);
 	return (sigma_old + sigma_poisson - q_cap + k_q * n_in) / (1 - sigma_laplace);
 }
 
@@ -194,8 +194,18 @@ double field_operations::sigma_from_phi(fmatrix & phi, mesh_set & mesh, fmatrix 
 				phi_xx = phi.val[ip * n_mesh_y + j]/((dx1 + dx2)*dx2) - phi.val[i * n_mesh_y + j]/(dx1*dx2) + phi.val[im * n_mesh_y + j]/((dx1 + dx2)*dx1);
 				phi_yy = phi.val[i * n_mesh_y + jp]/((dy1 + dy2)*dy2) - phi.val[i * n_mesh_y + j]/(dy1*dy2) + phi.val[i * n_mesh_y + jm]/((dy1 + dy2)*dy1);
 
-				volume = mesh.v.val[i * n_mesh_y + j];
+//
+//                cout << "phi.val[ip * n_mesh_y + j]/((dx1 + dx2)*dx2): " << phi.val[ip * n_mesh_y + j]/((dx1 + dx2)*dx2) << endl;
+//                cout << "phi.val[i * n_mesh_y + j]/(dx1*dx2): " << phi.val[i * n_mesh_y + j]/(dx1*dx2) << endl;
+//                cout << "phi.val[im * n_mesh_y + j]/((dx1 + dx2)*dx1): " << phi.val[im * n_mesh_y + j]/((dx1 + dx2)*dx1) << endl << endl;
+                
+//                cout << i << "," << j<< "   " << "phi.val[ip * n_mesh_y + j]: " << phi.val[ip * n_mesh_y + j] << "  "
+//                                              << "phi.val[i * n_mesh_y + j]: "  << phi.val[i * n_mesh_y + j] << "  "
+//                                              << "phi.val[im * n_mesh_y + j]: " << phi.val[im * n_mesh_y + j] << endl;
 
+                
+                
+				volume = mesh.v.val[i * n_mesh_y + j];
                 sigma += (eps_0 / c_cap) * volume * (phi_xx + phi_yy + gamma * dw / volume);
 			}
 		}
@@ -214,12 +224,12 @@ double field_operations::calculate_cap_charge(double sigma_new, double sigma_old
 
 
 double physical_space(double logical_position, double a, double b, double n_mesh){
-	return b * ((a / (n_mesh - 1)) * pow(logical_position, 2) + (1 - a) * logical_position);
+	return b * (((a / (n_mesh - 1)) * logical_position * logical_position) + ((1 - a) * logical_position));
 }
 
 
 int logical_space(float physical_position, float a, float b, float n_mesh){
-	return 2.0f * physical_position / (b * (1.0f - a + sqrtf((1.0f - a)*(1.0f - a) + (4.0f * a * physical_position / b)/(n_mesh - 1))));
+	return floor(2.0 * physical_position / (b * (1.0 - a + sqrt((1.0 - a)*(1.0 - a) + (4.0 * a * physical_position / b)/(n_mesh - 1)))));
 }
 
 

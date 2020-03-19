@@ -276,6 +276,9 @@ int main(int argc, char* argv[])
         //     }
         // }
         
+//        print_fmatrix(phi, 10, 25);
+//        system("read -p 'Press Enter to continue...' var");
+        
 	}
 
     auto stop = high_resolution_clock::now();

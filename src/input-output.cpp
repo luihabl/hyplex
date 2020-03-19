@@ -110,19 +110,19 @@ void save_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration 
     
     fmatrix p_e_corrected(state.n_active_e, 6);
     for(int i = 0; i < state.n_active_e; i++){
-        p_e_corrected.val[i * 6 + 0] = p_e.val[i * 6 + 3] * dx;
-        p_e_corrected.val[i * 6 + 1] = p_e.val[i * 6 + 4] * dx;
-        p_e_corrected.val[i * 6 + 2] = p_e.val[i * 6 + 5] * dx;
+        p_e_corrected.val[i * 6 + 0] = p_e.val[i * 6 + 0] * dx;
+        p_e_corrected.val[i * 6 + 1] = p_e.val[i * 6 + 1] * dx;
+        p_e_corrected.val[i * 6 + 2] = p_e.val[i * 6 + 2] * dx;
         p_e_corrected.val[i * 6 + 3] = p_e.val[i * 6 + 3] * dx / dt;
         p_e_corrected.val[i * 6 + 4] = p_e.val[i * 6 + 4] * dx / dt;
         p_e_corrected.val[i * 6 + 5] = p_e.val[i * 6 + 5] * dx / dt;
     }
 
     fmatrix p_i_corrected(state.n_active_i, 6);
-    for(int i = 0; i < state.n_active_e; i++){
-        p_i_corrected.val[i * 6 + 0] = p_i.val[i * 6 + 3] * dx;
-        p_i_corrected.val[i * 6 + 1] = p_i.val[i * 6 + 4] * dx;
-        p_i_corrected.val[i * 6 + 2] = p_i.val[i * 6 + 5] * dx;
+    for(int i = 0; i < state.n_active_i; i++){
+        p_i_corrected.val[i * 6 + 0] = p_i.val[i * 6 + 0] * dx;
+        p_i_corrected.val[i * 6 + 1] = p_i.val[i * 6 + 1] * dx;
+        p_i_corrected.val[i * 6 + 2] = p_i.val[i * 6 + 2] * dx;
         p_i_corrected.val[i * 6 + 3] = p_i.val[i * 6 + 3] * dx / dt;
         p_i_corrected.val[i * 6 + 4] = p_i.val[i * 6 + 4] * dx / dt;
         p_i_corrected.val[i * 6 + 5] = p_i.val[i * 6 + 5] * dx / dt;
@@ -211,15 +211,14 @@ void save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, m
 
     double dx = config.f("geometry/dx");
     double dt = config.f("time/dt");
-    double q = config.f("physical/q");
-    double m_el = config.f("electrons/m_el");
     double n_factor = config.f("particles/n_factor");
+    double k_phi = config.f("p/k_phi");
 
     file.write_attribute("/", "Time [s]", (double) state.step * dt);
     file.write_attribute("/", "Step", (double) state.step);
 
 
-    fmatrix phi_corrected = phi * (m_el * pow(dx, 2))/(q * pow(dt, 2));
+    fmatrix phi_corrected = phi / k_phi;
     file.write_dataset("/phi", phi_corrected);
 
     fmatrix dens_e = (4 / pow(dx, 2)) *  n_factor * wmesh_e / mesh.v;
@@ -269,14 +268,3 @@ void save_field_series(fmatrix & field, state_info state, configuration & config
     file.write_attribute("/" + to_string(state.step), "Time [s]", (double) state.step * dt);
 }
 
-void save_fmatrix(fmatrix & m, string filename, string dataname){
-    exdir file(filename);
-    file.write_dataset("/" + dataname, m);
-    verbose_log("Saved " + filename + "/" + dataname);
-}
-
-void load_fmatrix(fmatrix & m, string filename, string dataname){
-    exdir file(filename);
-    file.read_dataset("/dataname", m);
-    verbose_log("Loaded " + filename + "/" + dataname);
-}

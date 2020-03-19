@@ -26,7 +26,7 @@ particle_operations::particle_operations(configuration & config, pic_operations 
 	n_mesh_y = config.i("geometry/n_mesh_y");
 	n_thruster = config.i("geometry/n_thruster");
 	a_x = config.f("geometry/a_x");
-	a_y = config.f("geometry/a_x");
+	a_y = config.f("geometry/a_y");
 
 	dx = config.f("geometry/dx");
 	dy = config.f("geometry/dy");

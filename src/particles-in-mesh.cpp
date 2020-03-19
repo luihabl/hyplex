@@ -23,7 +23,7 @@ pic_operations::pic_operations(configuration & config){
 	dy = config.f("geometry/dy");
 	dt = config.f("time/dt");
 	a_x = config.f("geometry/a_x");
-	a_y = config.f("geometry/a_x");
+	a_y = config.f("geometry/a_y");
 	q = config.f("physical/q");
 
 	n_mesh_x = config.i("geometry/n_mesh_x");
@@ -83,7 +83,7 @@ void pic_operations::weight(fmatrix & p, int & n_active, fmatrix & wmesh, mesh_s
 		wmesh.val[(left_index_x + 1) * mesh_n2 + left_index_y] += 		 (x_p - x_0_mesh) * (y_1_mesh - y_p) / ((x_1_mesh - x_0_mesh) * (y_1_mesh - y_0_mesh));
 		wmesh.val[(left_index_x + 1) * mesh_n2 + (left_index_y + 1)] +=  (x_p - x_0_mesh) * (y_p - y_0_mesh) / ((x_1_mesh - x_0_mesh) * (y_1_mesh - y_0_mesh));
 		wmesh.val[left_index_x * mesh_n2 + (left_index_y + 1)] += 		 (x_1_mesh - x_p) * (y_p - y_0_mesh) / ((x_1_mesh - x_0_mesh) * (y_1_mesh - y_0_mesh));
-	}
+    }
 }
 
 void pic_operations::electric_field_at_particles(fmatrix & efield_at_particles_x, fmatrix & efield_at_particles_y, fmatrix & efield_x, fmatrix & efield_y, fmatrix & p, const int n_active, mesh_set & mesh, imatrix & lpos)

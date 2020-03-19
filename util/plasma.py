@@ -40,8 +40,8 @@ def balanced_currents(n_0, t_e_ev, area, m_i, mach):
     j_e = j_i * np.sqrt(m_i / (2 * pi * m_e)) / mach
     return (j_i* area, j_e * area)
     
-def particle_per_cell(current, dx, nx, ny, v, n_factor):
-    return (current * dx * np.sqrt(nx**2 + ny**2)) / (e * v * nx * ny * n_factor)
+def particle_per_cell(current, lx, ly, nx, ny, v, n_factor):
+    return (current * np.sqrt(lx**2 + ly**2)) / (e * v * nx * ny * n_factor)
     
 def particle_per_cell_2(current, dx, nx, ny, v, n_factor):
     return (current * dx) / (e * v * ny * n_factor)
@@ -49,4 +49,7 @@ def particle_per_cell_2(current, dx, nx, ny, v, n_factor):
     
 def physical_space(i, a, L, N):
     return (a * L / (N - 1)**2) * i**2 + ((1 - a) * L / (N - 1)) * i
+    
+def logical_space(x, a, L, N):
+    return ((N - 1) * 2 * x / L) / (1 - a + np.sqrt( (1 - a)**2 + (4*x*a/L) ))
     

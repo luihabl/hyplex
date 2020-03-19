@@ -40,7 +40,7 @@ class exdir
 
 };
 
-exdir::exdir(string _file_path, bool _overwrite_file){
+inline exdir::exdir(string _file_path, bool _overwrite_file){
     root_file_path = _file_path;
     overwrite_file = _overwrite_file;
     
@@ -50,25 +50,25 @@ exdir::exdir(string _file_path, bool _overwrite_file){
     create_folder(root_file_path, "file");
 }
 
-int exdir::mkdir(string path){
+inline int exdir::mkdir(string path){
     string cmd = "mkdir -p " + path;
     return system(cmd.c_str());
 }
 
-int exdir::rm_file(string path){
+inline int exdir::rm_file(string path){
     string cmd = "rm -r -f " + path;
     return system(cmd.c_str());
 }
 
 
-int exdir::create_folder(string path, string type){
+inline int exdir::create_folder(string path, string type){
     int dir = mkdir(path);
     write_metadata(path, type, VERSION);
     return dir;
 }   
 
 
-bool exdir::is_type(string path, string type){
+inline bool exdir::is_type(string path, string type){
     try { 
         YAML::Node node = YAML::LoadFile(path + "/exdir.yaml");
         return node["exdir"]["type"].as<string>() == type;
@@ -80,7 +80,7 @@ bool exdir::is_type(string path, string type){
 }
 
 
-void exdir::write_metadata(string path, string type, string version){
+inline void exdir::write_metadata(string path, string type, string version){
    
     YAML::Emitter out;
     
@@ -101,12 +101,12 @@ void exdir::write_metadata(string path, string type, string version){
        
 }
 
-void exdir::create_group(string group_path){
+inline void exdir::create_group(string group_path){
     create_folder(root_file_path + group_path, "group");
 }
 
 template <class T>
-void exdir::write_dataset(string dataset_path, tmatrix<T> & data){
+inline void exdir::write_dataset(string dataset_path, tmatrix<T> & data){
     
     create_folder(root_file_path + dataset_path, "dataset");
     
@@ -121,7 +121,7 @@ void exdir::write_dataset(string dataset_path, tmatrix<T> & data){
     npy::SaveArrayAsNumpy(root_file_path + dataset_path + "/data.npy", false, shape, data);
 }
 
-void exdir::clean_attr_file(string object_path){
+inline void exdir::clean_attr_file(string object_path){
     
     string attr_path = root_file_path + object_path + "/attributes.yaml";
     
@@ -130,7 +130,7 @@ void exdir::clean_attr_file(string object_path){
     fs.close();
 }
 
-void exdir::ensure_attr_exists(string object_path){
+inline void exdir::ensure_attr_exists(string object_path){
     
     string attr_path = root_file_path + object_path + "/attributes.yaml";
     
@@ -140,7 +140,7 @@ void exdir::ensure_attr_exists(string object_path){
 }
 
 template <class T>
-void exdir::write_attribute(string object_path, string key, T value) {
+inline void exdir::write_attribute(string object_path, string key, T value) {
     
     ensure_attr_exists(object_path);
  
@@ -157,7 +157,7 @@ void exdir::write_attribute(string object_path, string key, T value) {
 
 
 template <class T>
-void exdir::write_attribute(string object_path, tmatrix<string> & key, tmatrix<T> & value) {
+inline void exdir::write_attribute(string object_path, tmatrix<string> & key, tmatrix<T> & value) {
     
     ensure_attr_exists(object_path);
     
@@ -175,7 +175,7 @@ void exdir::write_attribute(string object_path, tmatrix<string> & key, tmatrix<T
 }
 
 template <class T>
-void exdir::write_attribute(string object_path, map<string, T> & dict) {
+inline void exdir::write_attribute(string object_path, map<string, T> & dict) {
     
     ensure_attr_exists(object_path);
     
@@ -194,10 +194,7 @@ void exdir::write_attribute(string object_path, map<string, T> & dict) {
     fout.close();
 }
 
-
-
-
-void exdir::get_dataset_size(string dataset_path, tmatrix<unsigned long> & shape){
+inline void exdir::get_dataset_size(string dataset_path, tmatrix<unsigned long> & shape){
     string data_path = root_file_path + dataset_path + "/data.npy";
     bool fortran_order = false;
     npy::GetArrayShape(data_path, shape, fortran_order);
@@ -205,7 +202,7 @@ void exdir::get_dataset_size(string dataset_path, tmatrix<unsigned long> & shape
 
 
 template <class T>
-void exdir::read_dataset(string dataset_path, tmatrix<T> & data){
+inline void exdir::read_dataset(string dataset_path, tmatrix<T> & data){
     
     string data_path = root_file_path + dataset_path + "/data.npy";
     
@@ -216,7 +213,7 @@ void exdir::read_dataset(string dataset_path, tmatrix<T> & data){
 }
 
 template <class T>
-void exdir::read_attribute(string object_path, string key, T & value) {
+inline void exdir::read_attribute(string object_path, string key, T & value) {
     string attr_path = root_file_path + object_path + "/attributes.yaml";
     
     YAML::Node node = YAML::LoadFile(attr_path);
@@ -224,7 +221,7 @@ void exdir::read_attribute(string object_path, string key, T & value) {
 }
 
 
-void exdir::read_all_attributes(string object_path, YAML::Node & node) {
+inline void exdir::read_all_attributes(string object_path, YAML::Node & node) {
     string attr_path = root_file_path + object_path + "/attributes.yaml";
     node = YAML::LoadFile(attr_path);
 }
