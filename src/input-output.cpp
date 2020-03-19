@@ -176,7 +176,7 @@ void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration 
     state.n_out_ob_i = attrs["Removed ions"].as<int>();
 
     state.n_active_e = attrs["Active electrons"].as<int>();
-    state.n_out_ob_e = attrs["Removed electron"].as<int>();
+    state.n_out_ob_e = attrs["Removed electrons"].as<int>();
 
     fmatrix p_i_load = fmatrix::zeros(state.n_active_i, 6);
     fmatrix p_e_load = fmatrix::zeros(state.n_active_e, 6);

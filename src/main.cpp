@@ -47,6 +47,7 @@ int main(int argc, char* argv[])
     // Loading variables from config
     
     const int n_steps           = config.i("time/n_steps");
+    const int rf_period_i       = config.i("p/rf_period_i");
     const int k_sub             = config.i("time/k_sub");
     const int n_mesh_x          = config.i("geometry/n_mesh_x");
     const int n_mesh_y          = config.i("geometry/n_mesh_y");
@@ -163,7 +164,7 @@ int main(int argc, char* argv[])
     
     mcc coll(config, pops, pic);
     coll.initialize_mcc(dens_n, mesh.v);
-
+    
     // ----------------------------- Loading initial state -------------------
 
     if(config.s("simulation/initial_state") == "load")  load_state(p_e, p_i, state, config);
@@ -209,7 +210,7 @@ int main(int argc, char* argv[])
 
         // Step 5: particles injection
         if(state.step % k_sub == 0) pops.add_flux_particles(p_i, state.n_active_i, t_i, v_drift_i, m_i, n_inj_i, k_sub);
-        if(inj_model == "constant")       n_inj_el = n_inj_el;
+        if(inj_model == "constant");  //n_inj_el = n_inj_el;
         else if(inj_model == "balanced")  n_inj_el = pops.balanced_injection(n_inj_el, 0.01, wmesh_i, wmesh_e, 0, 0, 0, n_thruster - 1);
         else if(inj_model == "pulsed")    n_inj_el = pops.pulsed_injection(state.step);
         else if(inj_model == "square")    n_inj_el = pops.square_injection(state.step);
@@ -267,14 +268,14 @@ int main(int argc, char* argv[])
         //      save_field_series(phi_corrected, state, 1, "_phi");
         //  }
 
-        // if(state.step - state.step_offset > 0.9 * (double) n_steps){
-        //     int i_av = average_field_over_period(phi_av, phi, RF_PERIOD_I, n_steps, state.step - state.step_offset);
-        //     average_field(wmesh_e_av, wmesh_e, state.step - state.step_offset);
-        //     average_field(wmesh_i_av, wmesh_i, state.step - state.step_offset);
-        //     if(i_av == RF_PERIOD_I){
-        //         save_fields_snapshot(phi_av, wmesh_e_av, wmesh_i_av, vmesh, state, "_av");
-        //     }
-        // }
+         if(state.step - state.step_offset > 0.0 * (double) n_steps){
+             int i_av = average_field_over_period(phi_av, phi, rf_period_i, n_steps, state.step - state.step_offset);
+             average_field(wmesh_e_av, wmesh_e, state.step - state.step_offset);
+             average_field(wmesh_i_av, wmesh_i, state.step - state.step_offset);
+             if(i_av == rf_period_i){
+                 save_fields_snapshot(phi_av, wmesh_e_av, wmesh_i_av, mesh, state, config, "_av" + job_suffix);
+             }
+         }
         
 //        print_fmatrix(phi, 10, 25);
 //        system("read -p 'Press Enter to continue...' var");
