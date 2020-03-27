@@ -50,6 +50,8 @@ particle_operations::particle_operations(configuration & config, pic_operations 
 	k_phi = config.f("p/k_phi");
 
 	c_cap = config.f("boundaries/c_cap");
+    
+    y_thruster = physical_space(n_thruster - 1, a_y, dy/dx, n_mesh_y);
 }
 
 
@@ -77,7 +79,8 @@ void particle_operations::add_flux_particles(fmatrix & p, int & n_active, const 
 	int n_new = (r_unif() <= (k_sub * n_add - f_n_add) ?  f_n_add + 1 : f_n_add);
 
 	double v_temperature = sqrt(q * temperature / mass);
-
+    
+    
 	for (int i = n_active; i < n_active + n_new; i++)
 	{	
 		p.val[i * 6 + 3] = (dt / dx) * (v_temperature * sqrt(- 2 *  log(r_unif())) + v_drift);
@@ -87,7 +90,8 @@ void particle_operations::add_flux_particles(fmatrix & p, int & n_active, const 
 		p.val[i * 6 + 5] = (dt / dx) * r_norm(0.0, v_temperature);
 
 		p.val[i * 6 + 0] = k_sub * p.val[i * 6 + 3] * r_unif();
-		p.val[i * 6 + 1] = (dy / dx) * ((double) n_thruster - 1.0) * r_unif();
+        p.val[i * 6 + 1] = y_thruster * r_unif();
+        
 		p.val[i * 6 + 2] = 0.0;
 	}
 	n_active += n_new;
@@ -110,7 +114,7 @@ void particle_operations::add_maxwellian_flux_particles(fmatrix & p, int & n_act
 		p.val[i * 6 + 5] = (dt / dx) * r_norm(0.0, v_temperature);
 
 		p.val[i * 6 + 0] = k_sub * p.val[i * 6 + 3] * r_unif(); // maybe necessary to multiply K_SUB here!
-		p.val[i * 6 + 1] = (dy / dx) * ((double) n_thruster - 1.0) * r_unif();
+		p.val[i * 6 + 1] = y_thruster * r_unif();
 		p.val[i * 6 + 2] = 0.0;
 	}
 	n_active += n_new;
@@ -195,14 +199,13 @@ void particle_operations::boundaries_n(fmatrix & p, int & n_active, imatrix & lp
     double x, y;
     const double x_max = ((double) n_mesh_x - 1);
     const double y_max = ((double) n_mesh_y - 1) * (dy / dx);
-	const double y_thr = ((double) n_thruster - 1) * (dy / dx);
     
     for (int i = 0; i < n_active; i++)
     {
         x = p.val[i * 6 + 0];
         y = p.val[i * 6 + 1];
         
-        if (x > x_max || y > y_max || (x < 0 && y < y_thr))
+        if (x > x_max || y > y_max || (x < 0 && y < y_thruster))
         {
             tbremoved.val[n_remove] = i;
             n_remove += 1;
@@ -212,7 +215,7 @@ void particle_operations::boundaries_n(fmatrix & p, int & n_active, imatrix & lp
             p.val[i * 6 + 1] = - p.val[i * 6 + 1];
             p.val[i * 6 + 4] = - p.val[i * 6 + 4];
         }
-		else if (x < 0 && y >= y_thr) {
+		else if (x < 0 && y >= y_thruster) {
 			p.val[i * 6 + 0] = - p.val[i * 6 + 0];
             p.val[i * 6 + 3] = - p.val[i * 6 + 3];
 		}
@@ -234,14 +237,13 @@ void particle_operations::boundaries_ob_count(fmatrix & p, int & n_active, imatr
 	double x, y;
 	const double x_max = ((double) n_mesh_x - 1);
 	const double y_max = ((double) n_mesh_y - 1) * (dy / dx);
-	const double y_thr = ((double) n_thruster - 1) * (dy / dx);
 
 	for (int i = 0; i < n_active; i++)
 	{
 		x = p.val[i * 6 + 0];
 		y = p.val[i * 6 + 1];
 
-		if (x > x_max || y > y_max || (x < 0 && y < y_thr))
+		if (x > x_max || y > y_max || (x < 0 && y < y_thruster))
 		{
 			tbremoved.val[n_remove] = i;
 			n_remove += 1;
@@ -250,7 +252,7 @@ void particle_operations::boundaries_ob_count(fmatrix & p, int & n_active, imatr
 				n_removed_ob += 1;
 			}
             
-            if(y < y_thr){
+            if(y < y_thruster){
                 n_removed_thr += 1;
             }
 
@@ -259,7 +261,7 @@ void particle_operations::boundaries_ob_count(fmatrix & p, int & n_active, imatr
             p.val[i * 6 + 1] = - p.val[i * 6 + 1];
             p.val[i * 6 + 4] = - p.val[i * 6 + 4];
         }
-		else if (x < 0 && y >= y_thr) {
+		else if (x < 0 && y >= y_thruster) {
 			p.val[i * 6 + 0] = - p.val[i * 6 + 0];
             p.val[i * 6 + 3] = - p.val[i * 6 + 3];
 		}
@@ -286,7 +288,6 @@ void particle_operations::boundaries_e(fmatrix & p, int & n_active, imatrix & lp
 	double energy, x, y, vx, vy, vz;
 	const double x_max = ((double) n_mesh_x - 1);
 	const double y_max = ((double) n_mesh_y - 1) * (dy / dx);
-	const double y_thr = ((double) n_thruster - 1) * (dy / dx);
 	
 	for (int i = 0; i < n_active; i++)
 	{
@@ -297,7 +298,7 @@ void particle_operations::boundaries_e(fmatrix & p, int & n_active, imatrix & lp
 			out.val[n_out] = i;
 			n_out += 1;
 
-			in_thr = (y <= y_thr) && (y > 0) && (x <= 0);
+			in_thr = (y <= y_thruster) && (y > 0) && (x <= 0);
 			in_sym = y <= 0;
 
 			if(!in_thr && !in_sym){
@@ -319,7 +320,7 @@ void particle_operations::boundaries_e(fmatrix & p, int & n_active, imatrix & lp
 		energy = (vx * vx) + (vy * vy) + (vz * vz);
 
 		is_crt = energy >= e_crit;
-		in_thr = (y <= y_thr) && (y > 0) && (x <= 0);
+		in_thr = (y <= y_thruster) && (y > 0) && (x <= 0);
 		in_sym = (y <= 0) && (x >= 0) && (x <= x_max);
 
 		if(in_sym || (!is_crt && !in_thr)){
@@ -344,9 +345,6 @@ void particle_operations::boundaries_e_cap(fmatrix & p, int & n_active, imatrix 
 	double energy, x, y, vx, vy, vz;
 	const double x_max = ((double) n_mesh_x - 1);
 	const double y_max = ((double) n_mesh_y - 1) * (dy / dx);
-	const double y_thr = ((double) n_thruster - 1) * (dy / dx);
-
-
 
 	for (int i = 0; i < n_active; i++)
 	{
@@ -370,7 +368,7 @@ void particle_operations::boundaries_e_cap(fmatrix & p, int & n_active, imatrix 
 		
 		energy =  e_factor * ((vx * vx) + (vy * vy) + (vz * vz));
 		is_crt = energy >= phi_at_p.val[n] - v_cap;
-		in_thr = (y <= y_thr) && (y > 0) && (x <= 0);
+		in_thr = (y <= y_thruster) && (y > 0) && (x <= 0);
 		in_sym = (y <= 0) && (x >= 0) && (x <= x_max);
 
 		if(in_sym || (!is_crt && !in_thr)){

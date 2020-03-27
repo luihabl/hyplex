@@ -9,7 +9,7 @@
 
 struct particle_operations{
 
-	double dx, dy, dt, q, k_inj, v_sb, v_rf, m_el, freq, duty_cycle, n_factor, k_sub, i_i, alpha, omega_i,c_cap, temp_e, a_x, a_y, k_phi;
+	double dx, dy, y_thruster, dt, q, k_inj, v_sb, v_rf, m_el, freq, duty_cycle, n_factor, k_sub, i_i, alpha, omega_i,c_cap, temp_e, a_x, a_y, k_phi;
 	int n_mesh_x, n_mesh_y, n_thruster;
 	pic_operations & pic;
 
