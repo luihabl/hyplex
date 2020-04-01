@@ -21,6 +21,7 @@
 #include "state-info.h"
 #include "arg-parser.h"
 #include "configuration.h"
+#include "clock.h"
 
 #define CONFIG_PATH "input/config/config.yaml"
 
@@ -175,9 +176,9 @@ int main(int argc, char* argv[])
     print_initial_info(coll.p_null_e, coll.p_null_i, config);
 
     verbose_log(" ---- Starting main loop ---- ");
-    auto start = high_resolution_clock::now();
+    auto start = now();
 	for (state.step = state.step_offset; state.step < n_steps + state.step_offset; state.step++)
-	{ 
+	{
 		// Step 1.0: particle weighting
         if(state.step % k_sub == 0) pic.weight(p_i, state.n_active_i, wmesh_i, mesh, lpos_i);
         pic.weight(p_e, state.n_active_e, wmesh_e, mesh, lpos_e);
@@ -282,9 +283,8 @@ int main(int argc, char* argv[])
         
 	}
 
-    auto stop = high_resolution_clock::now();
-    auto duration = duration_cast<microseconds>(stop - start);
-    std::cout << "Total execution duration: " << (double) duration.count() / (1.0e6 * 60) << " min" << endl;
+    auto stop = now();
+    std::cout << "Total execution duration: " << tdiff(start, stop) / 60 << " min" << endl;
 
     // ----------------------------- Saving outputs ---------------------------
     save_state(p_e, p_i, state, config, job_suffix);

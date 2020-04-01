@@ -45,6 +45,9 @@ def particle_per_cell(current, lx, ly, nx, ny, v, n_factor):
     
 def particle_per_cell_2(current, dx, nx, ny, v, n_factor):
     return (current * dx) / (e * v * ny * n_factor)
+
+def steps_to_steady(dt, lx, ly, v):
+    return np.sqrt(lx**2 + ly**2) / (dt * v)
     
     
 def physical_space(i, a, L, N):

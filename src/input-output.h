@@ -84,6 +84,18 @@ void load_fmatrix(tmatrix<T> & m, string filename, string dataname){
 }
 
 
+class output_manager {
+    
+    
+    
+};
+
+
+
+
+
+
+
 #endif
 
 

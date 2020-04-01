@@ -223,13 +223,4 @@ double field_operations::calculate_cap_charge(double sigma_new, double sigma_old
 }
 
 
-double physical_space(double logical_position, double a, double b, double n_mesh){
-	return b * (((a / (n_mesh - 1)) * logical_position * logical_position) + ((1 - a) * logical_position));
-}
-
-
-int logical_space(float physical_position, float a, float b, float n_mesh){
-	return floor(2.0 * physical_position / (b * (1.0 - a + sqrt((1.0 - a)*(1.0 - a) + (4.0 * a * physical_position / b)/(n_mesh - 1)))));
-}
-
 

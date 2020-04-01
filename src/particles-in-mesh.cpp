@@ -46,6 +46,8 @@ void pic_operations::weight(fmatrix & p, int & n_active, fmatrix & wmesh, mesh_s
 	double x_1_mesh = 0;
 	double y_0_mesh = 0;
 	double y_1_mesh = 0;
+    
+    double cell_area = 0;
 
 	int left_index_x = 0;
 	int left_index_y = 0;
@@ -78,77 +80,85 @@ void pic_operations::weight(fmatrix & p, int & n_active, fmatrix & wmesh, mesh_s
 			y_0_mesh = mesh_y.val[left_index_x * mesh_n2 + left_index_y];
 			y_1_mesh = mesh_y.val[left_index_x * mesh_n2 + (left_index_y + 1)];
 		}
-		
-		wmesh.val[left_index_x * mesh_n2 + left_index_y] += 			 (x_1_mesh - x_p) * (y_1_mesh - y_p) / ((x_1_mesh - x_0_mesh) * (y_1_mesh - y_0_mesh));
-		wmesh.val[(left_index_x + 1) * mesh_n2 + left_index_y] += 		 (x_p - x_0_mesh) * (y_1_mesh - y_p) / ((x_1_mesh - x_0_mesh) * (y_1_mesh - y_0_mesh));
-		wmesh.val[(left_index_x + 1) * mesh_n2 + (left_index_y + 1)] +=  (x_p - x_0_mesh) * (y_p - y_0_mesh) / ((x_1_mesh - x_0_mesh) * (y_1_mesh - y_0_mesh));
-		wmesh.val[left_index_x * mesh_n2 + (left_index_y + 1)] += 		 (x_1_mesh - x_p) * (y_p - y_0_mesh) / ((x_1_mesh - x_0_mesh) * (y_1_mesh - y_0_mesh));
+        
+        cell_area = (x_1_mesh - x_0_mesh) * (y_1_mesh - y_0_mesh);
+		wmesh.val[left_index_x * mesh_n2 + left_index_y] += 			 (x_1_mesh - x_p) * (y_1_mesh - y_p) / cell_area;
+		wmesh.val[(left_index_x + 1) * mesh_n2 + left_index_y] += 		 (x_p - x_0_mesh) * (y_1_mesh - y_p) / cell_area;
+		wmesh.val[(left_index_x + 1) * mesh_n2 + (left_index_y + 1)] +=  (x_p - x_0_mesh) * (y_p - y_0_mesh) / cell_area;
+		wmesh.val[left_index_x * mesh_n2 + (left_index_y + 1)] += 		 (x_1_mesh - x_p) * (y_p - y_0_mesh) / cell_area;
     }
 }
 
 void pic_operations::electric_field_at_particles(fmatrix & efield_at_particles_x, fmatrix & efield_at_particles_y, fmatrix & efield_x, fmatrix & efield_y, fmatrix & p, const int n_active, mesh_set & mesh, imatrix & lpos)
 {
 
-	for (int i = 0; i < n_active; i++)
-	{
-		efield_at_particles_x.val[i] = field_at_position(efield_x, mesh, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0], lpos.val[i * 2 + 1]);
-		efield_at_particles_y.val[i] = field_at_position(efield_y, mesh, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0], lpos.val[i * 2 + 1]);
-	}
-	// double x_p = 0;
-	// double y_p = 0;
+	 double x_p = 0;
+	 double y_p = 0;
 
-	// double x_0_mesh = 0;
-	// double x_1_mesh = 0;
-	// double y_0_mesh = 0;
-	// double y_1_mesh = 0;
+	 double x_0_mesh = 0;
+	 double x_1_mesh = 0;
+	 double y_0_mesh = 0;
+	 double y_1_mesh = 0;
 
-	// double cell_area = 0;
-	// double area_1 = 0;
-	// double area_2 = 0;
-	// double area_3 = 0;
-	// double area_4 = 0;
+	 double cell_area = 0;
+	 double area_1 = 0;
+	 double area_2 = 0;
+	 double area_3 = 0;
+	 double area_4 = 0;
 
-	// int left_index_x = 0;
-	// int left_index_y = 0;
+	 int left_index_x = 0;
+	 int left_index_y = 0;
 
-	// double e_p_x = 0.0;
-	// double e_p_y = 0.0;
+	 double e_p_x = 0.0;
+	 double e_p_y = 0.0;
+    
+//    fmatrix & mesh_x = mesh.x;
+//    fmatrix & mesh_y = mesh.y;
 
-	// const int mesh_n2 = (int) mesh_x.n2;;
+    const double *mesh_x = mesh.x.val;
+    const double *mesh_y = mesh.y.val;
+    const double * ex = efield_x.val;
+    const double * ey = efield_y.val;
+    const double *pp = p.val;
+    int const * lp = lpos.val;
 
-	// for (int i = 0; i < n_active; i++)
-	// {
-	// 	x_p = p.val[i * 6 + 0];
-	// 	y_p = p.val[i * 6 + 1];
+    const int mesh_n2 = (int) mesh.x.n2;
+    
+    
 
-	// 	left_index_x = lpos.val[i * 2 + 0];
-	// 	left_index_y = lpos.val[i * 2 + 1];
+	 for (int i = 0; i < n_active; i++)
+	 {
+	 	x_p = pp[i * 6 + 0];
+	 	y_p = pp[i * 6 + 1];
 
-	// 	x_0_mesh = mesh_x.val[left_index_x * mesh_n2 + left_index_y];
-	// 	x_1_mesh = mesh_x.val[(left_index_x + 1) * mesh_n2 + left_index_y];
-	// 	y_0_mesh = mesh_y.val[left_index_x * mesh_n2 + left_index_y];
-	// 	y_1_mesh = mesh_y.val[left_index_x * mesh_n2 + (left_index_y + 1)];
+	 	left_index_x = lp[i * 2 + 0];
+	 	left_index_y = lp[i * 2 + 1];
 
-	// 	area_1 = (x_1_mesh - x_p) * (y_1_mesh - y_p);
-	// 	area_2 = (x_p - x_0_mesh) * (y_1_mesh - y_p);
-	// 	area_3 = (x_p - x_0_mesh) * (y_p - y_0_mesh);
-	// 	area_4 = (x_1_mesh - x_p) * (y_p - y_0_mesh);
-	// 	cell_area = area_1 + area_2 + area_3 + area_4;
+	 	x_0_mesh = mesh_x[left_index_x * mesh_n2 + left_index_y];
+	 	x_1_mesh = mesh_x[(left_index_x + 1) * mesh_n2 + left_index_y];
+	 	y_0_mesh = mesh_y[left_index_x * mesh_n2 + left_index_y];
+	 	y_1_mesh = mesh_y[left_index_x * mesh_n2 + (left_index_y + 1)];
+
+	 	area_1 = (x_1_mesh - x_p) * (y_1_mesh - y_p);
+	 	area_2 = (x_p - x_0_mesh) * (y_1_mesh - y_p);
+	 	area_3 = (x_p - x_0_mesh) * (y_p - y_0_mesh);
+	 	area_4 = (x_1_mesh - x_p) * (y_p - y_0_mesh);
+	 	cell_area = area_1 + area_2 + area_3 + area_4;
 		
-	// 	e_p_x =  efield_x.val[left_index_x * mesh_n2 + left_index_y] 				* area_1;
-	// 	e_p_x += efield_x.val[(left_index_x + 1) * mesh_n2 + left_index_y] 			* area_2;
-	// 	e_p_x += efield_x.val[(left_index_x + 1) * mesh_n2 + (left_index_y + 1)] 	* area_3;
-	// 	e_p_x += efield_x.val[left_index_x * mesh_n2 + (left_index_y + 1)] 			* area_4;
+	 	e_p_x =  ex[left_index_x * mesh_n2 + left_index_y] 				* area_1;
+	 	e_p_x += ex[(left_index_x + 1) * mesh_n2 + left_index_y] 			* area_2;
+	 	e_p_x += ex[(left_index_x + 1) * mesh_n2 + (left_index_y + 1)] 	* area_3;
+	 	e_p_x += ex[left_index_x * mesh_n2 + (left_index_y + 1)] 			* area_4;
 
-	// 	efield_at_particles_x.val[i] = e_p_x / cell_area;
+	 	efield_at_particles_x.val[i] = e_p_x / cell_area;
 
-	// 	e_p_y =  efield_y.val[left_index_x * mesh_n2 + left_index_y] 				* area_1;
-	// 	e_p_y += efield_y.val[(left_index_x + 1) * mesh_n2 + left_index_y] 			* area_2;
-	// 	e_p_y += efield_y.val[(left_index_x + 1) * mesh_n2 + (left_index_y + 1)] 	* area_3;
-	// 	e_p_y += efield_y.val[left_index_x * mesh_n2 + (left_index_y + 1)] 			* area_4;
+	 	e_p_y =  ey[left_index_x * mesh_n2 + left_index_y] 				* area_1;
+	 	e_p_y += ey[(left_index_x + 1) * mesh_n2 + left_index_y] 			* area_2;
+	 	e_p_y += ey[(left_index_x + 1) * mesh_n2 + (left_index_y + 1)] 	* area_3;
+	 	e_p_y += ey[left_index_x * mesh_n2 + (left_index_y + 1)] 			* area_4;
 
-	// 	efield_at_particles_y.val[i] = e_p_y / cell_area;
-	// }
+	 	efield_at_particles_y.val[i] = e_p_y / cell_area;
+	 }
 }
 
 double pic_operations::field_at_position(fmatrix & field, mesh_set & mesh, double x, double y, int lpos_x, int lpos_y)

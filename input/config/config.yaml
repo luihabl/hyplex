@@ -18,7 +18,7 @@ project:
   cross_sections_path: "input/cross-sections/"
 
 simulation:
-  initial_state: "new"                      # Load input for simulation state or start again: 'load' or 'new'
+  initial_state: "load"                      # Load input for simulation state or start again: 'load' or 'new'
 
 physical:
   q: 1.60217662e-19                         # Elementary charge [C]
@@ -38,7 +38,7 @@ geometry:
 
 time:
   dt: 5.0e-12                               # Time step [s]
-  n_steps: 100000                           # Number of simulation steps to be executed []
+  n_steps: 1000000                           # Number of simulation steps to be executed []
   n_steps_dsmc: 1e6                         # Number of DSMC simulation steps to be executed []
   n_average: 1                              # Number of average steps []
   n_average_dsmc: 50000                     # Number of DSMC average steps []

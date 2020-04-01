@@ -45,8 +45,13 @@ struct field_operations{
 
 
 
+inline double physical_space(double logical_position, double a, double b, double n_mesh){
+    return b * (((a / (n_mesh - 1)) * logical_position * logical_position) + ((1 - a) * logical_position));
+}
 
-double physical_space(double logical_position, double a, double b, double n_mesh);
-int logical_space(float physical_position, float a, float b, float n_mesh);
+inline int logical_space(const float & physical_position, const float & a, const float & b, const float & n_mesh){
+    return floor(2.0f * physical_position / (b * (1.0f - a + sqrt((1.0f - a)*(1.0f - a) + (4.0f * a * physical_position / b)/(n_mesh - 1)))));
+}
+
 
 #endif

@@ -9,7 +9,7 @@
 
 ## Building
 
-Before using the code it is necessary to install:
+The code uses C++17. Before using the code it is necessary to install:
 
 - Open MPI - https://www.open-mpi.org/
 - HYPRE - https://github.com/hypre-space/hypre
@@ -20,6 +20,13 @@ Make sure to place the files of HYPRE and yaml-cpp in `/lib/`.  After building M
 Compile with the `-D VERBOSE` flag in the variable `CXXFLAGS` to print more information during runtime.
 
 ## To do
+
+- Write a folder system with metadata for the output. The output folder name should look like `hy_20200331_<job_name>.output`. The metadata should be a `.yaml` file and contain the code version, start, end and duration times of the run, `job_name` and how many steps from the total were executed. The output folder should also contain the `config.yaml` file used for that run.
+- Write `python` script that reads folders recursively and generates a table (database) with all runs. This table should contain the metadata, configuration data, the group (relative path) and the output files contained. Use pandas?
+- Using the mentioned script, unify the place for storing simulation output. Use groups (folders) to separate runs used for diffferent purposes.
+- Also based on the last script, create a genereric class to explore the data through the database and with exdir. Use pandas?
+- Find solution to run remotely painlessly.
+- Write `python` script to automatically generate a list of config files from an original file, variating certain parameters.
 
 ### Backlog:
 
