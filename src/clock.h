@@ -2,12 +2,15 @@
 #define CLOCK_H
 
 #include <chrono>
-#include "date.h"
 #include <iostream>
+#include <string>
+#include <sstream>
+
+#include "date.h"
 
 using namespace std;
 using namespace std::chrono;
-
+using namespace date;
 
 template <class T>
 double tdiff(T t1, T t2){
@@ -25,6 +28,14 @@ inline high_resolution_clock::time_point now(){
     return high_resolution_clock::now();
 }
 
+
+inline string get_utc_datetime_string()
+{
+    auto t = system_clock::now();
+    stringstream ss;
+    ss << t;
+    return ss.str();
+}
 
 
 #endif

@@ -31,6 +31,7 @@ using namespace std::chrono;
 // ----------------------------- Main function --------------------------------
 int main(int argc, char* argv[])
 {
+
     // ------------------- Loading configuration ------------------------------
 
     argparser arg(argc, argv);
