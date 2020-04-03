@@ -32,8 +32,10 @@ using namespace std::chrono;
 // ----------------------------- Main function --------------------------------
 int main(int argc, char* argv[])
 {
+    auto start_utc = sys_now();
+
     cout << "Hyplex " << GIT_VERSION << endl;
-    cout << "Starting UTC: " <<  get_utc_datetime_string() << endl << endl;
+    cout << "Starting at " <<  time_to_string(start_utc) << " UTC" << endl << endl;
 
     // ------------------- Loading configuration ------------------------------
 
@@ -46,7 +48,6 @@ int main(int argc, char* argv[])
     config.set_job_name(job_name);
 
     state_info state;
-    output_manager output(state, config);
 
     // ------------------- Variable initialization ----------------------------
     
@@ -135,7 +136,8 @@ int main(int argc, char* argv[])
     mesh_set mesh(config);
     mesh.init_mesh();
 
-    output.save_initial_data(mesh);
+    output_manager output(start_utc, state, config, mesh);
+    output.save_initial_data();
 
     field_operations fields(config);
     pic_operations pic(config);
@@ -257,6 +259,7 @@ int main(int argc, char* argv[])
         {
             output.save_state(p_e, p_i);
             output.save_fields_snapshot(phi, wmesh_e, wmesh_i, mesh, "");
+            output.update_metadata();
         }
 
          if(state.step % 50000 == 0) {
@@ -287,20 +290,17 @@ int main(int argc, char* argv[])
              if(i_av == rf_period_i){
                 output.save_fields_snapshot(phi_av, wmesh_e_av, wmesh_i_av, mesh, "-av");
              }
-         }
-        
-//        print_fmatrix(phi, 10, 25);
-//        system("read -p 'Press Enter to continue...' var");
-        
+         }    
 	}
 
     auto stop = now();
-    std::cout << "Total execution duration: " << tdiff(start, stop) / 60 << " min" << endl;
+    std::cout << "Total execution duration: " << tdiff_h(start, stop) << " hours" << endl;
 
     // ----------------------------- Saving outputs ---------------------------
     output.save_state(p_e, p_i);
     output.save_fields_snapshot(phi, wmesh_e, wmesh_i, mesh, "");
     output.save_series(series, n_points_series);
+    output.update_metadata("completed");
 
     // ----------------------------- Finalizing -------------------------------
     // delete_cross_sections_arrays();

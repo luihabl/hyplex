@@ -13,10 +13,17 @@ using namespace std::chrono;
 using namespace date;
 
 template <class T>
-double tdiff(T t1, T t2){
+double tdiff_s(T t1, T t2){
     auto duration = duration_cast<microseconds>(t2 - t1);
-    return (double) duration.count() / 1e3;
+    return (double) duration.count() / 1e6;
 }
+
+template <class T>
+double tdiff_min(T t1, T t2){
+    auto duration = duration_cast<microseconds>(t2 - t1);
+    return (double) duration.count() / (1e6 * 60);
+}
+
 
 template <class T>
 double tdiff_h(T t1, T t2){

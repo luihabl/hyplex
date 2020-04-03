@@ -102,20 +102,21 @@ class output_manager
         filesystem::path output_path;
         string output_name;
         string job_name; 
-        configuration & config;
         state_info & state;
-
+        configuration & config;
+        mesh_set & mesh;
+        void check_output_folder();
         string build_output_name();
     
     public:
         exdir file;
-        output_manager(state_info & state, configuration & config);
+        output_manager(system_clock::time_point _start_utc, state_info & state, configuration & config, mesh_set & mesh);
         void save_state(fmatrix & p_e, fmatrix & p_i);
         void save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, mesh_set & mesh, string suffix);
         void save_series(unordered_map<string, fmatrix> & series, int & n_points); 
         void save_field_series(fmatrix & field, double conversion_constant);
-        void save_initial_data(mesh_set & mesh);
-    
+        void save_initial_data();
+        void update_metadata(string status = "running");
 };
 
 

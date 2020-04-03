@@ -109,7 +109,7 @@ fmatrix load_csv(string file_path, char delim, int cols)
 }
 
 void output_manager::save_state(fmatrix & p_e, fmatrix & p_i){
-    
+    check_output_folder();
     const double dx = config.f("geometry/dx");
     const double dt = config.f("time/dt");
     
@@ -214,6 +214,7 @@ void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration 
 
 void output_manager::save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, mesh_set & mesh, string suffix)
 {
+    check_output_folder();
     file.create_group("fields" + suffix);
 
     double dx = config.f("geometry/dx");
@@ -239,6 +240,8 @@ void output_manager::save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmat
 
 void output_manager::save_series(unordered_map<string, fmatrix> & series, int & n_points)
 {
+    check_output_folder();
+
     file.create_group("series");
 
     double dt = config.f("time/dt");
@@ -257,6 +260,7 @@ void output_manager::save_series(unordered_map<string, fmatrix> & series, int & 
 
 void output_manager::save_field_series(fmatrix & field, double conversion_constant)
 {
+    check_output_folder();
     file.create_group("field_series");
 
     double dt = config.f("time/dt");
@@ -267,11 +271,9 @@ void output_manager::save_field_series(fmatrix & field, double conversion_consta
     file.write_attribute("field_series/" + to_string(state.step), "Time [s]", (double) state.step * dt);
 }
 
-// ------------------- output manager methods ---------------------------------
-
-output_manager::output_manager(state_info & _state, configuration & _config): state(_state), config(_config) {
+output_manager::output_manager(system_clock::time_point _start_utc, state_info & _state, configuration & _config, mesh_set & _mesh): state(_state), config(_config), mesh(_mesh){
     
-    start_utc = sys_now();
+    start_utc = _start_utc;
     output_path = config.s("project/output_path");
     job_name = config.s("p/job_name");
 
@@ -297,7 +299,7 @@ string output_manager::build_output_name(){
     return tmp_filename;
 }
 
-void output_manager::save_initial_data(mesh_set & mesh){
+void output_manager::save_initial_data(){
 
     double dx = config.f("geometry/dx");
     fmatrix mesh_x = mesh.x * dx;
@@ -313,14 +315,29 @@ void output_manager::save_initial_data(mesh_set & mesh){
 
     attributes["metadata"]["version"] = GIT_VERSION;
     attributes["metadata"]["start_utc"] = time_to_string(start_utc);
-    attributes["metadata"]["stop_utc"] = time_to_string(sys_now());
-    attributes["metadata"]["elapsed_hours"] = tdiff_h(start_utc, sys_now());
-    attributes["metadata"]["status"] = "running"; //or 'completed'
-
     attributes["config"] = config_node;
     attributes["config"]["simulation"]["job_name"] = config.s("p/job_name");
     
     file.write_attribute("", attributes);
+
+    update_metadata();
+}
+
+void output_manager::update_metadata(string status){
+    YAML::Node attributes = file.get_attributes("");
+    attributes["metadata"]["stop_utc"] = time_to_string(sys_now());
+    attributes["metadata"]["elapsed_hours"] = tdiff_h(start_utc, sys_now());
+    attributes["metadata"]["status"] = status;
+    attributes["metadata"]["progress"] = float (state.step - state.step_offset) / config.f("time/n_steps");
+    file.write_attribute("", attributes);
+}
+
+void output_manager::check_output_folder(){
+    if(!file.file_exists()){  
+        file = exdir(output_path / output_name, false);    
+        save_initial_data();
+        update_metadata();
+    }
 }
 
 

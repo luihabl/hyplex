@@ -47,6 +47,7 @@ class exdir
         template <class T> void read_attribute(filesystem::path object_path, string key, T & value);
         void get_dataset_size(filesystem::path dataset_path, tmatrix<unsigned long> & shape);
         void clean_attr_file(filesystem::path object_path);
+        bool file_exists();
 };
 
 inline exdir::exdir(filesystem::path _file_path, bool _overwrite_file){
@@ -95,6 +96,10 @@ inline bool exdir::is_type(filesystem::path path, string type){
         return false;
     }
     return false;
+}
+
+inline bool exdir::file_exists(){
+    return filesystem::exists(file_path);
 }
 
 inline void exdir::write_metadata(filesystem::path path, string type, string version){
