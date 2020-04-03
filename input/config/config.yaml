@@ -18,6 +18,7 @@ project:
   cross_sections_path: "input/cross-sections/"
 
 simulation:
+  job_name: ""
   initial_state: "load"                      # Load input for simulation state or start again: 'load' or 'new'
 
 physical:

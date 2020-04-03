@@ -3,11 +3,15 @@
 #ifndef INPUTOUTPUT_H
 #define INPUTOUTPUT_H
 
+#include <chrono>
 #include <string>
 #include <fstream>
 #include <sstream>
 #include <iomanip>
 #include <unordered_map>
+#include <filesystem>
+#include "clock.h"
+#include "date.h"
 #include "fmatrix.h"
 #include "fields.h"
 #include "state-info.h"
@@ -16,17 +20,23 @@
 #include "exdir.h"
 
 using namespace std;
+using namespace std::chrono;
 
 void verbose_log(string message);
-void print_info(state_info state, int step_interval, configuration & config);
+void print_info(state_info & state, int step_interval, configuration & config);
 void print_initial_info(double p_null_e, double p_null_i, configuration & config);
 void print_dsmc_info(int i, int n_active_n, int step_interval, int n_steps);
 
-void save_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration & config, string suffix);
 void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration & config, string filename="state.exdir");
-void save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, mesh_set & mesh, state_info & state, configuration & config, string suffix);
-void save_series(unordered_map<string, fmatrix> & series, int & n_points, state_info state, configuration & config, string suffix);
-void save_field_series(fmatrix & field, state_info state, configuration & config, double conversion_constant, string suffix);
+
+// template<class T>
+// void save_to_file(filesystem::path file_path, T content, ios::openmode mode=ios::app)
+// {
+//     ofstream file;
+//     file.open(file_path, mode);
+//     file << content;
+//     file.close();
+// }
 
 fmatrix load_csv(string file_path, char delim = ';', int cols = 2);
 template <class T>
@@ -83,13 +93,30 @@ void load_fmatrix(tmatrix<T> & m, string filename, string dataname){
     verbose_log("Loaded " + filename + dataname);
 }
 
+// ------------------- output manager class ---------------------------------
 
-class output_manager {
+class output_manager 
+{
+    private:
+        system_clock::time_point start_utc, end_utc;
+        filesystem::path output_path;
+        string output_name;
+        string job_name; 
+        configuration & config;
+        state_info & state;
+
+        string build_output_name();
     
-    
+    public:
+        exdir file;
+        output_manager(state_info & state, configuration & config);
+        void save_state(fmatrix & p_e, fmatrix & p_i);
+        void save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, mesh_set & mesh, string suffix);
+        void save_series(unordered_map<string, fmatrix> & series, int & n_points); 
+        void save_field_series(fmatrix & field, double conversion_constant);
+        void save_initial_data(mesh_set & mesh);
     
 };
-
 
 
 

@@ -28,6 +28,7 @@ class configuration {
         template<typename T> void select_gas_on_map(unordered_map<string, T> & map);
 
     public:
+        string filename;
         configuration(string filename);
         void print_all();
         void print_m();
@@ -47,6 +48,7 @@ class configuration {
         template<typename T> void set(string key, T val);
         template<typename T> void set_seq(string key, tmatrix<T> seq);
 
+        void set_job_name(string arg_job_name);
 };
 
 string lowercase(string s);

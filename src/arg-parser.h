@@ -23,11 +23,11 @@ struct argparser{
 
 argparser::argparser(int argc, char* argv[]){
     
-    args::ArgumentParser parser("This is the PIC-plume simulation code.", "This code runs with MPI, possibly causing other flags to be passed here.");
+    args::ArgumentParser parser("This is the Hyplex code.", "This code runs with MPI, possibly causing other flags to be passed here.");
     args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
     
-    args::ValueFlag<string> config_path(parser, "config", "Path to configuration .ini file", {'c', "config"});
-    args::ValueFlag<string> job_name(parser, "name", "Job identifier name", {'n', "name"});
+    args::ValueFlag<string> config_path(parser, "config", "Path to configuration .yaml file", {'c', "config"});
+    args::ValueFlag<string> job_name(parser, "name", "Override job identifier name", {'n', "name"});
     
     try
     {

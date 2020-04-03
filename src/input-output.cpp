@@ -7,7 +7,10 @@
 #include <fstream>
 #include <chrono>
 #include <unordered_map>
+#include <filesystem>
 #include <sys/stat.h>
+
+#include "yaml-cpp/yaml.h"
 
 #include "fmatrix.h"
 #include "fmath.h"
@@ -16,6 +19,9 @@
 #include "exdir.h"
 #include "configuration.h"
 #include "fields.h"
+
+#include "date.h"
+
 
 using namespace std;
 using namespace std::chrono;
@@ -40,7 +46,7 @@ void print_dsmc_info(int i, int n_active_n, int step_interval, int n_steps){
     }
 }
 
-void print_info(state_info state, int step_interval, configuration & config)
+void print_info(state_info & state, int step_interval, configuration & config)
 {
     static high_resolution_clock::time_point t0;
     if(state.step==state.step_offset) t0 = high_resolution_clock::now();
@@ -102,11 +108,10 @@ fmatrix load_csv(string file_path, char delim, int cols)
     return data;
 }
 
-void save_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration & config, string suffix){
+void output_manager::save_state(fmatrix & p_e, fmatrix & p_i){
     
     const double dx = config.f("geometry/dx");
     const double dt = config.f("time/dt");
-    string output_path = config.s("project/output_path");
     
     fmatrix p_e_corrected(state.n_active_e, 6);
     for(int i = 0; i < state.n_active_e; i++){
@@ -128,10 +133,11 @@ void save_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration 
         p_i_corrected.val[i * 6 + 5] = p_i.val[i * 6 + 5] * dx / dt;
     }
 
-    exdir file(output_path + "state" + suffix + ".exdir");
+
+    file.create_group("state");
    
-    file.write_dataset("/p_i", p_i_corrected);
-    file.write_dataset("/p_e", p_e_corrected);
+    file.write_dataset("state/p_i", p_i_corrected);
+    file.write_dataset("state/p_e", p_e_corrected);
 
     map<string, double> state_attrs_double = {
         {"Time [s]", (double) state.step * dt},
@@ -141,7 +147,7 @@ void save_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration 
     };
     
 
-    file.write_attribute("/", state_attrs_double);
+    file.write_attribute("state", state_attrs_double);
 
     map<string, int> state_attrs_int = {
         {"Step", state.step},
@@ -151,22 +157,23 @@ void save_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration 
         {"Removed electrons", state.n_out_ob_e}
     };
 
-    file.write_attribute("/", state_attrs_int);
+    file.write_attribute("state", state_attrs_int);
 
     verbose_log("Saved state");
 }
 
 void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration & config, string filename){
 
-    string input_path = config.s("project/input_path");
+    filesystem::path input_path = config.s("project/input_path");
+    input_path /= filename;
+
     double dx = config.f("geometry/dx");
     double dt = config.f("time/dt");
 
-
-    exdir file(input_path + filename);
+    exdir file(input_path, false);
 
     YAML::Node attrs;
-    file.read_all_attributes("/", attrs);
+    file.read_all_attributes("", attrs);
 
     state.step_offset = attrs["Step"].as<int>();
     state.q_cap = attrs["Capacitor charge [norm. C]"].as<double>();
@@ -181,8 +188,9 @@ void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration 
     fmatrix p_i_load = fmatrix::zeros(state.n_active_i, 6);
     fmatrix p_e_load = fmatrix::zeros(state.n_active_e, 6);
 
-    file.read_dataset("/p_e", p_e_load);
-    file.read_dataset("/p_i", p_i_load);
+    
+    file.read_dataset("p_e", p_e_load);
+    file.read_dataset("p_i", p_i_load);
 
     p_e_load = p_e_load / dx;
     for(int i = 0; i < state.n_active_e; i++){
@@ -204,67 +212,115 @@ void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration 
     verbose_log("Loaded state: Step: " + to_string(state.step_offset) + " Active electrons: " + to_string(state.n_active_e) + " Active ions: " + to_string(state.n_active_i));
 }
 
-void save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, mesh_set & mesh, state_info & state, configuration & config, string suffix)
+void output_manager::save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, mesh_set & mesh, string suffix)
 {
-    
-    exdir file(config.s("project/output_path") + "fields" + suffix + ".exdir");
+    file.create_group("fields" + suffix);
 
     double dx = config.f("geometry/dx");
     double dt = config.f("time/dt");
     double n_factor = config.f("particles/n_factor");
     double k_phi = config.f("p/k_phi");
 
-    file.write_attribute("/", "Time [s]", (double) state.step * dt);
-    file.write_attribute("/", "Step", (double) state.step);
+    file.write_attribute("fields", "Time [s]", (double) state.step * dt);
+    file.write_attribute("fields", "Step", (double) state.step);
 
 
     fmatrix phi_corrected = phi / k_phi;
-    file.write_dataset("/phi", phi_corrected);
+    file.write_dataset("fields/phi", phi_corrected);
 
     fmatrix dens_e = (4 / pow(dx, 2)) *  n_factor * wmesh_e / mesh.v;
-    file.write_dataset("/dens_e", dens_e);
+    file.write_dataset("fields/dens_e", dens_e);
 
     fmatrix dens_i = (4 / pow(dx, 2)) *  n_factor * wmesh_i / mesh.v;
-    file.write_dataset("/dens_i", dens_i);
-    
-    file.create_group("/mesh");
-    file.write_dataset("/mesh/mesh_x", mesh.x);
-    file.write_dataset("/mesh/mesh_y", mesh.y);
-    file.write_attribute("/mesh", "a_x", mesh.a_x);
-    file.write_attribute("/mesh", "a_y", mesh.a_y);
+    file.write_dataset("fields/dens_i", dens_i);
     
     verbose_log("Saved fields snapshot");
 }
 
-void save_series(unordered_map<string, fmatrix> & series, int & n_points, state_info state, configuration & config, string suffix)
+void output_manager::save_series(unordered_map<string, fmatrix> & series, int & n_points)
 {
-    
-    exdir file(config.s("project/output_path") + "series" + suffix + ".exdir");
+    file.create_group("series");
 
     double dt = config.f("time/dt");
     
-    file.write_attribute("/", "Time [s]", (double) state.step * dt);
-    file.write_attribute("/", "Step", (double) state.step);
+    file.write_attribute("series", "Time [s]", (double) state.step * dt);
+    file.write_attribute("series", "Step", (double) state.step);
 
     for (auto & element : series)
     {
-        string path = "/" + element.first;
+        string path = "series/" + element.first;
         file.write_dataset(path, element.second);
     }
 
     verbose_log("Saved time series");
 }
 
-void save_field_series(fmatrix & field, state_info state, configuration & config, double conversion_constant, string suffix)
+void output_manager::save_field_series(fmatrix & field, double conversion_constant)
 {
-
-    exdir file(config.s("project/output_path") + "fseries" + suffix + ".exdir");
+    file.create_group("field_series");
 
     double dt = config.f("time/dt");
     
     fmatrix field_corrected = conversion_constant * field;
 
-    file.write_dataset("/" + to_string(state.step), field_corrected);
-    file.write_attribute("/" + to_string(state.step), "Time [s]", (double) state.step * dt);
+    file.write_dataset("field_series/" + to_string(state.step), field_corrected);
+    file.write_attribute("field_series/" + to_string(state.step), "Time [s]", (double) state.step * dt);
 }
+
+// ------------------- output manager methods ---------------------------------
+
+output_manager::output_manager(state_info & _state, configuration & _config): state(_state), config(_config) {
+    
+    start_utc = sys_now();
+    output_path = config.s("project/output_path");
+    job_name = config.s("p/job_name");
+
+    output_name = build_output_name();
+    
+    file = exdir(output_path / output_name, false);    
+}
+
+string output_manager::build_output_name(){
+    string initial_datetime = format("%Y-%m-%d", start_utc);    
+    string filename_preffix = "hy_" + initial_datetime;
+
+    if(config.s("p/job_name") != "") filename_preffix += "_" + config.s("p/job_name");
+
+    string tmp_filename = filename_preffix + EXDIR_EXT;
+
+    int n_file = 1;
+    while (filesystem::exists(output_path / tmp_filename))
+    {
+        tmp_filename = filename_preffix + "(" + to_string(n_file) + ")" + EXDIR_EXT;
+        n_file += 1;
+    }
+    return tmp_filename;
+}
+
+void output_manager::save_initial_data(mesh_set & mesh){
+
+    double dx = config.f("geometry/dx");
+    fmatrix mesh_x = mesh.x * dx;
+    fmatrix mesh_y = mesh.y * dx;
+
+    file.create_group("mesh");
+    file.write_dataset("mesh/x", mesh_x);
+    file.write_dataset("mesh/y", mesh_y);
+
+    YAML::Node config_node = YAML::LoadFile(config.filename);
+
+    YAML::Node attributes = file.get_attributes("");
+
+    attributes["metadata"]["version"] = GIT_VERSION;
+    attributes["metadata"]["start_utc"] = time_to_string(start_utc);
+    attributes["metadata"]["stop_utc"] = time_to_string(sys_now());
+    attributes["metadata"]["elapsed_hours"] = tdiff_h(start_utc, sys_now());
+    attributes["metadata"]["status"] = "running"; //or 'completed'
+
+    attributes["config"] = config_node;
+    attributes["config"]["simulation"]["job_name"] = config.s("p/job_name");
+    
+    file.write_attribute("", attributes);
+}
+
 

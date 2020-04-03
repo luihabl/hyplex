@@ -22,6 +22,12 @@ else
   CXXFLAGS = -I/usr/local/include -Ilib -Ilib/$(hypre_dir)/src/hypre/include -Ilib/yaml -std=$(cpp_std) -O3 -march=native -Wall -D VERBOSE
 endif
 
+# GIT_HASH=`git rev-parse HEAD`
+# COMPILE_TIME=`date -u +'%Y-%m-%d %H:%M:%S UTC'`
+GIT_VERSION=`git describe --tags --always`
+# GIT_BRANCH=`git branch | grep "^\*" | sed 's/^..//'`
+export VERSION_FLAGS=-DGIT_VERSION="\"$(GIT_VERSION)\""
+
 src = $(wildcard $(sdr)/*.cpp)
 srn = $(src:src/%=%)
 obj = $(srn:%.cpp=$(bdr)/%.o)
@@ -31,7 +37,10 @@ $(exe): $(obj)
 	$(CC) $^ $(LDFLAGS) $(CXXFLAGS) -o $@
 
 $(bdr)/%.o: $(sdr)/%.cpp | $(bdr)
-	$(CC) $(CXXFLAGS) -c $< -o $@ 
+	$(CC) $(VERSION_FLAGS) $(CXXFLAGS) -c $< -o $@ 
+
+gitversion.c: .git/HEAD .git/index
+	echo "const char *gitversion = \"$(shell git rev-parse HEAD)\";" > $@
 	
 -include $(dep)   #include all dep files in the makefile
 $(bdr)/%.d: $(sdr)/%.cpp | $(bdr)

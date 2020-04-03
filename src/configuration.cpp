@@ -62,6 +62,9 @@ void configuration::calculate_parameters(){
     set(calc_key + "n_exc", (int) exc_path.n1);
 }
 
+void configuration::set_job_name(string arg_job_name){
+    set("p/job_name", arg_job_name == "" ? s("simulation/job_name") : arg_job_name);
+}
 
 
 void configuration::select_gas(){
@@ -69,8 +72,9 @@ void configuration::select_gas(){
     select_gas_on_map(_ms);
 }
 
-configuration::configuration(string filename)
+configuration::configuration(string _filename)
 {
+    filename = _filename;
     YAML::Node config_node = YAML::LoadFile(filename);
     flatten_map(config_node);
     select_gas();

@@ -6,6 +6,7 @@
 #include <sstream>
 #include <string>
 #include <unordered_map>
+#include <filesystem>
 
 #include "fields.h"
 #include "fmatrix.h"
@@ -23,7 +24,7 @@
 #include "configuration.h"
 #include "clock.h"
 
-#define CONFIG_PATH "input/config/config.yaml"
+#define DEFAULT_CONFIG_PATH "input/config/config.yaml"
 
 using namespace std;
 using namespace std::chrono;
@@ -31,15 +32,21 @@ using namespace std::chrono;
 // ----------------------------- Main function --------------------------------
 int main(int argc, char* argv[])
 {
+    cout << "Hyplex " << GIT_VERSION << endl;
+    cout << "Starting UTC: " <<  get_utc_datetime_string() << endl << endl;
 
     // ------------------- Loading configuration ------------------------------
 
     argparser arg(argc, argv);
 
-    string job_suffix = arg.get("name", "");
-    string config_path = arg.get("config", CONFIG_PATH);
+    string job_name = arg.get("name", "");
+    string config_path = arg.get("config", DEFAULT_CONFIG_PATH);
 
     configuration config(config_path);
+    config.set_job_name(job_name);
+
+    state_info state;
+    output_manager output(state, config);
 
     // ------------------- Variable initialization ----------------------------
     
@@ -80,7 +87,6 @@ int main(int argc, char* argv[])
     imatrix electrode_mask  = imatrix::zeros(n_mesh_x, n_mesh_y);
     fmatrix voltages        = fmatrix::zeros(4);
     double sigma_laplace;
-    state_info state;
     
     // Doiagnostics variables
     verbose_log("Initializing diagnostics variables");
@@ -128,7 +134,9 @@ int main(int argc, char* argv[])
 
     mesh_set mesh(config);
     mesh.init_mesh();
-    
+
+    output.save_initial_data(mesh);
+
     field_operations fields(config);
     pic_operations pic(config);
     particle_operations pops(config, pic);
@@ -151,7 +159,7 @@ int main(int argc, char* argv[])
 
     if (expm_neutral == "dsmc"){
         verbose_log(" ---- Starting DSMC loop ---- ");
-        run_dsmc(mesh, dens_n, config, "dens_n" + job_suffix + ".exdir");
+        run_dsmc(mesh, dens_n, config, "dens_n" + job_name + ".exdir");
     }
     else if (expm_neutral == "constant") {
         verbose_log(" ---- Setting constant neutral density ---- ");
@@ -161,6 +169,8 @@ int main(int argc, char* argv[])
         verbose_log(" ---- Loading neutral density field ---- ");
         load_fmatrix(dens_n, config.s("project/input_path") + "dens_n.exdir", "dens_n");
     }
+
+    
 
     // ----------------------------- MCC --------------------------------------
     
@@ -245,12 +255,12 @@ int main(int argc, char* argv[])
         
         if(state.step % 10000 == 0)
         {
-            save_state(p_e, p_i, state, config, job_suffix);
-            save_fields_snapshot(phi, wmesh_e, wmesh_i, mesh, state, config, job_suffix);
+            output.save_state(p_e, p_i);
+            output.save_fields_snapshot(phi, wmesh_e, wmesh_i, mesh, "");
         }
 
          if(state.step % 50000 == 0) {
-             save_series(series, n_points_series, state, config, job_suffix);
+             output.save_series(series, n_points_series);
          }
         
         //  if(state.step % 1 == 0) {
@@ -275,7 +285,7 @@ int main(int argc, char* argv[])
              average_field(wmesh_e_av, wmesh_e, state.step - state.step_offset);
              average_field(wmesh_i_av, wmesh_i, state.step - state.step_offset);
              if(i_av == rf_period_i){
-                 save_fields_snapshot(phi_av, wmesh_e_av, wmesh_i_av, mesh, state, config, "_av" + job_suffix);
+                output.save_fields_snapshot(phi_av, wmesh_e_av, wmesh_i_av, mesh, "-av");
              }
          }
         
@@ -288,9 +298,9 @@ int main(int argc, char* argv[])
     std::cout << "Total execution duration: " << tdiff(start, stop) / 60 << " min" << endl;
 
     // ----------------------------- Saving outputs ---------------------------
-    save_state(p_e, p_i, state, config, job_suffix);
-    save_fields_snapshot(phi, wmesh_e, wmesh_i, mesh, state, config, job_suffix);
-    save_series(series, n_points_series, state, config, job_suffix);
+    output.save_state(p_e, p_i);
+    output.save_fields_snapshot(phi, wmesh_e, wmesh_i, mesh, "");
+    output.save_series(series, n_points_series);
 
     // ----------------------------- Finalizing -------------------------------
     // delete_cross_sections_arrays();
