@@ -315,6 +315,8 @@ void output_manager::save_initial_data(){
 
     attributes["metadata"]["version"] = GIT_VERSION;
     attributes["metadata"]["start_utc"] = time_to_string(start_utc);
+    attributes["metadata"]["stop_utc"] = time_to_string(start_utc);
+    attributes["metadata"]["initial_step"] = state.step_offset;
     attributes["config"] = config_node;
     attributes["config"]["simulation"]["job_name"] = config.s("p/job_name");
     
