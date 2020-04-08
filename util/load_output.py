@@ -153,10 +153,10 @@ def load_all(folder_path='.'):
     for f in folder.glob('*'):
         if f.suffix == '.h5':
             print(f'Loaded {f}')
-            d[f.stem] = load_file_data_h5(f)
+            d[f.stem] = OutputFile(load_file_data_h5(f))
         if f.suffix == '.exdir':
             print(f'Loaded {f}')
-            d[f.stem] = load_file_data_exdir(f)
+            d[f.stem] = OutputFile(load_file_data_exdir(f))
     
     return d
 
