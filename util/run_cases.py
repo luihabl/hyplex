@@ -1,5 +1,5 @@
 from pathlib import Path
-import os
+import os, argparse
 
 def run_all(dir_with_files, run_file):
 
@@ -14,10 +14,14 @@ def run_all(dir_with_files, run_file):
         os.system(f'mpirun -np 1 {run_file.name} -c {case}')
         os.system('sleep 1')
 
-
 if __name__ == '__main__':
-    directory = "config/"
-    run_all(directory, "../run")
+
+    parser = argparse.ArgumentParser(description='Run Hyplex in sequence with all the config files in a directory.')
+    parser.add_argument("-c", "--config", help="directory with the config files.", default="config/")
+    parser.add_argument("-r", "--run", help="Hyplex executable", default= "../run")
+    args = parser.parse_args()
+
+    run_all(args.config, args.run)
 
 
 

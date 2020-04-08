@@ -1,7 +1,6 @@
-import numpy as np
-import pandas as pd
 import exdir
-import collections
+import pandas as pd
+import collections, argparse
 from pathlib import Path
 
 ignored_keys = ['config.xenon', 'config.helium', 'config.neutrals', 'config.physical', 'config.project']
@@ -34,11 +33,16 @@ def fetch_data(search_path='.'):
     return metadata
 
     
-def save_to_xls(metadata, path='outdb.html'):
+def save_to_xls(metadata, path='out.xls'):
     df = pd.DataFrame(metadata)
-    df.to_html(path)
+    df.to_excel(path)
 
 
 if __name__ == "__main__":
-    save_to_xls(fetch_data())
+    parser = argparse.ArgumentParser(description='Generate xls file with list of outputs from Hyplex.')
+    parser.add_argument("-s", "--search", help="directory to be searched.", default='.')
+    parser.add_argument("-o", "--output", help="output xls file.", default='out.xls')
+    args = parser.parse_args()
+
+    save_to_xls(fetch_data(args.search), args.output)
 
