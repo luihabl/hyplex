@@ -8,7 +8,7 @@ ignored_keys = ['config.xenon', 'config.helium', 'config.neutrals', 'config.phys
                 'config.thruster.eta_p', 'config.thruster.mfc', 'config.time.n_steps_dsmc', 'config.time.k_sub_dsmc',
                 'config.time.k_sub', 'config.time.dt', 'config.thruster.mfc', 'config.ions.q_i', 'config.ions.gas_name',
                 'config.electrons.sqr_duty_cycle', 'config.electrons.q_el', 'config.electrons.m_el', 'config.boundaries.volt_1',
-                'config.boundaries.volt_0', 'config.time.n_average_dsmc']
+                'config.boundaries.volt_0', 'config.time.n_average_dsmc', 'simulation.verbosity']
 
 def flatten(d, parent_key='', sep='.', ignored=[]): 
         items = [] 

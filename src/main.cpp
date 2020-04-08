@@ -63,6 +63,7 @@ int main(int argc, char* argv[])
     const int n_mesh_y          = config.i("geometry/n_mesh_y");
     const int n_thruster        = config.i("geometry/n_thruster");
     const int n_max_particles   = config.i("particles/n_max_particles");
+    const int verbosity         = config.i("simulation/verbosity");
     const double dt             = config.f("time/dt");
     const double q              = config.f("physical/q");
     const double m_el           = config.f("electrons/m_el");
@@ -136,9 +137,6 @@ int main(int argc, char* argv[])
     mesh_set mesh(config);
     mesh.init_mesh();
 
-    output_manager output(start_utc, state, config, mesh);
-    output.save_initial_data();
-
     field_operations fields(config);
     pic_operations pic(config);
     particle_operations pops(config, pic);
@@ -172,8 +170,6 @@ int main(int argc, char* argv[])
         load_fmatrix(dens_n, config.s("project/input_path") + "dens_n.exdir", "dens_n");
     }
 
-    
-
     // ----------------------------- MCC --------------------------------------
     
     mcc coll(config, pops, pic);
@@ -183,21 +179,35 @@ int main(int argc, char* argv[])
 
     if(config.s("simulation/initial_state") == "load")  load_state(p_e, p_i, state, config);
 
+    // ----------------------------- Output manager ---------------------------
+
+    output_manager output(start_utc, state, config, mesh);
+    output.save_initial_data();
+
 	// ----------------------------- Main loop --------------------------------
 
     // Printing initial information
     print_initial_info(coll.p_null_e, coll.p_null_i, config);
 
+    fmatrix td = fmatrix::zeros(9); 
+    tmatrix<steady_clock::time_point> tp(10);
+
     verbose_log(" ---- Starting main loop ---- ");
     auto start = now();
 	for (state.step = state.step_offset; state.step < n_steps + state.step_offset; state.step++)
 	{
+        tp.val[0] = now();
+
 		// Step 1.0: particle weighting
         if(state.step % k_sub == 0) pic.weight(p_i, state.n_active_i, wmesh_i, mesh, lpos_i);
         pic.weight(p_e, state.n_active_e, wmesh_e, mesh, lpos_e);
 
+        tp.val[1] = now();
+
         // Step 2.0 integration of Poisson's equation
         solver.solve(phi_poisson, voltages, wmesh_i, wmesh_e);
+
+        tp.val[2] = now();
         
         state.sigma_0 = state.sigma_1;
         state.phi_zero = fields.calculate_phi_zero(state.sigma_1, state.n_out_ob_i -  state.n_out_ob_e, state.q_cap, sigma_laplace, phi_poisson, mesh, wmesh_e, wmesh_i, electrode_mask);
@@ -207,20 +217,30 @@ int main(int argc, char* argv[])
 
         phi = phi_poisson + (state.phi_zero * phi_laplace);
 
+        tp.val[3] = now();
+
         // Step 2.1: calculation of electric field
         fields.calculate_efield(efield_x, efield_y, phi, wmesh_i, wmesh_e, mesh, electrode_mask);
+
+        tp.val[4] = now();
 
         // Step 2.2: field weighting
         if(state.step % k_sub == 0) pic.electric_field_at_particles(efield_x_at_p_i, efield_y_at_p_i, efield_x, efield_y, p_i, state.n_active_i, mesh, lpos_i);
         pic.electric_field_at_particles(efield_x_at_p_e, efield_y_at_p_e, efield_x, efield_y, p_e, state.n_active_e, mesh, lpos_e);
 
+        tp.val[5] = now();
+
         // Step 3: integration of equations of motion
         if(state.step % k_sub == 0) pops.move_i(p_i, state.n_active_i, efield_x_at_p_i, efield_y_at_p_i);
         pops.move_e(p_e, state.n_active_e, efield_x_at_p_e, efield_y_at_p_e);
 
+        tp.val[6] = now();
+
         // // Step 4: particle loss at boundaries
         if(state.step % k_sub == 0) pops.boundaries_ob_count(p_i, state.n_active_i, lpos_i, state.n_out_ob_i, state.n_out_thr_i);
         pops.boundaries_ob_count(p_e, state.n_active_e, lpos_e, state.n_out_ob_e, state.n_out_thr_e);
+
+       tp.val[7] = now();
 
         // Step 5: particles injection
         if(state.step % k_sub == 0) pops.add_flux_particles(p_i, state.n_active_i, t_i, v_drift_i, m_i, n_inj_i, k_sub);
@@ -235,6 +255,8 @@ int main(int argc, char* argv[])
             if(state.step % k_sub == 0) coll.collisions_i(p_i, state.n_active_i, lpos_i, mesh, dens_n);
             coll.collisions_e(p_e, state.n_active_e, lpos_e, p_i, state.n_active_i, lpos_i, mesh, dens_n);
         }
+
+        tp.val[8] = now();
         
         //  ----------------------------- Diagnostics -------------------------
 
@@ -262,9 +284,10 @@ int main(int argc, char* argv[])
             output.update_metadata();
         }
 
-         if(state.step % 50000 == 0) {
-             output.save_series(series, n_points_series);
-         }
+        if(state.step % 50000 == 0) {
+            output.save_series(series, n_points_series);
+        }
+         
         
         //  if(state.step % 1 == 0) {
         //     fmatrix dens_i = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_i / vmesh;
@@ -290,8 +313,23 @@ int main(int argc, char* argv[])
              if(i_av == rf_period_i){
                 output.save_fields_snapshot(phi_av, wmesh_e_av, wmesh_i_av, mesh, "-av");
              }
-         }    
-	}
+         }
+
+        tp.val[9] = now();
+
+        if(verbosity >= 2)
+        {
+            for(int j=0; j < td.n1; j++){
+                td.val[j] += tdiff_ms(tp.val[j], tp.val[j+1]);
+            }
+            if((state.step+1) % 100 == 0){
+                print_td(td, 100);
+                td.set_zero();
+            }
+        }
+	
+    
+    }
 
     auto stop = now();
     std::cout << "Total execution duration: " << tdiff_h(start, stop) << " hours" << endl;
