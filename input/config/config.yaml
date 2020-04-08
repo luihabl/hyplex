@@ -18,7 +18,7 @@ project:
 
 simulation:
   job_name: ""
-  initial_state: "load"                      # Load input for simulation state or start again: 'load' or 'new'
+  initial_state: "new"                      # Load input for simulation state or start again: 'load' or 'new'
   verbosity: 1                               # Verbosity level: 0 means minimum messages
 
 physical:
@@ -29,17 +29,17 @@ physical:
 
 
 geometry:
-  l_x: 0.169984                             # Spatial step in x [m]
-  l_y: 0.042496                             # Spatial step in y [m]
+  l_x: 0.11242                              # Spatial step in x [m]
+  l_y: 0.02794                             # Spatial step in y [m]
   n_mesh_x: 512                             # Number of grid points in the x direction []
   n_mesh_y: 128                             # Number of grid points in the y direction []
-  n_thruster: 14                            # Number of nodes that represent the thruster []
-  a_x: 0.5                                  # Grid distorsion coefficient in the x direction []
-  a_y: 0.5                                  # Grid distorsion coefficient in the y direction []
+  n_thruster: 16                            # Number of nodes that represent the thruster []
+  a_x: 0.0                                  # Grid distorsion coefficient in the x direction []
+  a_y: 0.0                                  # Grid distorsion coefficient in the y direction []
 
 time:
   dt: 5.0e-12                               # Time step [s]
-  n_steps: 1000000                           # Number of simulation steps to be executed []
+  n_steps: 1000                             # Number of simulation steps to be executed []
   n_steps_dsmc: 1e6                         # Number of DSMC simulation steps to be executed []
   n_average: 1                              # Number of average steps []
   n_average_dsmc: 50000                     # Number of DSMC average steps []
@@ -53,14 +53,14 @@ boundaries:
   ob_type: "dirichlet"                      # Type of outer boundary condition: neumann, dirichlet
 
 thruster:
-  mfc: 1.5                                  # Mass flow rate of thruster [sccm]
+  mfc: 3.0                                  # Mass flow rate of thruster [sccm]
   eta_p: 0.5                                # Propellant utilization efficiency []
   freq: 30.0e6                              # Frequency of signal [Hz]
   v_sb: 1001.58                             # Self-bias voltage [V]
   v_rf: 1000.0                              # Amplitude of the RF signal [V]
 
 particles:
-  n_factor: 7e5                             # Macro-particle weight factor (i.e. how many particles one macro-particle represents) []
+  n_factor: 3.2e5                           # Macro-particle weight factor (i.e. how many particles one macro-particle represents) []
   n_factor_dsmc: 5e8                        # Macro-particle weight factor for neutrals []
   n_max_particles: 1e7                      # Maximum number of particles in the array []
 
@@ -83,7 +83,7 @@ ions:
   gas_name: "xenon"                         # Name of gas: 'helium' or 'xenon'
   q_i: 1.60217662e-19                       # Ion charge [kg]
   t_i: 0.025                                # Initial ion temperature [eV]
-  i_i: 0.16337157311411596                  # Ion injection current [A/m]
+  i_i: 0.1155                               # Ion injection current [A/m]
   v_drift_i: 38427.34                       # Ion injection drift velocity [m/s]
 
 helium:
