@@ -32,6 +32,12 @@ double tdiff_h(T t1, T t2){
 }
 
 template <class T>
+double tdiff_ms(T t1, T t2){
+    auto duration = duration_cast<microseconds>(t2 - t1);
+    return (double) duration.count() / (1e3);
+}
+
+template <class T>
 double tdiff_us(T t1, T t2){
     auto duration = duration_cast<microseconds>(t2 - t1);
     return (double) duration.count();
