@@ -26,10 +26,8 @@
 using namespace std;
 using namespace std::chrono;
 
-void verbose_log(string message){
-    #ifdef VERBOSE
-    cout << message << endl;
-    #endif
+void verbose_log(string message, bool print){
+    if(print) cout << message << endl;
 }
 
 void print_dsmc_info(int i, int n_active_n, int step_interval, int n_steps){
@@ -65,7 +63,7 @@ void print_info(state_info & state, int step_interval, configuration & config)
 
 void print_initial_info(double p_null_e, double p_null_i, configuration & config)
 {
-    verbose_log("\n ---- Simulation parameters ----");
+    verbose_log("\n ---- Simulation parameters ----", config.i("simulation/verbosity") >= 1);
     printf("Grid size:\t\t (%d, %d)\n", config.i("geometry/n_mesh_x"), config.i("geometry/n_mesh_y"));
     printf("Number of steps:\t %d\n", config.i("time/n_steps"));
     printf("Gas:\t\t\t %s\n", config.s("ions/gas_name").c_str());
@@ -159,7 +157,7 @@ void output_manager::save_state(fmatrix & p_e, fmatrix & p_i){
 
     file.write_attribute("state", state_attrs_int);
 
-    verbose_log("Saved state");
+    verbose_log("Saved state", verbosity >= 1);
 }
 
 void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration & config, string filename){
@@ -209,7 +207,7 @@ void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration 
     for(int i=0; i < state.n_active_i * 6; i++) p_i.val[i] = p_i_load.val[i];
     for(int i=0; i < state.n_active_e * 6; i++) p_e.val[i] = p_e_load.val[i];
 
-    verbose_log("Loaded state: Step: " + to_string(state.step_offset) + " Active electrons: " + to_string(state.n_active_e) + " Active ions: " + to_string(state.n_active_i));
+    verbose_log("Loaded state: Step: " + to_string(state.step_offset) + " Active electrons: " + to_string(state.n_active_e) + " Active ions: " + to_string(state.n_active_i), true);
 }
 
 void output_manager::save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, mesh_set & mesh, string suffix)
@@ -235,7 +233,7 @@ void output_manager::save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmat
     fmatrix dens_i = (4 / pow(dx, 2)) *  n_factor * wmesh_i / mesh.v;
     file.write_dataset("fields/dens_i", dens_i);
     
-    verbose_log("Saved fields snapshot");
+    verbose_log("Saved fields snapshot", verbosity >= 1);
 }
 
 void output_manager::save_series(unordered_map<string, fmatrix> & series, int & n_points)
@@ -255,7 +253,7 @@ void output_manager::save_series(unordered_map<string, fmatrix> & series, int & 
         file.write_dataset(path, element.second);
     }
 
-    verbose_log("Saved time series");
+    verbose_log("Saved time series", verbosity >= 1);
 }
 
 void output_manager::save_field_series(fmatrix & field, double conversion_constant)
@@ -280,6 +278,7 @@ output_manager::output_manager(system_clock::time_point _start_utc, state_info &
     output_name = build_output_name();
     
     file = exdir(output_path / output_name, false);    
+    verbosity = config.i("simulation/verbosity");
 }
 
 string output_manager::build_output_name(){

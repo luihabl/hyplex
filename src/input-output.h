@@ -22,7 +22,7 @@
 using namespace std;
 using namespace std::chrono;
 
-void verbose_log(string message);
+void verbose_log(string message, bool print);
 void print_info(state_info & state, int step_interval, configuration & config);
 void print_initial_info(double p_null_e, double p_null_i, configuration & config);
 void print_dsmc_info(int i, int n_active_n, int step_interval, int n_steps);
@@ -62,7 +62,7 @@ void save_to_csv(tmatrix<T> & m, string output_path, string name = "out.csv", in
     
     file.close();
 
-    verbose_log("Saved " + name);
+    verbose_log("Saved " + name, true);
 }
 
 
@@ -83,14 +83,14 @@ template <class T>
 void save_fmatrix(tmatrix<T> & m, string filename, string dataname){
     exdir file(filename);
     file.write_dataset(dataname, m);
-    verbose_log("Saved " + filename + dataname);
+    verbose_log("Saved " + filename + dataname, true);
 }
 
 template <class T>
 void load_fmatrix(tmatrix<T> & m, string filename, string dataname){
     exdir file(filename);
     file.read_dataset(dataname, m);
-    verbose_log("Loaded " + filename + dataname);
+    verbose_log("Loaded " + filename + dataname, true);
 }
 
 // ------------------- output manager class ---------------------------------
@@ -105,6 +105,7 @@ class output_manager
         state_info & state;
         configuration & config;
         mesh_set & mesh;
+        int verbosity;
         void check_output_folder();
         string build_output_name();
     

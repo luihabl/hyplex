@@ -50,9 +50,6 @@ int main(int argc, char* argv[])
     state_info state;
 
     // ------------------- Variable initialization ----------------------------
-    
-	
-    verbose_log("Initializing general variables");
 
     // Loading variables from config
     
@@ -78,6 +75,8 @@ int main(int argc, char* argv[])
     const double n_factor       = config.f("particles/n_factor");
     const bool mcc_coll         = config.b("neutrals/mcc_coll");
     const string inj_model      = config.s("electrons/inj_model");
+
+    verbose_log("Initializing general variables", verbosity >= 1);
  
     // General field variables
 
@@ -91,7 +90,7 @@ int main(int argc, char* argv[])
     double sigma_laplace;
     
     // Doiagnostics variables
-    verbose_log("Initializing diagnostics variables");
+    verbose_log("Initializing diagnostics variables", verbosity >= 1);
     fmatrix phi_av          = fmatrix::zeros(n_mesh_x, n_mesh_y);
     fmatrix wmesh_e_av      = fmatrix::zeros(n_mesh_x, n_mesh_y);
     fmatrix wmesh_i_av      = fmatrix::zeros(n_mesh_x, n_mesh_y);
@@ -110,7 +109,7 @@ int main(int argc, char* argv[])
     int n_points_series         = 0;
     
 	// Particle 1 - Electrons
-    verbose_log("Initializing electrons variables");
+    verbose_log("Initializing electrons variables", verbosity >= 1);
 	fmatrix p_e             = fmatrix::zeros(n_max_particles, 6);
     imatrix lpos_e          = imatrix::zeros(n_max_particles, 2);
 	fmatrix wmesh_e         = fmatrix::zeros(n_mesh_x, n_mesh_y);
@@ -119,7 +118,7 @@ int main(int argc, char* argv[])
     double n_inj_el          = config.f("p/n_inj_el");
 	
 	// Particle 2 - Ions
-    verbose_log("Initializing ions variables");
+    verbose_log("Initializing ions variables", verbosity >= 1);
 	fmatrix p_i             = fmatrix::zeros(n_max_particles, 6);
     imatrix lpos_i          = imatrix::zeros(n_max_particles, 2);
 	fmatrix wmesh_i         = fmatrix::zeros(n_mesh_x, n_mesh_y);
@@ -128,11 +127,11 @@ int main(int argc, char* argv[])
     double n_inj_i          = config.f("p/n_inj_i");
     
     // Particle 3 - Neutrals
-    verbose_log("Initializing neutral variables");
+    verbose_log("Initializing neutral variables", verbosity >= 1);
     fmatrix dens_n          = fmatrix::zeros(n_mesh_x, n_mesh_y);
 
     // ----------------------------- Operation objects -------------------------
-    verbose_log("Initializing mesh");
+    verbose_log("Initializing mesh", verbosity >= 1);
 
     mesh_set mesh(config);
     mesh.init_mesh();
@@ -142,7 +141,7 @@ int main(int argc, char* argv[])
     particle_operations pops(config, pic);
 
     // ----------------------------- Solver -----------------------------------
-    verbose_log("Initializing solver");
+    verbose_log("Initializing solver", verbosity >= 1);
 
     rsolver solver(mesh, config);
     setup_rsolver(solver, mesh, electrode_mask);
@@ -158,15 +157,15 @@ int main(int argc, char* argv[])
     string expm_neutral = config.s("neutrals/expm_neutral");
 
     if (expm_neutral == "dsmc"){
-        verbose_log(" ---- Starting DSMC loop ---- ");
+        verbose_log(" ---- Starting DSMC loop ---- ", verbosity >= 1);
         run_dsmc(mesh, dens_n, config, "dens_n" + job_name + ".exdir");
     }
     else if (expm_neutral == "constant") {
-        verbose_log(" ---- Setting constant neutral density ---- ");
+        verbose_log(" ---- Setting constant neutral density ---- ", verbosity >= 1);
         dens_n.set_all(config.f("neutrals/n_neutral"));
     } 
     else if (expm_neutral == "load") {
-        verbose_log(" ---- Loading neutral density field ---- ");
+        verbose_log(" ---- Loading neutral density field ---- ", verbosity >= 1);
         load_fmatrix(dens_n, config.s("project/input_path") + "dens_n.exdir", "dens_n");
     }
 
@@ -192,7 +191,7 @@ int main(int argc, char* argv[])
     fmatrix td = fmatrix::zeros(9); 
     tmatrix<steady_clock::time_point> tp(10);
 
-    verbose_log(" ---- Starting main loop ---- ");
+    verbose_log(" ---- Starting main loop ---- ", verbosity >= 1);
     auto start = now();
 	for (state.step = state.step_offset; state.step < n_steps + state.step_offset; state.step++)
 	{

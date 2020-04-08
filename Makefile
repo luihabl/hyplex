@@ -11,15 +11,15 @@ ifeq ($(machine),zoidberg)
   # CXXFLAGS = -I/usr/local/include -Ilib -I$(HDF5INCLUDE) -I$(MPI_INCLUDE) -I$(HYPREINCLUDE) -lpthread -lz -ldl -lm -std=c++11 -O3 -march=native -Wall -D VERBOSE 
   CC = h5c++
   LDFLAGS = -lHYPRE -lm
-  CXXFLAGS = -Ilib -I$(HYPREINCLUDE) -std=$(cpp_std) -O3 -Wall -D VERBOSE
+  CXXFLAGS = -Ilib -I$(HYPREINCLUDE) -std=$(cpp_std) -O3 -Wall
 else ifeq ($(machine),hopper)
   CC = mpic++
   LDFLAGS = -lm
-  CXXFLAGS = -Ilib -I$(HDF5INCLUDE) -I$(HYPREINCLUDE) -std=$(cpp_std) -O3 -Wall -D VERBOS
+  CXXFLAGS = -Ilib -I$(HDF5INCLUDE) -I$(HYPREINCLUDE) -std=$(cpp_std) -O3 -Wall
 else
   CC = g++
   LDFLAGS = -L/usr/local/lib -Llib/$(hypre_dir)/src/hypre/lib -Llib/yaml -lmpi -lHYPRE -lyaml-cpp
-  CXXFLAGS = -I/usr/local/include -Ilib -Ilib/$(hypre_dir)/src/hypre/include -Ilib/yaml -std=$(cpp_std) -O3 -march=native -Wall -D VERBOSE
+  CXXFLAGS = -I/usr/local/include -Ilib -Ilib/$(hypre_dir)/src/hypre/include -Ilib/yaml -std=$(cpp_std) -O3 -march=native -Wall
 endif
 
 # GIT_HASH=`git rev-parse HEAD`
