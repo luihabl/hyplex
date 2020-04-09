@@ -32,7 +32,6 @@ using namespace std::experimental;
 #endif
 
 void verbose_log(string message, bool print);
-void print_info(state_info & state, int step_interval, configuration & config);
 void print_initial_info(double p_null_e, double p_null_i, configuration & config);
 void print_dsmc_info(int i, int n_active_n, int step_interval, int n_steps);
 
@@ -115,18 +114,20 @@ class output_manager
         configuration & config;
         mesh_set & mesh;
         int verbosity;
+        int step_print_info, step_save_state, step_save_fields, step_save_series, step_save_fseries, step_update_metadata;
         void check_output_folder();
         string build_output_name();
     
     public:
         exdir file;
         output_manager(system_clock::time_point _start_utc, state_info & state, configuration & config, mesh_set & mesh);
-        void save_state(fmatrix & p_e, fmatrix & p_i);
-        void save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, mesh_set & mesh, string suffix);
-        void save_series(unordered_map<string, fmatrix> & series, int & n_points); 
-        void save_field_series(fmatrix & field, double conversion_constant);
+        void save_state(fmatrix & p_e, fmatrix & p_i, bool force = false);
+        void save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, mesh_set & mesh, string suffix, bool force = false);
+        void save_series(unordered_map<string, fmatrix> & series, int & n_points, bool force = false); 
+        void save_field_series(fmatrix & field, double conversion_constant, bool force = false);
         void save_initial_data();
-        void update_metadata(string status = "running");
+        void update_metadata(string status = "running", bool force = false);
+        void print_info();
 };
 
 

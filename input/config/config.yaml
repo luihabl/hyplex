@@ -27,7 +27,6 @@ physical:
   pi: 3.14159265359                         # Pi []
   k_boltz: 1.38064852e-23                   # Boltzmann constant [J * K^-1]
 
-
 geometry:
   l_x: 0.11242                              # Spatial step in x [m]
   l_y: 0.02794                             # Spatial step in y [m]
@@ -86,6 +85,33 @@ ions:
   i_i: 0.1155                               # Ion injection current [A/m]
   v_drift_i: 38427.34                       # Ion injection drift velocity [m/s]
 
+diagnostics:
+  
+  print_info:
+    print_step: 100
+
+  metadata:
+    update_step: 10000
+    end_save: true  
+
+  state:
+    save_step: 10000
+    end_save: true                              
+
+  fields_snapshot:
+    save_step: 10000
+    end_save: true   
+  
+  series:
+    measure_step: 1
+    save_step: 50000
+    end_save: true
+  
+  field_series:
+    save_step: 1
+    end_save: true
+
+                         
 helium:
   m_i: 6.67e-27                             # Ion mass [kg]
   e_exc:                                    # Excitation energies [eV]

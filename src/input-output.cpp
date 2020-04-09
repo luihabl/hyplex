@@ -53,18 +53,18 @@ void print_dsmc_info(int i, int n_active_n, int step_interval, int n_steps){
     }
 }
 
-void print_info(state_info & state, int step_interval, configuration & config)
+void output_manager::print_info()
 {
     static high_resolution_clock::time_point t0;
     if(state.step==state.step_offset) t0 = high_resolution_clock::now();
-    if ((state.step + 1) % step_interval == 0 || state.step == 0)
+    if ((state.step + 1) % step_print_info == 0 || state.step == 0)
     {
         printf("[%05.2f%%] ", (double) (100.0 * (state.step + 1 - state.step_offset) / config.i("time/n_steps")));
         printf("Step: %-8d ", state.step + 1);
         printf("Active electrons: %-8d ", state.n_active_e);
         printf("Active ions: %-8d ", state.n_active_i);
         printf("Cap. voltage: %.4f V   ", state.phi_zero / config.f("p/k_phi"));
-        printf("Loop time: %.2f ms ", (double) duration_cast<microseconds>(high_resolution_clock::now() - t0).count() / (1e3 * step_interval));
+        printf("Loop time: %.2f ms ", (double) duration_cast<microseconds>(high_resolution_clock::now() - t0).count() / (1e3 * step_print_info));
         printf("\n");
         t0 = high_resolution_clock::now();
     }
@@ -115,7 +115,10 @@ fmatrix load_csv(string file_path, char delim, int cols)
     return data;
 }
 
-void output_manager::save_state(fmatrix & p_e, fmatrix & p_i){
+void output_manager::save_state(fmatrix & p_e, fmatrix & p_i, bool force){
+
+    if(!(force || state.step % step_save_state == 0)) return;
+
     check_output_folder();
     const double dx = config.f("geometry/dx");
     const double dt = config.f("time/dt");
@@ -219,8 +222,10 @@ void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration 
     verbose_log("Loaded state: Step: " + to_string(state.step_offset) + " Active electrons: " + to_string(state.n_active_e) + " Active ions: " + to_string(state.n_active_i), true);
 }
 
-void output_manager::save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, mesh_set & mesh, string suffix)
+void output_manager::save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, mesh_set & mesh, string suffix, bool force)
 {
+    if(!(force || state.step % step_save_fields == 0)) return;
+
     check_output_folder();
     file.create_group("fields" + suffix);
 
@@ -245,8 +250,10 @@ void output_manager::save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmat
     verbose_log("Saved fields snapshot", verbosity >= 1);
 }
 
-void output_manager::save_series(unordered_map<string, fmatrix> & series, int & n_points)
+void output_manager::save_series(unordered_map<string, fmatrix> & series, int & n_points, bool force)
 {
+    if(!(force || state.step % step_save_series == 0)) return;
+
     check_output_folder();
 
     file.create_group("series");
@@ -265,8 +272,10 @@ void output_manager::save_series(unordered_map<string, fmatrix> & series, int & 
     verbose_log("Saved time series", verbosity >= 1);
 }
 
-void output_manager::save_field_series(fmatrix & field, double conversion_constant)
+void output_manager::save_field_series(fmatrix & field, double conversion_constant, bool force)
 {
+    if(!(force || state.step % step_save_fseries == 0)) return;
+
     check_output_folder();
     file.create_group("field_series");
 
@@ -309,6 +318,13 @@ string output_manager::build_output_name(){
 
 void output_manager::save_initial_data(){
 
+    step_print_info  = config.i("diagnostics/print_info/print_step");
+    step_save_state  = config.i("diagnostics/state/save_step"); 
+    step_save_fields = config.i("diagnostics/fields_snapshot/save_step"); 
+    step_save_series = config.i("diagnostics/series/save_step");
+    step_save_fseries = config.i("diagnostics/field_series/save_step");
+    step_update_metadata = config.i("diagnostics/metadata/update_step");
+
     double dx = config.f("geometry/dx");
     fmatrix mesh_x = mesh.x * dx;
     fmatrix mesh_y = mesh.y * dx;
@@ -333,7 +349,10 @@ void output_manager::save_initial_data(){
     update_metadata();
 }
 
-void output_manager::update_metadata(string status){
+void output_manager::update_metadata(string status, bool force){
+
+    if(!(force || state.step % step_update_metadata == 0)) return;
+
     YAML::Node attributes = file.get_attributes("");
     attributes["metadata"]["stop_utc"] = time_to_string(sys_now());
     attributes["metadata"]["elapsed_hours"] = tdiff_h(start_utc, sys_now());

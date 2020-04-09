@@ -267,35 +267,28 @@ int main(int argc, char* argv[])
         
         //  ----------------------------- Diagnostics -------------------------
 
-        print_info(state, 100, config);
+        output.print_info();
 
-         if(state.step % 1 == 0){
-             series["time"].val[n_points_series] = state.step * dt;
-             series["v_cap"].val[n_points_series] = state.phi_zero / k_phi;
-             series["n_active_i"].val[n_points_series] = state.n_active_i;
-             series["n_active_e"].val[n_points_series] = state.n_active_e;
-            
-             series["I_out_ob_e"].val[n_points_series] = state.n_out_ob_e * n_factor * q / dt;
-             series["I_out_ob_i"].val[n_points_series] = state.n_out_ob_i * n_factor * q / dt;
-             series["I_out_thr_e"].val[n_points_series] = state.n_out_thr_e * n_factor * q / dt;
-             series["I_out_thr_i"].val[n_points_series] = state.n_out_thr_i * n_factor * q / dt;
-             series["I_in_thr_e"].val[n_points_series] = n_inj_el * n_factor * q / dt;
-             series["I_in_thr_i"].val[n_points_series] = n_inj_i * n_factor * q / dt;
-             n_points_series += 1;
-         }
+        if(state.step % 1 == 0){
+            series["time"].val[n_points_series] = state.step * dt;
+            series["v_cap"].val[n_points_series] = state.phi_zero / k_phi;
+            series["n_active_i"].val[n_points_series] = state.n_active_i;
+            series["n_active_e"].val[n_points_series] = state.n_active_e;
         
-        if(state.step % 10000 == 0)
-        {
-            output.save_state(p_e, p_i);
-            output.save_fields_snapshot(phi, wmesh_e, wmesh_i, mesh, "");
-            output.update_metadata();
+            series["I_out_ob_e"].val[n_points_series] = state.n_out_ob_e * n_factor * q / dt;
+            series["I_out_ob_i"].val[n_points_series] = state.n_out_ob_i * n_factor * q / dt;
+            series["I_out_thr_e"].val[n_points_series] = state.n_out_thr_e * n_factor * q / dt;
+            series["I_out_thr_i"].val[n_points_series] = state.n_out_thr_i * n_factor * q / dt;
+            series["I_in_thr_e"].val[n_points_series] = n_inj_el * n_factor * q / dt;
+            series["I_in_thr_i"].val[n_points_series] = n_inj_i * n_factor * q / dt;
+            n_points_series += 1;
         }
 
-        if(state.step % 50000 == 0) {
-            output.save_series(series, n_points_series);
-        }
-         
-        
+        output.save_state(p_e, p_i);
+        output.save_fields_snapshot(phi, wmesh_e, wmesh_i, mesh, "");
+        output.save_series(series, n_points_series);
+        output.update_metadata();
+                
         //  if(state.step % 1 == 0) {
         //     fmatrix dens_i = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_i / vmesh;
         //     save_field_series(dens_i, state, 1, "_dens_i");
@@ -340,10 +333,10 @@ int main(int argc, char* argv[])
     std::cout << "Total execution duration: " << tdiff_h(start, stop) << " hours" << endl;
 
     // ----------------------------- Saving outputs ---------------------------
-    output.save_state(p_e, p_i);
-    output.save_fields_snapshot(phi, wmesh_e, wmesh_i, mesh, "");
-    output.save_series(series, n_points_series);
-    output.update_metadata("completed");
+    output.save_state(p_e, p_i, config.b("diagnostics/state/end_save"));
+    output.save_fields_snapshot(phi, wmesh_e, wmesh_i, mesh, "", config.b("diagnostics/fields_snapshot/end_save"));
+    output.save_series(series, n_points_series, config.b("diagnostics/series/end_save"));
+    output.update_metadata("completed", config.b("diagnostics/metadata/end_save"));
 
     // ----------------------------- Finalizing -------------------------------
     // delete_cross_sections_arrays();
