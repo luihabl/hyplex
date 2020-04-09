@@ -5,17 +5,13 @@ hypre_dir=hypre-2.16.0
 cpp_std=c++17
 
 ifeq ($(machine),zoidberg)
-  # CC = g++
-  #CC=h5c++
-  # LDFLAGS = -L/usr/local/lib -lHYPRE -lmpi -lmpi_cxx -lhdf5 -lhdf5_hl_cpp -lhdf5_cpp -lhdf5_hl -lhdf5
-  # CXXFLAGS = -I/usr/local/include -Ilib -I$(HDF5INCLUDE) -I$(MPI_INCLUDE) -I$(HYPREINCLUDE) -lpthread -lz -ldl -lm -std=c++11 -O3 -march=native -Wall -D VERBOSE 
   CC = h5c++
   LDFLAGS = -lHYPRE -lm
   CXXFLAGS = -Ilib -I$(HYPREINCLUDE) -std=$(cpp_std) -O3 -Wall
 else ifeq ($(machine),hopper)
   CC = mpic++
-  LDFLAGS = -lm -L/usr/local/lib -Llib/yaml -lyaml-cpp
-  CXXFLAGS = -I/usr/local/include -Ilib -Ilib/yaml -Ilibm -I$(HYPREINCLUDE) -std=$(cpp_std) -O3 -Wall
+  LDFLAGS = -lm -L/usr/local/lib -Llib/yaml -lyaml-cpp -L$(HYPREDIR) -lHYPRE -lstdc++fs
+  CXXFLAGS = -I/usr/local/include -Ilib -Ilib/yaml -Ilibm -I$(HYPREINCLUDE) -std=$(cpp_std) -O3 -Wall -D FS_EXPERIMENTAL
 else
   CC = g++
   LDFLAGS = -L/usr/local/lib -Llib/$(hypre_dir)/src/hypre/lib -Llib/yaml -lmpi -lHYPRE -lyaml-cpp

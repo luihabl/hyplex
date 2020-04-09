@@ -19,7 +19,7 @@ project:
 simulation:
   job_name: ""
   initial_state: "new"                      # Load input for simulation state or start again: 'load' or 'new'
-  verbosity: 1                               # Verbosity level: 0 means minimum messages
+  verbosity: 2                               # Verbosity level: 0 means minimum messages
 
 physical:
   q: 1.60217662e-19                         # Elementary charge [C]

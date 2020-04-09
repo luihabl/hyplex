@@ -9,7 +9,13 @@
 #include <sstream>
 #include <iomanip>
 #include <unordered_map>
+
+#ifdef FS_EXPERIMENTAL
+#include <experimental/filesystem>
+#else
 #include <filesystem>
+#endif
+
 #include "clock.h"
 #include "date.h"
 #include "fmatrix.h"
@@ -21,6 +27,9 @@
 
 using namespace std;
 using namespace std::chrono;
+#ifdef FS_EXPERIMENTAL
+using namespace std::experimental;
+#endif
 
 void verbose_log(string message, bool print);
 void print_info(state_info & state, int step_interval, configuration & config);

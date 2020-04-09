@@ -6,7 +6,12 @@
 #include <sstream>
 #include <string>
 #include <unordered_map>
+
+#ifdef FS_EXPERIMENTAL
+#include <experimental/filesystem>
+#else
 #include <filesystem>
+#endif
 
 #include "fields.h"
 #include "fmatrix.h"
@@ -28,6 +33,9 @@
 
 using namespace std;
 using namespace std::chrono;
+#ifdef FS_EXPERIMENTAL
+using namespace std::experimental;
+#endif
 
 // ----------------------------- Main function --------------------------------
 int main(int argc, char* argv[])
@@ -189,24 +197,24 @@ int main(int argc, char* argv[])
     print_initial_info(coll.p_null_e, coll.p_null_i, config);
 
     fmatrix td = fmatrix::zeros(9); 
-    tmatrix<steady_clock::time_point> tp(10);
+    tmatrix<system_clock::time_point> tp(10);
 
     verbose_log(" ---- Starting main loop ---- ", verbosity >= 1);
-    auto start = now();
+    auto start = sys_now();
 	for (state.step = state.step_offset; state.step < n_steps + state.step_offset; state.step++)
 	{
-        tp.val[0] = now();
+        tp.val[0] = sys_now();
 
 		// Step 1.0: particle weighting
         if(state.step % k_sub == 0) pic.weight(p_i, state.n_active_i, wmesh_i, mesh, lpos_i);
         pic.weight(p_e, state.n_active_e, wmesh_e, mesh, lpos_e);
 
-        tp.val[1] = now();
+        tp.val[1] = sys_now();
 
         // Step 2.0 integration of Poisson's equation
         solver.solve(phi_poisson, voltages, wmesh_i, wmesh_e);
 
-        tp.val[2] = now();
+        tp.val[2] = sys_now();
         
         state.sigma_0 = state.sigma_1;
         state.phi_zero = fields.calculate_phi_zero(state.sigma_1, state.n_out_ob_i -  state.n_out_ob_e, state.q_cap, sigma_laplace, phi_poisson, mesh, wmesh_e, wmesh_i, electrode_mask);
@@ -216,30 +224,30 @@ int main(int argc, char* argv[])
 
         phi = phi_poisson + (state.phi_zero * phi_laplace);
 
-        tp.val[3] = now();
+        tp.val[3] = sys_now();
 
         // Step 2.1: calculation of electric field
         fields.calculate_efield(efield_x, efield_y, phi, wmesh_i, wmesh_e, mesh, electrode_mask);
 
-        tp.val[4] = now();
+        tp.val[4] = sys_now();
 
         // Step 2.2: field weighting
         if(state.step % k_sub == 0) pic.electric_field_at_particles(efield_x_at_p_i, efield_y_at_p_i, efield_x, efield_y, p_i, state.n_active_i, mesh, lpos_i);
         pic.electric_field_at_particles(efield_x_at_p_e, efield_y_at_p_e, efield_x, efield_y, p_e, state.n_active_e, mesh, lpos_e);
 
-        tp.val[5] = now();
+        tp.val[5] = sys_now();
 
         // Step 3: integration of equations of motion
         if(state.step % k_sub == 0) pops.move_i(p_i, state.n_active_i, efield_x_at_p_i, efield_y_at_p_i);
         pops.move_e(p_e, state.n_active_e, efield_x_at_p_e, efield_y_at_p_e);
 
-        tp.val[6] = now();
+        tp.val[6] = sys_now();
 
         // // Step 4: particle loss at boundaries
         if(state.step % k_sub == 0) pops.boundaries_ob_count(p_i, state.n_active_i, lpos_i, state.n_out_ob_i, state.n_out_thr_i);
         pops.boundaries_ob_count(p_e, state.n_active_e, lpos_e, state.n_out_ob_e, state.n_out_thr_e);
 
-       tp.val[7] = now();
+       tp.val[7] = sys_now();
 
         // Step 5: particles injection
         if(state.step % k_sub == 0) pops.add_flux_particles(p_i, state.n_active_i, t_i, v_drift_i, m_i, n_inj_i, k_sub);
@@ -255,7 +263,7 @@ int main(int argc, char* argv[])
             coll.collisions_e(p_e, state.n_active_e, lpos_e, p_i, state.n_active_i, lpos_i, mesh, dens_n);
         }
 
-        tp.val[8] = now();
+        tp.val[8] = sys_now();
         
         //  ----------------------------- Diagnostics -------------------------
 
@@ -314,7 +322,7 @@ int main(int argc, char* argv[])
              }
          }
 
-        tp.val[9] = now();
+        tp.val[9] = sys_now();
 
         if(verbosity >= 2)
         {
@@ -330,7 +338,7 @@ int main(int argc, char* argv[])
     
     }
 
-    auto stop = now();
+    auto stop = sys_now();
     std::cout << "Total execution duration: " << tdiff_h(start, stop) << " hours" << endl;
 
     // ----------------------------- Saving outputs ---------------------------

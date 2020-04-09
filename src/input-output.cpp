@@ -7,7 +7,13 @@
 #include <fstream>
 #include <chrono>
 #include <unordered_map>
+
+#ifdef FS_EXPERIMENTAL
+#include <experimental/filesystem>
+#else
 #include <filesystem>
+#endif
+
 #include <sys/stat.h>
 
 #include "yaml-cpp/yaml.h"
@@ -25,6 +31,9 @@
 
 using namespace std;
 using namespace std::chrono;
+#ifdef FS_EXPERIMENTAL
+using namespace std::experimental;
+#endif
 
 void verbose_log(string message, bool print){
     if(print) cout << message << endl;

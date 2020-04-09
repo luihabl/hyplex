@@ -2,7 +2,13 @@
 #define EXDIR_H
 
 #include <string>
+
+#ifdef FS_EXPERIMENTAL
+#include <experimental/filesystem>
+#else
 #include <filesystem>
+#endif
+
 #include <cstdlib>
 #include <fstream>
 #include <map>
@@ -18,6 +24,10 @@
 #define EXDIR_EXT ".exdir"
 
 using namespace std;
+#ifdef FS_EXPERIMENTAL
+using namespace std::experimental;
+#endif
+
 class exdir
 {
     private:
