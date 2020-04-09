@@ -326,7 +326,7 @@ int main(int argc, char* argv[])
 
         if(verbosity >= 2)
         {
-            for(int j=0; j < td.n1; j++){
+            for(size_t j=0; j < td.n1; j++){
                 td.val[j] += tdiff_ms(tp.val[j], tp.val[j+1]);
             }
             if((state.step+1) % 100 == 0){
@@ -334,8 +334,6 @@ int main(int argc, char* argv[])
                 td.set_zero();
             }
         }
-	
-    
     }
 
     auto stop = sys_now();
