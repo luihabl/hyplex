@@ -10,7 +10,6 @@
 #SBATCH --verbose                                       # Increase informational messages
 #SBATCH --ntasks=1	                                    # Number of core (max 64) for your parallel job
 #SBATCH --time=10:00                                    # Maximum time 
-#SBATCH --test-only
 
 # Put your email here to receive execution location by mail
 echo "" |mail -s "Your job $SLURM_JOB_ID is running on $HOSTNAME" lui.habl@lpp.polytechnique.fr
