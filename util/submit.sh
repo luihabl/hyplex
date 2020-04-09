@@ -23,7 +23,7 @@ module load hypre/2.14.0
 
 # Here the code to execute with the SRUN command
 
-srun ./run #/home/habl/pic-plume/input/config/config-zoid.ini
+mpirun --mca btl openib,self,sm -np $SLURM_NTASKS ./run #/home/habl/pic-plume/input/config/config-zoid.ini
 
 # Make sure you return zero as exit code otherwiser SLURM will report your job
 # as failed.
