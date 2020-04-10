@@ -10,8 +10,8 @@ ifeq ($(machine),zoidberg)
   CXXFLAGS = -Ilib -I$(HYPREINCLUDE) -std=$(cpp_std) -O3 -Wall
 else ifeq ($(machine),hopper)
   CC = mpic++
-  LDFLAGS = -lm -L/usr/local/lib -Llib/yaml -lyaml-cpp -L$(HYPREDIR) -lHYPRE -lstdc++fs
-  CXXFLAGS = -I/usr/local/include -Ilib -Ilib/yaml -Ilibm -I$(HYPREINCLUDE) -std=$(cpp_std) -O3 -Wall -D FS_EXPERIMENTAL
+  LDFLAGS = -lm -L/usr/local/lib -Llib/yaml -lyaml-cpp -Llib/hypre-2.18.2/src/hypre/lib -lHYPRE 
+  CXXFLAGS = -I/usr/local/include -Ilib -Ilib/yaml -Ilibm -Ilib/hypre-2.18.2/src/hypre/include -std=$(cpp_std) -O3 -Wall 
 else
   CC = g++
   LDFLAGS = -L/usr/local/lib -Llib/$(hypre_dir)/src/hypre/lib -Llib/yaml -lmpi -lHYPRE -lyaml-cpp
