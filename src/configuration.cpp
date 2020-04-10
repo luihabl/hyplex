@@ -3,7 +3,11 @@
 #include <iomanip>
 #include <typeinfo>
 #include <string>
+#ifdef FS_EXPERIMENTAL
+#include <experimental/unordered_map>
+#else
 #include <unordered_map>
+#endif
 #include <cmath>
 #include <cxxabi.h>
 

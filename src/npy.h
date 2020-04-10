@@ -34,10 +34,17 @@
 #include <stdexcept>
 #include <algorithm>
 #include <regex>
+#ifdef FS_EXPERIMENTAL
+#include <experimental/unordered_map>
+#else
 #include <unordered_map>
+#endif
 
 #include "fmatrix.h"
 
+#ifdef FS_EXPERIMENTAL
+using namespace std::experimental;
+#endif
 
 namespace npy {
 

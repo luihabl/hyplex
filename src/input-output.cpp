@@ -6,7 +6,11 @@
 #include <sstream>
 #include <fstream>
 #include <chrono>
+#ifdef FS_EXPERIMENTAL
+#include <experimental/unordered_map>
+#else
 #include <unordered_map>
+#endif
 
 #ifdef FS_EXPERIMENTAL
 #include <experimental/filesystem>
