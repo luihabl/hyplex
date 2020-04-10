@@ -3,11 +3,7 @@
 #include <iomanip>
 #include <typeinfo>
 #include <string>
-#ifdef FS_EXPERIMENTAL
-#include <experimental/unordered_map>
-#else
 #include <unordered_map>
-#endif
 #include <cmath>
 #include <cxxabi.h>
 
@@ -15,8 +11,6 @@
 #include "yaml-cpp/yaml.h"
 
 #define ERROR_MSG(Map, Type) "ERROR: Key not found in Configuration." #Map "(" Type "): "
-
-
 
 void configuration::calculate_parameters(){
 

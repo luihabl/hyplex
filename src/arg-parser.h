@@ -4,18 +4,11 @@
 #include "args.h"
 #include "input-output.h"
 #include <iostream>
-#ifdef FS_EXPERIMENTAL
-#include <experimental/unordered_map>
-#else
 #include <unordered_map>
-#endif
 
 #include <string>
 
 using namespace std;
-#ifdef FS_EXPERIMENTAL
-using namespace std::experimental;
-#endif
 
 struct argparser{
 

@@ -2,13 +2,9 @@
 #define CONFIGURATION_H
 
 #include <string>
-#ifdef FS_EXPERIMENTAL
-#include <experimental/unordered_map>
-#else
-#include <unordered_map>
-#endif
 #include <sstream>
 #include <iomanip>
+#include <unordered_map>
 
 #include "yaml-cpp/yaml.h"
 #include "fmatrix.h"
@@ -16,9 +12,6 @@
 #define ERROR_MSG(Map, Type) "ERROR: Key not found in Configuration." #Map "(" Type "): "
 
 using namespace std;
-#ifdef FS_EXPERIMENTAL
-using namespace std::experimental;
-#endif
 
 class configuration {
 
