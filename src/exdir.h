@@ -3,11 +3,7 @@
 
 #include <string>
 
-#ifdef FS_EXPERIMENTAL
-#include <experimental/filesystem>
-#else
-#include <filesystem>
-#endif
+#include "filesystem.hpp"
 
 #include <cstdlib>
 #include <fstream>
@@ -24,46 +20,42 @@
 #define EXDIR_EXT ".exdir"
 
 using namespace std;
-#ifdef FS_EXPERIMENTAL
-using namespace std::experimental;
-#endif
-
 class exdir
 {
     private:
-        void create_folder(filesystem::path path, string type);
-        void write_metadata(filesystem::path path, string type, string version);
-        void ensure_attr_exists(filesystem::path object_path);
-        template<class T> void save_to_file(filesystem::path file_path, T content, ios::openmode mode=ios::app);
+        void create_folder(ghc::filesystem::path path, string type);
+        void write_metadata(ghc::filesystem::path path, string type, string version);
+        void ensure_attr_exists(ghc::filesystem::path object_path);
+        template<class T> void save_to_file(ghc::filesystem::path file_path, T content, ios::openmode mode=ios::app);
         string build_file_name(string file_preffix);
-        bool is_type(filesystem::path path, string type);
+        bool is_type(ghc::filesystem::path path, string type);
     
     public:
-        filesystem::path file_path;
+        ghc::filesystem::path file_path;
         
-        exdir(filesystem::path _file_path, bool _overwrite_file=false);
+        exdir(ghc::filesystem::path _file_path, bool _overwrite_file=false);
         exdir(const exdir & other);
         exdir() {};
         exdir & operator = (const exdir & other);
-        void create_group(filesystem::path group_path);
-        template <class T> void write_dataset(filesystem::path dataset_path, tmatrix<T> & data);
-        YAML::Node get_attributes(filesystem::path object_path);
-        void read_all_attributes(filesystem::path object_path, YAML::Node & node);
-        template <class T> void write_attribute(filesystem::path object_path, string key, T value);
-        template <class T> void write_attribute(filesystem::path object_path, tmatrix<string> & key, tmatrix<T> & value);
-        template <class T> void write_attribute(filesystem::path object_path, map<string, T> & dict);
-        void write_attribute(filesystem::path object_path, YAML::Node & other_node);
-        template <class T> void read_dataset(filesystem::path dataset_path, tmatrix<T> & data);
-        template <class T> void read_attribute(filesystem::path object_path, string key, T & value);
-        void get_dataset_size(filesystem::path dataset_path, tmatrix<unsigned long> & shape);
-        void clean_attr_file(filesystem::path object_path);
+        void create_group(ghc::filesystem::path group_path);
+        template <class T> void write_dataset(ghc::filesystem::path dataset_path, tmatrix<T> & data);
+        YAML::Node get_attributes(ghc::filesystem::path object_path);
+        void read_all_attributes(ghc::filesystem::path object_path, YAML::Node & node);
+        template <class T> void write_attribute(ghc::filesystem::path object_path, string key, T value);
+        template <class T> void write_attribute(ghc::filesystem::path object_path, tmatrix<string> & key, tmatrix<T> & value);
+        template <class T> void write_attribute(ghc::filesystem::path object_path, map<string, T> & dict);
+        void write_attribute(ghc::filesystem::path object_path, YAML::Node & other_node);
+        template <class T> void read_dataset(ghc::filesystem::path dataset_path, tmatrix<T> & data);
+        template <class T> void read_attribute(ghc::filesystem::path object_path, string key, T & value);
+        void get_dataset_size(ghc::filesystem::path dataset_path, tmatrix<unsigned long> & shape);
+        void clean_attr_file(ghc::filesystem::path object_path);
         bool file_exists();
 };
 
-inline exdir::exdir(filesystem::path _file_path, bool _overwrite_file){
+inline exdir::exdir(ghc::filesystem::path _file_path, bool _overwrite_file){
     file_path = _file_path;
     if(_overwrite_file) 
-        filesystem::remove_all(file_path);
+        ghc::filesystem::remove_all(file_path);
 
     create_folder(file_path, "file");
 }
@@ -82,13 +74,13 @@ inline exdir::exdir (const exdir & other)
     file_path = other.file_path;
 }
 
-inline void exdir::create_folder(filesystem::path path, string type){
-    filesystem::create_directories(path);
+inline void exdir::create_folder(ghc::filesystem::path path, string type){
+    ghc::filesystem::create_directories(path);
     write_metadata(path, type, VERSION);
 }   
 
 template<class T>
-void exdir::save_to_file(filesystem::path file_path, T content, ios::openmode mode)
+void exdir::save_to_file(ghc::filesystem::path file_path, T content, ios::openmode mode)
 {
     ofstream file;
     file.open(file_path, mode);
@@ -97,7 +89,7 @@ void exdir::save_to_file(filesystem::path file_path, T content, ios::openmode mo
 }
 
 
-inline bool exdir::is_type(filesystem::path path, string type){
+inline bool exdir::is_type(ghc::filesystem::path path, string type){
     try { 
         YAML::Node node = YAML::LoadFile(path / METADATA_FILE);
         return node["exdir"]["type"].as<string>() == type;
@@ -109,10 +101,10 @@ inline bool exdir::is_type(filesystem::path path, string type){
 }
 
 inline bool exdir::file_exists(){
-    return filesystem::exists(file_path);
+    return ghc::filesystem::exists(file_path);
 }
 
-inline void exdir::write_metadata(filesystem::path path, string type, string version){
+inline void exdir::write_metadata(ghc::filesystem::path path, string type, string version){
    
     YAML::Emitter out;
     
@@ -132,12 +124,12 @@ inline void exdir::write_metadata(filesystem::path path, string type, string ver
     fout.close();      
 }
 
-inline void exdir::create_group(filesystem::path group_path){
+inline void exdir::create_group(ghc::filesystem::path group_path){
     create_folder(file_path / group_path, "group");
 }
 
 template <class T>
-inline void exdir::write_dataset(filesystem::path dataset_path, tmatrix<T> & data){
+inline void exdir::write_dataset(ghc::filesystem::path dataset_path, tmatrix<T> & data){
     
     create_folder(file_path / dataset_path, "dataset");
     
@@ -152,16 +144,16 @@ inline void exdir::write_dataset(filesystem::path dataset_path, tmatrix<T> & dat
     npy::SaveArrayAsNumpy(file_path / dataset_path / DATA_FILE, false, shape, data);
 }
 
-inline void exdir::clean_attr_file(filesystem::path object_path){
+inline void exdir::clean_attr_file(ghc::filesystem::path object_path){
     
-    filesystem::path attr_path = file_path / object_path / ATTR_FILE;
+    ghc::filesystem::path attr_path = file_path / object_path / ATTR_FILE;
     
     ofstream fs;
     fs.open(attr_path, ofstream::out | ofstream::trunc);
     fs.close();
 }
 
-inline void exdir::ensure_attr_exists(filesystem::path object_path){
+inline void exdir::ensure_attr_exists(ghc::filesystem::path object_path){
     
     string attr_path = file_path / object_path / ATTR_FILE;
     
@@ -171,7 +163,7 @@ inline void exdir::ensure_attr_exists(filesystem::path object_path){
 }
 
 template <class T>
-inline void exdir::write_attribute(filesystem::path object_path, string key, T value) {
+inline void exdir::write_attribute(ghc::filesystem::path object_path, string key, T value) {
     
     ensure_attr_exists(object_path);
  
@@ -188,11 +180,11 @@ inline void exdir::write_attribute(filesystem::path object_path, string key, T v
 
 
 template <class T>
-inline void exdir::write_attribute(filesystem::path object_path, tmatrix<string> & key, tmatrix<T> & value) {
+inline void exdir::write_attribute(ghc::filesystem::path object_path, tmatrix<string> & key, tmatrix<T> & value) {
     
     ensure_attr_exists(object_path);
     
-    filesystem::path attr_path = file_path / object_path / ATTR_FILE;
+    ghc::filesystem::path attr_path = file_path / object_path / ATTR_FILE;
 
     YAML::Node node = YAML::LoadFile(attr_path);
     
@@ -206,11 +198,11 @@ inline void exdir::write_attribute(filesystem::path object_path, tmatrix<string>
 }
 
 template <class T>
-inline void exdir::write_attribute(filesystem::path object_path, map<string, T> & dict) {
+inline void exdir::write_attribute(ghc::filesystem::path object_path, map<string, T> & dict) {
     
     ensure_attr_exists(object_path);
     
-    filesystem::path attr_path = file_path / object_path / ATTR_FILE;
+    ghc::filesystem::path attr_path = file_path / object_path / ATTR_FILE;
 
     YAML::Node node = YAML::LoadFile(attr_path);
     
@@ -225,11 +217,11 @@ inline void exdir::write_attribute(filesystem::path object_path, map<string, T> 
     fout.close();
 }
 
-inline void exdir::write_attribute(filesystem::path object_path, YAML::Node & other_node) {
+inline void exdir::write_attribute(ghc::filesystem::path object_path, YAML::Node & other_node) {
     
     ensure_attr_exists(object_path);
     
-    filesystem::path attr_path = file_path / object_path / ATTR_FILE;
+    ghc::filesystem::path attr_path = file_path / object_path / ATTR_FILE;
 
     YAML::Node node = YAML::LoadFile(attr_path);
 
@@ -240,23 +232,23 @@ inline void exdir::write_attribute(filesystem::path object_path, YAML::Node & ot
     save_to_file(attr_path, node, ios::trunc);
 }
 
-inline YAML::Node exdir::get_attributes(filesystem::path object_path){
+inline YAML::Node exdir::get_attributes(ghc::filesystem::path object_path){
     ensure_attr_exists(object_path);
-    filesystem::path attr_path = file_path / object_path / ATTR_FILE;
+    ghc::filesystem::path attr_path = file_path / object_path / ATTR_FILE;
     return YAML::LoadFile(attr_path);
 }
 
-inline void exdir::get_dataset_size(filesystem::path dataset_path, tmatrix<unsigned long> & shape){
-    filesystem::path data_path = file_path / dataset_path / DATA_FILE;
+inline void exdir::get_dataset_size(ghc::filesystem::path dataset_path, tmatrix<unsigned long> & shape){
+    ghc::filesystem::path data_path = file_path / dataset_path / DATA_FILE;
     bool fortran_order = false;
     npy::GetArrayShape(data_path, shape, fortran_order);
 }
 
 
 template <class T>
-inline void exdir::read_dataset(filesystem::path dataset_path, tmatrix<T> & data){
+inline void exdir::read_dataset(ghc::filesystem::path dataset_path, tmatrix<T> & data){
     
-    filesystem::path data_path = file_path / dataset_path / DATA_FILE;
+    ghc::filesystem::path data_path = file_path / dataset_path / DATA_FILE;
 
     cout << data_path << endl;
     
@@ -267,17 +259,17 @@ inline void exdir::read_dataset(filesystem::path dataset_path, tmatrix<T> & data
 }
 
 template <class T>
-inline void exdir::read_attribute(filesystem::path object_path, string key, T & value) {
-    filesystem::path attr_path = file_path / object_path / ATTR_FILE;
+inline void exdir::read_attribute(ghc::filesystem::path object_path, string key, T & value) {
+    ghc::filesystem::path attr_path = file_path / object_path / ATTR_FILE;
     
     YAML::Node node = YAML::LoadFile(attr_path);
     value = node[key].as<T>();       
 }
 
 
-inline void exdir::read_all_attributes(filesystem::path object_path, YAML::Node & node) {
+inline void exdir::read_all_attributes(ghc::filesystem::path object_path, YAML::Node & node) {
     ensure_attr_exists(object_path);
-    filesystem::path attr_path = file_path / object_path / ATTR_FILE;
+    ghc::filesystem::path attr_path = file_path / object_path / ATTR_FILE;
     node = YAML::LoadFile(attr_path);
 }
 

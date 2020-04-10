@@ -10,11 +10,7 @@
 #include <iomanip>
 #include <unordered_map>
 
-#ifdef FS_EXPERIMENTAL
-#include <experimental/filesystem>
-#else
-#include <filesystem>
-#endif
+#include "filesystem.hpp"
 
 #include "clock.h"
 #include "date.h"
@@ -27,9 +23,6 @@
 
 using namespace std;
 using namespace std::chrono;
-#ifdef FS_EXPERIMENTAL
-using namespace std::experimental;
-#endif
 
 void verbose_log(string message, bool print);
 void print_initial_info(double p_null_e, double p_null_i, configuration & config);
@@ -38,7 +31,7 @@ void print_dsmc_info(int i, int n_active_n, int step_interval, int n_steps);
 void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration & config, string filename="state.exdir");
 
 // template<class T>
-// void save_to_file(filesystem::path file_path, T content, ios::openmode mode=ios::app)
+// void save_to_file(ghc::filesystem::path file_path, T content, ios::openmode mode=ios::app)
 // {
 //     ofstream file;
 //     file.open(file_path, mode);
@@ -107,7 +100,7 @@ class output_manager
 {
     private:
         system_clock::time_point start_utc, end_utc;
-        filesystem::path output_path;
+        ghc::filesystem::path output_path;
         string output_name;
         string job_name; 
         state_info & state;

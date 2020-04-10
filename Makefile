@@ -2,7 +2,7 @@ exe = run
 sdr = src
 bdr = build
 hypre_dir=hypre-2.16.0
-cpp_std=c++17
+cpp_std=c++11
 
 ifeq ($(machine),zoidberg)
   CC = h5c++
@@ -10,8 +10,8 @@ ifeq ($(machine),zoidberg)
   CXXFLAGS = -Ilib -I$(HYPREINCLUDE) -std=$(cpp_std) -O3 -Wall
 else ifeq ($(machine),hopper)
   CC = mpic++
-  LDFLAGS =  -Llib/yaml -lyaml-cpp -Llib/hypre-2.18.2/src/hypre/lib -lHYPRE -lstdc++fs
-  CXXFLAGS = -Ilib -Ilib/yaml -Ilib/hypre-2.18.2/src/hypre/include -std=$(cpp_std) -O3 -Wall -D FS_EXPERIMENTAL
+  LDFLAGS =  -Llib/yaml -lyaml-cpp -Llib/hypre-2.18.2/src/hypre/lib -lHYPRE
+  CXXFLAGS = -Ilib -Ilib/yaml -Ilib/hypre-2.18.2/src/hypre/include -std=$(cpp_std) -O3 -Wall
 else
   CC = g++
   LDFLAGS = -L/usr/local/lib -Llib/$(hypre_dir)/src/hypre/lib -Llib/yaml -lmpi -lHYPRE -lyaml-cpp

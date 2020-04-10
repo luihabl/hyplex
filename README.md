@@ -21,11 +21,7 @@ Compile with the `-D VERBOSE` flag in the variable `CXXFLAGS` to print more info
 
 ## To do
 
-- Write `python` script that reads folders recursively and generates a table (database) with all runs. This table should contain the metadata, configuration data, the group (relative path) and the output files contained. Use pandas?
-- Using the mentioned script, unify the place for storing simulation output. Use groups (folders) to separate runs used for different purposes.
-- Also based on the last script, create a generic class to explore the data through the database and with exdir. Use pandas?
-- Find solution to run remotely painlessly.
-- Write method to calculate distribution function from a species
+- Try to convert code back to C++11 - DONE!
 
 ### Backlog:
 

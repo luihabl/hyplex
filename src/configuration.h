@@ -38,7 +38,7 @@ class configuration {
         double  f(string key);
         string  s(string key);
         bool    b(string key);
-        template<typename T> T get(string key);
+        // template<typename T> T get(string key);
 
         tmatrix<int>     is(string key);
         tmatrix<double>  fs(string key);
@@ -57,47 +57,47 @@ double to_double(string str_val);
 int to_int(string str_val);
 string pass_string(string str_val);
 
-template <typename T> T convert_to (const string & str)
-{
-    if constexpr(is_integral<T>::value)
-    {
-        istringstream ss(str);
+// template <typename T> T convert_to (const string & str)
+// {
+//     if constexpr(is_integral<T>::value)
+//     {
+//         istringstream ss(str);
         
-        if constexpr(is_same<T, string>::value){
-            return str;
-        }
+//         if constexpr(is_same<T, string>::value){
+//             return str;
+//         }
         
-        if(str.find("e") != string::npos){
-            double num;
-            ss >> num;
-            return static_cast<T>(num);
-        }
+//         if(str.find("e") != string::npos){
+//             double num;
+//             ss >> num;
+//             return static_cast<T>(num);
+//         }
 
-        T num;
-        ss >> num;
-        return num;
+//         T num;
+//         ss >> num;
+//         return num;
         
-    }
-    else
-    {
-        istringstream ss(str);
-        T num;
-        ss >> num;
-        return num;
-    }
-}
+//     }
+//     else
+//     {
+//         istringstream ss(str);
+//         T num;
+//         ss >> num;
+//         return num;
+//     }
+// }
 
-template<typename T>
-T configuration::get(string key)
-{
-    try{
-        return convert_to<T>(_m.at(key));
-    }
-    catch (const out_of_range & e){
-        cerr << ERROR_MSG(_m, "type") + key << endl;
-        abort();
-    }
-}
+// template<typename T>
+// T configuration::get(string key)
+// {
+//     try{
+//         return convert_to<T>(_m.at(key));
+//     }
+//     catch (const out_of_range & e){
+//         cerr << ERROR_MSG(_m, "type") + key << endl;
+//         abort();
+//     }
+// }
 
 
 template <typename T, typename U>

@@ -8,11 +8,7 @@
 #include <chrono>
 #include <unordered_map>
 
-#ifdef FS_EXPERIMENTAL
-#include <experimental/filesystem>
-#else
-#include <filesystem>
-#endif
+#include "filesystem.hpp"
 
 #include <sys/stat.h>
 
@@ -28,12 +24,8 @@
 
 #include "date.h"
 
-
 using namespace std;
 using namespace std::chrono;
-#ifdef FS_EXPERIMENTAL
-using namespace std::experimental;
-#endif
 
 void verbose_log(string message, bool print){
     if(print) cout << message << endl;
@@ -174,7 +166,7 @@ void output_manager::save_state(fmatrix & p_e, fmatrix & p_i, bool force){
 
 void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration & config, string filename){
 
-    filesystem::path input_path = config.s("project/input_path");
+    ghc::filesystem::path input_path = config.s("project/input_path");
     input_path /= filename;
 
     double dx = config.f("geometry/dx");
@@ -308,7 +300,7 @@ string output_manager::build_output_name(){
     string tmp_filename = filename_preffix + EXDIR_EXT;
 
     int n_file = 1;
-    while (filesystem::exists(output_path / tmp_filename))
+    while (ghc::filesystem::exists(output_path / tmp_filename))
     {
         tmp_filename = filename_preffix + "(" + to_string(n_file) + ")" + EXDIR_EXT;
         n_file += 1;

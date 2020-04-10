@@ -7,13 +7,6 @@
 #include <string>
 #include <unordered_map>
 
-#ifdef FS_EXPERIMENTAL
-#include <experimental/filesystem>
-#else
-#include <filesystem>
-#include <unordered_map>
-#endif
-
 #include "fields.h"
 #include "fmatrix.h"
 #include "fmath.h"
@@ -34,9 +27,6 @@
 
 using namespace std;
 using namespace std::chrono;
-#ifdef FS_EXPERIMENTAL
-using namespace std::experimental;
-#endif
 
 // ----------------------------- Main function --------------------------------
 int main(int argc, char* argv[])
