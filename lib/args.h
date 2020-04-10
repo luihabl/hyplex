@@ -41,12 +41,7 @@
 #include <string>
 #include <tuple>
 #include <vector>
-
-#ifdef FS_EXPERIMENTAL
-#include <experimental/unordered_map>
-#else
 #include <unordered_map>
-#endif
 
 #include <unordered_set>
 #include <type_traits>
