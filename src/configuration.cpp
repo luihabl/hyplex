@@ -46,6 +46,7 @@ void configuration::calculate_parameters(){
 
     set(calc_key + "k_phi", q * dt * dt / (m_el * dx * dx));
     set(calc_key + "k_q", f(calc_key + "k_phi") * q * n_factor / f("boundaries/c_cap"));
+    set(calc_key + "k_v", dt / dx);
 
     set(calc_key + "gamma", 2 * n_factor * pow(q, 2) * pow(dt, 2) / (m_el * f("physical/eps_0") * pow(dx, 2)));
     set(calc_key + "alpha", (double) i("time/k_sub") * m_el / f("ugas/m_i"));

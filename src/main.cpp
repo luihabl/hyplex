@@ -21,6 +21,7 @@
 #include "state-info.h"
 #include "arg-parser.h"
 #include "configuration.h"
+#include "diagnostics.h"
 #include "clock.h"
 
 #define DEFAULT_CONFIG_PATH "input/config/config.yaml"
@@ -138,6 +139,7 @@ int main(int argc, char* argv[])
     field_operations fields(config);
     pic_operations pic(config);
     particle_operations pops(config, pic);
+    diagnostics diag(config);
 
     // ----------------------------- Solver -----------------------------------
     verbose_log("Initializing solver", verbosity >= 1);
@@ -328,6 +330,12 @@ int main(int argc, char* argv[])
     output.save_fields_snapshot(phi, wmesh_e, wmesh_i, mesh, "", config.b("diagnostics/fields_snapshot/end_save"));
     output.save_series(series, n_points_series, config.b("diagnostics/series/end_save"));
     output.update_metadata("completed", config.b("diagnostics/metadata/end_save"));
+
+    int n_v = 100;
+    fmatrix dist = fmatrix::zeros(n_v);
+    diag.velocity_distribution(p_i, state.n_active_i, 4, n_v, -800, 800, dist);
+    output.save_fmatrix(dist, "velocity-dist");
+    
 
     // ----------------------------- Finalizing -------------------------------
     // delete_cross_sections_arrays();

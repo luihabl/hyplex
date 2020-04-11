@@ -118,11 +118,18 @@ class output_manager
         void save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, mesh_set & mesh, string suffix, bool force = false);
         void save_series(unordered_map<string, fmatrix> & series, int & n_points, bool force = false); 
         void save_field_series(fmatrix & field, double conversion_constant, bool force = false);
+        template <class T> void save_fmatrix(tmatrix<T> & m, ghc::filesystem::path datapath);
         void save_initial_data();
         void update_metadata(string status = "running", bool force = false);
         void print_info();
 };
 
+template <class T>
+void output_manager::save_fmatrix(tmatrix<T> & m, ghc::filesystem::path datapath){
+    file.write_dataset(datapath, m);
+    string message = output_name / datapath;
+    verbose_log("Saved " +  message, true);
+}
 
 
 

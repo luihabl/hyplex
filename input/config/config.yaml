@@ -19,7 +19,7 @@ project:
 simulation:
   job_name: ""
   initial_state: "new"                      # Load input for simulation state or start again: 'load' or 'new'
-  verbosity: 2                               # Verbosity level: 0 means minimum messages
+  verbosity: 1                               # Verbosity level: 0 means minimum messages
 
 physical:
   q: 1.60217662e-19                         # Elementary charge [C]
@@ -111,6 +111,23 @@ diagnostics:
     save_step: 1
     end_save: true
 
+  vdist:
+    electrons:
+      n_v: 200
+      x:
+        v_0: -20e6
+        v_1: 20e6
+      y:
+        v_0: -2e6
+        v_1: 2e6      
+    ions:
+      n_v: 200
+      x:
+        v_0: -20e6
+        v_1: 20e6
+      y:
+        v_0: -500
+        v_1: 500  
                          
 helium:
   m_i: 6.67e-27                             # Ion mass [kg]
