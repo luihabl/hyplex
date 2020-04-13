@@ -12,6 +12,8 @@
 /output/*.mp4
 /output/*.png
 /output/*.zip
+/output/*.out
+/output/*.err
 /input/**/*.h5
 /input/**/*.exdir
 /.vscode/

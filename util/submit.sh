@@ -5,8 +5,8 @@
 #SBATCH --mail-type=ALL                                 # When to send mail  (BEGIN, END, FAIL, REQUEUE, ALL)
 #SBATCH --mail-user=lui.habl@lpp.polytechnique.fr       # Where to send mail.  
 #SBATCH --workdir="/home/LPP/lui.habl/hyplex"           # Set current directory before job starts - LOGIN is your login
-#SBATCH --error="%j.err"                                # Direct STDERR here (file identifier), %j is substituted for the job number
-#SBATCH --output="%j.out"                               # Direct STDOUT here (file identifier), %j is substituted for the job number
+#SBATCH --error="output/%j.err"                                # Direct STDERR here (file identifier), %j is substituted for the job number
+#SBATCH --output="output/%j.out"                               # Direct STDOUT here (file identifier), %j is substituted for the job number
 #SBATCH --verbose                                       # Increase informational messages
 #SBATCH --ntasks=1	                                    # Number of core (max 64) for your parallel job
 #SBATCH --cpus-per-task=4                               # Number of CPUs per task
