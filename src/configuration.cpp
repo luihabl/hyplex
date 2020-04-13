@@ -9,6 +9,7 @@
 
 #include "fmatrix.h"
 #include "yaml-cpp/yaml.h"
+#include "mpi.h"
 
 #define ERROR_MSG(Map, Type) "ERROR: Key not found in Configuration." #Map "(" Type "): "
 
@@ -62,7 +63,18 @@ void configuration::calculate_parameters(){
 }
 
 void configuration::set_job_name(string arg_job_name){
-    set("p/job_name", arg_job_name == "" ? s("simulation/job_name") : arg_job_name);
+
+    int nproc;
+    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+
+    string mpi_rank_label = "";
+    if(nproc > 1){
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+        mpi_rank_label = to_string(rank);
+    }
+
+    set("p/job_name", arg_job_name == "" ? s("simulation/job_name") + mpi_rank_label : arg_job_name + mpi_rank_label);
 }
 
 

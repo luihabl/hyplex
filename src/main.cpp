@@ -32,6 +32,8 @@ using namespace std::chrono;
 // ----------------------------- Main function --------------------------------
 int main(int argc, char* argv[])
 {
+    MPI_Init(NULL, NULL);
+
     auto start_utc = sys_now();
 
     cout << "Hyplex " << GIT_VERSION << endl;

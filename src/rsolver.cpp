@@ -21,8 +21,6 @@ using namespace std;
 
 rsolver::rsolver(mesh_set & _mesh, int _n_neumann, int _n_dirichlet, configuration & _config): mesh(_mesh), config(_config){
 
-    MPI_Init(NULL, NULL);
-
     n_neumann = _n_neumann;
     n_dirichlet = _n_dirichlet;
     n_mesh_x = (int) _mesh.nx;
@@ -41,8 +39,6 @@ rsolver::rsolver(mesh_set & _mesh, int _n_neumann, int _n_dirichlet, configurati
 }
 
 rsolver::rsolver(mesh_set & _mesh, configuration & _config): mesh(_mesh), config(_config){
-
-    MPI_Init(NULL, NULL);
 
     n_mesh_x = (int) _mesh.nx;
     n_mesh_y = (int) _mesh.ny;
