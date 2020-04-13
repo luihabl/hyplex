@@ -10,6 +10,7 @@
 #include "fmatrix.h"
 #include "yaml-cpp/yaml.h"
 #include "mpi.h"
+#include "filesystem.hpp"
 
 #define ERROR_MSG(Map, Type) "ERROR: Key not found in Configuration." #Map "(" Type "): "
 
@@ -60,21 +61,6 @@ void configuration::calculate_parameters(){
     // ---- cross-sections ----
     smatrix exc_path = ss("ugas/exc_path");
     set(calc_key + "n_exc", (int) exc_path.n1);
-}
-
-void configuration::set_job_name(string arg_job_name){
-
-    int nproc;
-    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
-
-    string mpi_rank_label = "";
-    if(nproc > 1){
-        int rank;
-        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-        mpi_rank_label = to_string(rank);
-    }
-
-    set("p/job_name", arg_job_name == "" ? s("simulation/job_name") + mpi_rank_label : arg_job_name + mpi_rank_label);
 }
 
 
@@ -282,4 +268,43 @@ void configuration::print_ms(){
 void configuration::print_all(){
     print_m();
     print_ms();
+}
+
+void configuration::set_job_name(string arg_job_name){
+
+    int nproc;
+    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+
+    string mpi_rank_label = "";
+    if(nproc > 1){
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+        mpi_rank_label = to_string(rank);
+    }
+
+    set("p/job_name", arg_job_name == "" ? s("simulation/job_name") + mpi_rank_label : arg_job_name + mpi_rank_label);
+}
+
+string configuration::get_config_file_name(string config_name, string batch_path){
+    
+    int nproc;
+    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+
+    if(nproc > 1 && batch_path != ""){
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+        ghc::filesystem::path path = batch_path;
+        vector<ghc::filesystem::path> paths;
+        
+        for (const auto & entry : ghc::filesystem::directory_iterator(path))
+            paths.push_back(entry.path());
+        
+        sort(paths.begin(), paths.end());
+
+        if(rank > paths.size() - 1) rank = paths.size() - 1;
+        return paths[rank];
+    }
+    else {
+        return config_name;
+    }
 }

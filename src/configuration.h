@@ -49,6 +49,7 @@ class configuration {
         template<typename T> void set_seq(string key, tmatrix<T> seq);
 
         void set_job_name(string arg_job_name);
+        static string get_config_file_name(string config_name, string batch_path);
 };
 
 string lowercase(string s);

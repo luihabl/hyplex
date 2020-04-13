@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
     string job_name = arg.get("name", "");
     string config_path = arg.get("config", DEFAULT_CONFIG_PATH);
 
-    configuration config(config_path);
+    configuration config(configuration::get_config_file_name(arg.get("config", DEFAULT_CONFIG_PATH), arg.get("batch", "")));
     config.set_job_name(job_name);
 
     state_info state;
