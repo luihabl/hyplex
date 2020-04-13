@@ -338,6 +338,5 @@ int main(int argc, char* argv[])
     
 
     // ----------------------------- Finalizing -------------------------------
-    // delete_cross_sections_arrays();
 	return 0;
 }
