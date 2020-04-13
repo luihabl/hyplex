@@ -63,8 +63,6 @@ int main(int argc, char* argv[])
     const int n_thruster        = config.i("geometry/n_thruster");
     const int n_max_particles   = config.i("particles/n_max_particles");
     const int verbosity         = config.i("simulation/verbosity");
-    const double dt             = config.f("time/dt");
-    const double q              = config.f("physical/q");
     const double m_el           = config.f("electrons/m_el");
     const double t_el           = config.f("electrons/t_el");
     const double v_drift_el     = config.f("electrons/v_drift_el");
@@ -73,8 +71,6 @@ int main(int argc, char* argv[])
     const double m_i            = config.f("ugas/m_i");
     const double volt_0_norm    = config.f("p/volt_0_norm");
     const double volt_1_norm    = config.f("p/volt_1_norm");
-    const double k_phi          = config.f("p/k_phi");
-    const double n_factor       = config.f("particles/n_factor");
     const bool mcc_coll         = config.b("neutrals/mcc_coll");
     const string inj_model      = config.s("electrons/inj_model");
 
@@ -96,19 +92,6 @@ int main(int argc, char* argv[])
     fmatrix phi_av          = fmatrix::zeros(n_mesh_x, n_mesh_y);
     fmatrix wmesh_e_av      = fmatrix::zeros(n_mesh_x, n_mesh_y);
     fmatrix wmesh_i_av      = fmatrix::zeros(n_mesh_x, n_mesh_y);
-    
-    unordered_map<string, fmatrix> series;
-    series["time"]              = fmatrix::zeros(n_steps);
-    series["v_cap"]             = fmatrix::zeros(n_steps);
-    series["n_active_e"]        = fmatrix::zeros(n_steps);
-    series["n_active_i"]        = fmatrix::zeros(n_steps);
-    series["I_out_ob_e"]        = fmatrix::zeros(n_steps);
-    series["I_out_ob_i"]        = fmatrix::zeros(n_steps);
-    series["I_out_thr_e"]       = fmatrix::zeros(n_steps);
-    series["I_out_thr_i"]       = fmatrix::zeros(n_steps);
-    series["I_in_thr_e"]        = fmatrix::zeros(n_steps);
-    series["I_in_thr_i"]        = fmatrix::zeros(n_steps);
-    int n_points_series         = 0;
     
 	// Particle 1 - Electrons
     verbose_log("Initializing electrons variables", verbosity >= 1);
@@ -141,7 +124,7 @@ int main(int argc, char* argv[])
     field_operations fields(config);
     pic_operations pic(config);
     particle_operations pops(config, pic);
-    diagnostics diag(config);
+    diagnostics diag(config, state);
 
     // ----------------------------- Solver -----------------------------------
     verbose_log("Initializing solver", verbosity >= 1);
@@ -264,24 +247,11 @@ int main(int argc, char* argv[])
 
         output.print_info();
 
-        if(state.step % 1 == 0){
-            series["time"].val[n_points_series] = state.step * dt;
-            series["v_cap"].val[n_points_series] = state.phi_zero / k_phi;
-            series["n_active_i"].val[n_points_series] = state.n_active_i;
-            series["n_active_e"].val[n_points_series] = state.n_active_e;
+        diag.update_series(n_inj_el, n_inj_i);
         
-            series["I_out_ob_e"].val[n_points_series] = state.n_out_ob_e * n_factor * q / dt;
-            series["I_out_ob_i"].val[n_points_series] = state.n_out_ob_i * n_factor * q / dt;
-            series["I_out_thr_e"].val[n_points_series] = state.n_out_thr_e * n_factor * q / dt;
-            series["I_out_thr_i"].val[n_points_series] = state.n_out_thr_i * n_factor * q / dt;
-            series["I_in_thr_e"].val[n_points_series] = n_inj_el * n_factor * q / dt;
-            series["I_in_thr_i"].val[n_points_series] = n_inj_i * n_factor * q / dt;
-            n_points_series += 1;
-        }
-
         output.save_state(p_e, p_i);
         output.save_fields_snapshot(phi, wmesh_e, wmesh_i, mesh, "");
-        output.save_series(series, n_points_series);
+        output.save_series(diag.series, diag.n_points_series);
         output.update_metadata();
                 
         //  if(state.step % 1 == 0) {
@@ -330,15 +300,14 @@ int main(int argc, char* argv[])
     // ----------------------------- Saving outputs ---------------------------
     output.save_state(p_e, p_i, config.b("diagnostics/state/end_save"));
     output.save_fields_snapshot(phi, wmesh_e, wmesh_i, mesh, "", config.b("diagnostics/fields_snapshot/end_save"));
-    output.save_series(series, n_points_series, config.b("diagnostics/series/end_save"));
+    output.save_series(diag.series, diag.n_points_series, config.b("diagnostics/series/end_save"));
     output.update_metadata("completed", config.b("diagnostics/metadata/end_save"));
 
-    int n_v = 100;
-    fmatrix dist = fmatrix::zeros(n_v);
-    diag.velocity_distribution(p_i, state.n_active_i, 4, n_v, -800, 800, dist);
-    output.save_fmatrix(dist, "velocity-dist");
+    // int n_v = 100;
+    // fmatrix dist = fmatrix::zeros(n_v);
+    // diag.velocity_distribution(p_i, state.n_active_i, 4, n_v, -800, 800, dist);
+    // output.save_fmatrix(dist, "velocity-dist");
     
-
     // ----------------------------- Finalizing -------------------------------
 	return 0;
 }
