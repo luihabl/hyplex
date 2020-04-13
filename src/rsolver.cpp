@@ -78,7 +78,7 @@ rsolver::~rsolver(){
 // ------------------- initialization ----------------------------
 
 void rsolver::init_grid(){
-    HYPRE_StructGridCreate(MPI_COMM_WORLD, 2, &hypre_grid);
+    HYPRE_StructGridCreate(MPI_COMM_SELF, 2, &hypre_grid);
     HYPRE_StructGridSetExtents(hypre_grid, inner_ll.val, inner_ur.val);
     n_solve += (inner_ur.val[0] - inner_ll.val[0] + 1) * (inner_ur.val[1] - inner_ll.val[1] + 1);
 
@@ -96,13 +96,13 @@ void rsolver::init_grid(){
 
 void rsolver::init_matrix(){
     HYPRE_StructStencilCreate(2, 5, &hypre_stencil);
-    HYPRE_StructMatrixCreate(MPI_COMM_WORLD, hypre_grid, hypre_stencil, &hypre_A);
+    HYPRE_StructMatrixCreate(MPI_COMM_SELF, hypre_grid, hypre_stencil, &hypre_A);
     HYPRE_StructMatrixInitialize(hypre_A);
 }
 
 void rsolver::init_vectors(){
-    HYPRE_StructVectorCreate(MPI_COMM_WORLD, hypre_grid, &hypre_b);
-    HYPRE_StructVectorCreate(MPI_COMM_WORLD, hypre_grid, &hypre_x);
+    HYPRE_StructVectorCreate(MPI_COMM_SELF, hypre_grid, &hypre_b);
+    HYPRE_StructVectorCreate(MPI_COMM_SELF, hypre_grid, &hypre_x);
     HYPRE_StructVectorInitialize(hypre_b);
     HYPRE_StructVectorInitialize(hypre_x);
 }
@@ -316,7 +316,7 @@ void rsolver::solve(fmatrix & solution, fmatrix & voltages, fmatrix & w_i, fmatr
     HYPRE_StructVectorAssemble(hypre_b);
     HYPRE_StructVectorAssemble(hypre_x);
 
-    SOLVER_F(HYPRE_Struct, Create)(MPI_COMM_WORLD, &hypre_solver);
+    SOLVER_F(HYPRE_Struct, Create)(MPI_COMM_SELF, &hypre_solver);
     SOLVER_F(HYPRE_Struct, SetTol)(hypre_solver, SOLVER_TOLERANCE);
     // SOLVER_F(HYPRE_Struct, SetPrintLevel)(hypre_solver, SOLVER_PRINT_LEVEL);
     SOLVER_F(HYPRE_Struct, Setup)(hypre_solver, hypre_A, hypre_b, hypre_x);
