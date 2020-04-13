@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH --comment="Testing Hyplex execution"            # An arbitrary comment on the job
-#SBATCH --job-name="pic plume"                          # Give this job an arbitrary name
+#SBATCH --job-name="ht01"                          # Give this job an arbitrary name
 #SBATCH --mail-type=ALL                                 # When to send mail  (BEGIN, END, FAIL, REQUEUE, ALL)
 #SBATCH --mail-user=lui.habl@lpp.polytechnique.fr       # Where to send mail.  
 #SBATCH --workdir="/home/LPP/lui.habl/hyplex"           # Set current directory before job starts - LOGIN is your login

@@ -11,7 +11,7 @@ ifeq ($(machine),zoidberg)
 else ifeq ($(machine),hopper)
   CC = mpic++
   LDFLAGS =  -Llib/yaml -lyaml-cpp -Llib/hypre-2.18.2/src/hypre/lib -lHYPRE
-  CXXFLAGS = -Ilib -Ilib/yaml -Ilib/hypre-2.18.2/src/hypre/include -std=$(cpp_std) -O3 -Wall
+  CXXFLAGS = -Ilib -Ilib/yaml -Ilib/hypre-2.18.2/src/hypre/include -std=$(cpp_std) -O3 -march=x86-64 -Wall
 else
   CC = g++
   LDFLAGS = -L/usr/local/lib -Llib/$(hypre_dir)/src/hypre/lib -Llib/yaml -lmpi -lHYPRE -lyaml-cpp
