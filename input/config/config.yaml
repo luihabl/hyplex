@@ -39,11 +39,11 @@ geometry:
 time:
   dt: 5.0e-12                               # Time step [s]
   n_steps: 1000                             # Number of simulation steps to be executed []
-  n_steps_dsmc: 1e6                         # Number of DSMC simulation steps to be executed []
+  n_steps_dsmc: 0.5e6                         # Number of DSMC simulation steps to be executed []
   n_average: 1                              # Number of average steps []
   n_average_dsmc: 50000                     # Number of DSMC average steps []
   k_sub: 1                                  # Ion subcycling factor []
-  k_sub_dsmc: 100                           # DSMC subcycling factor []
+  k_sub_dsmc: 400                           # DSMC subcycling factor []
 
 boundaries:
   volt_0: 0.0                               # Voltage on the thruster [V]
@@ -60,12 +60,12 @@ thruster:
 
 particles:
   n_factor: 3.2e5                           # Macro-particle weight factor (i.e. how many particles one macro-particle represents) []
-  n_factor_dsmc: 5e8                        # Macro-particle weight factor for neutrals []
+  n_factor_dsmc: 1e8                        # Macro-particle weight factor for neutrals []
   n_max_particles: 1e7                      # Maximum number of particles in the array []
 
 neutrals:
-  expm_neutral: "constant"                  # Expansion model of neutral flow: 'dsmc', 'constant' or 'load'
-  mcc_coll: false                           # Toggle MCC collisions: 'on' or 'off'
+  expm_neutral: "dsmc"                  # Expansion model of neutral flow: 'dsmc', 'constant' or 'load'
+  mcc_coll: true                           # Toggle MCC collisions: 'on' or 'off'
   t_neutral: 0.02585                        # Temperature of neutral gas [eV]
   n_neutral: 4.82e18                        # Density of neutral gas [m^-3]
 

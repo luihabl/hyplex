@@ -84,7 +84,7 @@ template <class T>
 void save_fmatrix(tmatrix<T> & m, string filename, string dataname){
     exdir file(filename);
     file.write_dataset(dataname, m);
-    verbose_log("Saved " + filename + dataname, true);
+    verbose_log("Saved " + filename + "/" + dataname, true);
 }
 
 template <class T>

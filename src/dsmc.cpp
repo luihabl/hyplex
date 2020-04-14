@@ -9,6 +9,8 @@
 #include "configuration.h"
 #include "input-output.h"
 
+#include "mpi.h"
+
 
 void run_dsmc(mesh_set & mesh, fmatrix & dens_n, configuration & config, string output_name){
     
@@ -27,9 +29,13 @@ void run_dsmc(mesh_set & mesh, fmatrix & dens_n, configuration & config, string 
     const double t_neutral = config.f("neutrals/t_neutral");
     const double m_i = config.f("ugas/m_i");
     const double n_inj_n = config.f("p/n_inj_n");
+
+    int size, rank;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     
     for (int i = 0; i < n_steps_dsmc; i++){
-        pops.add_flux_particles(p_n, n_active_n, t_neutral, 0, m_i, n_inj_n, k_sub_dsmc);
+        pops.add_flux_particles(p_n, n_active_n, t_neutral, 0, m_i, n_inj_n / (double) size, k_sub_dsmc);
 
         if(i > n_steps_dsmc - n_average_dsmc){
             pic.weight(p_n, n_active_n, wmesh_n, mesh, lpos_n);
@@ -38,12 +44,14 @@ void run_dsmc(mesh_set & mesh, fmatrix & dens_n, configuration & config, string 
         
         pops.move_n(p_n, n_active_n, k_sub_dsmc);
         pops.boundaries_n(p_n, n_active_n, lpos_n);
-        print_dsmc_info(i, n_active_n, 1000, n_steps_dsmc);    
+        if(rank == 0) print_dsmc_info(i, n_active_n * size, 1000, n_steps_dsmc);
     }
 
-    wmesh_n = (config.f("particles/n_factor_dsmc") / config.f("particles/n_factor")) * wmesh_n_av;
-    dens_n = (4.0 / pow(config.f("geometry/dx"), 2)) *  config.f("particles/n_factor") * wmesh_n / mesh.v;
+    MPI_Allreduce(wmesh_n_av.val, wmesh_n.val, config.i("geometry/n_mesh_x") * config.i("geometry/n_mesh_y"), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    dens_n = config.f("particles/n_factor_dsmc") *  (4.0 / pow(config.f("geometry/dx"), 2)) * wmesh_n / mesh.v;
 
-    save_fmatrix(dens_n, config.s("project/output_path") + output_name, "dens_n");
+    if(rank == 0){
+        save_fmatrix(dens_n, config.s("project/output_path") + output_name, "dens_n");
+    }
 }
 
