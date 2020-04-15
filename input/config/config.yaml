@@ -17,7 +17,7 @@ project:
   cross_sections_path: "input/cross-sections/"
 
 simulation:
-  job_name: ""
+  job_name: "full-mcc-a4f30"
   initial_state: "new"                      # Load input for simulation state or start again: 'load' or 'new'
   verbosity: 1                               # Verbosity level: 0 means minimum messages
 
@@ -38,7 +38,7 @@ geometry:
 
 time:
   dt: 5.0e-12                               # Time step [s]
-  n_steps: 1000                             # Number of simulation steps to be executed []
+  n_steps: 1e6                             # Number of simulation steps to be executed []
   n_steps_dsmc: 0.5e6                         # Number of DSMC simulation steps to be executed []
   n_average: 1                              # Number of average steps []
   n_average_dsmc: 50000                     # Number of DSMC average steps []
@@ -64,8 +64,8 @@ particles:
   n_max_particles: 1e7                      # Maximum number of particles in the array []
 
 neutrals:
-  expm_neutral: "dsmc"                  # Expansion model of neutral flow: 'dsmc', 'constant' or 'load'
-  mcc_coll: true                           # Toggle MCC collisions: 'on' or 'off'
+  expm_neutral: "load"                  # Expansion model of neutral flow: 'dsmc', 'constant' or 'load'
+  mcc_coll: true                           # Toggle MCC collisions: true or false
   t_neutral: 0.02585                        # Temperature of neutral gas [eV]
   n_neutral: 4.82e18                        # Density of neutral gas [m^-3]
 
