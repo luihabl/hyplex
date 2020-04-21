@@ -56,7 +56,6 @@ int main(int argc, char* argv[])
     // Loading variables from config
     
     const int n_steps           = config.i("time/n_steps");
-    const int rf_period_i       = config.i("p/rf_period_i");
     const int k_sub             = config.i("time/k_sub");
     const int n_mesh_x          = config.i("geometry/n_mesh_x");
     const int n_mesh_y          = config.i("geometry/n_mesh_y");
@@ -174,7 +173,6 @@ int main(int argc, char* argv[])
     // Printing initial information
     print_initial_info(coll.p_null_e, coll.p_null_i, config);
 
-    fmatrix td = fmatrix::zeros(9); 
     tmatrix<system_clock::time_point> tp(10);
 
     verbose_log(" ---- Starting main loop ---- ", verbosity >= 1);
@@ -253,6 +251,7 @@ int main(int argc, char* argv[])
         output.save_fields_snapshot(phi, wmesh_e, wmesh_i, mesh, "");
         output.save_series(diag.series, diag.n_points_series);
         output.update_metadata();
+        output.fields_rf_average(phi, wmesh_e, wmesh_i, mesh);
                 
         //  if(state.step % 1 == 0) {
         //     fmatrix dens_i = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_i / vmesh;
@@ -271,27 +270,17 @@ int main(int argc, char* argv[])
         //      save_field_series(phi_corrected, state, 1, "_phi");
         //  }
 
-         if(state.step - state.step_offset > 0.0 * (double) n_steps){
-             int i_av = average_field_over_period(phi_av, phi, rf_period_i, n_steps, state.step - state.step_offset);
-             average_field(wmesh_e_av, wmesh_e, state.step - state.step_offset);
-             average_field(wmesh_i_av, wmesh_i, state.step - state.step_offset);
-             if(i_av == rf_period_i){
-                output.save_fields_snapshot(phi_av, wmesh_e_av, wmesh_i_av, mesh, "-av");
-             }
-         }
+        //  if(state.step - state.step_offset > 0.9 * (double) n_steps){
+        //      int i_av = average_field_over_period(phi_av, phi, rf_period_i, n_steps, state.step - state.step_offset);
+        //      average_field(wmesh_e_av, wmesh_e, state.step - state.step_offset);
+        //      average_field(wmesh_i_av, wmesh_i, state.step - state.step_offset);
+        //      if(i_av == rf_period_i){
+        //         output.save_fields_snapshot(phi_av, wmesh_e_av, wmesh_i_av, mesh, "-av");
+        //      }
+        //  }
 
         tp.val[9] = sys_now();
-
-        if(verbosity >= 2)
-        {
-            for(size_t j=0; j < td.n1; j++){
-                td.val[j] += tdiff_ms(tp.val[j], tp.val[j+1]);
-            }
-            if((state.step+1) % 100 == 0){
-                print_td(td, 100);
-                td.set_zero();
-            }
-        }
+        output.print_loop_timing(tp);
     }
 
     auto stop = sys_now();

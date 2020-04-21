@@ -107,7 +107,16 @@ class output_manager
         configuration & config;
         mesh_set & mesh;
         int verbosity;
-        int step_print_info, step_save_state, step_save_fields, step_save_series, step_save_fseries, step_update_metadata;
+        int step_print_info, step_save_state, step_save_fields, step_save_series, step_save_fseries, step_update_metadata,
+            rf_period_i, n_steps, print_timing_step;
+        double start_progress;
+
+        fmatrix wmesh_e_av;
+        fmatrix wmesh_i_av;
+        fmatrix phi_av;
+        fmatrix td; 
+    
+
         void check_output_folder();
         string build_output_name();
     
@@ -118,10 +127,12 @@ class output_manager
         void save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, mesh_set & mesh, string suffix, bool force = false);
         void save_series(unordered_map<string, fmatrix> & series, int & n_points, bool force = false); 
         void save_field_series(fmatrix & field, double conversion_constant, bool force = false);
+        void fields_rf_average(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, mesh_set & mesh);
         template <class T> void save_fmatrix(tmatrix<T> & m, ghc::filesystem::path datapath);
         void save_initial_data();
         void update_metadata(string status = "running", bool force = false);
         void print_info();
+        void print_loop_timing(tmatrix<system_clock::time_point> & tp);
 };
 
 template <class T>

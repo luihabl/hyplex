@@ -22,6 +22,8 @@
 #include "configuration.h"
 #include "fields.h"
 
+#include "num-tools.h"
+
 #include "date.h"
 
 using namespace std;
@@ -219,25 +221,28 @@ void output_manager::save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmat
     if(!(force || state.step % step_save_fields == 0)) return;
 
     check_output_folder();
-    file.create_group("fields" + suffix);
+
+    ghc::filesystem::path obj_path = "fields" + suffix;
+
+    file.create_group(obj_path);
 
     double dx = config.f("geometry/dx");
     double dt = config.f("time/dt");
     double n_factor = config.f("particles/n_factor");
     double k_phi = config.f("p/k_phi");
 
-    file.write_attribute("fields", "Time [s]", (double) state.step * dt);
-    file.write_attribute("fields", "Step", (double) state.step);
+    file.write_attribute(obj_path, "Time [s]", (double) state.step * dt);
+    file.write_attribute(obj_path, "Step", (double) state.step);
 
 
     fmatrix phi_corrected = phi / k_phi;
-    file.write_dataset("fields/phi", phi_corrected);
+    file.write_dataset(obj_path / "phi", phi_corrected);
 
     fmatrix dens_e = (4 / pow(dx, 2)) *  n_factor * wmesh_e / mesh.v;
-    file.write_dataset("fields/dens_e", dens_e);
+    file.write_dataset(obj_path / "dens_e", dens_e);
 
     fmatrix dens_i = (4 / pow(dx, 2)) *  n_factor * wmesh_i / mesh.v;
-    file.write_dataset("fields/dens_i", dens_i);
+    file.write_dataset(obj_path / "dens_i", dens_i);
     
     verbose_log("Saved fields snapshot", verbosity >= 1);
 }
@@ -285,6 +290,21 @@ output_manager::output_manager(system_clock::time_point _start_utc, state_info &
     output_path = config.s("project/output_path");
     job_name = config.s("p/job_name");
 
+    rf_period_i = config.i("p/rf_period_i");
+    n_steps = config.i("time/n_steps");
+    start_progress = config.f("diagnostics/rf_av/start_progress");
+    print_timing_step = config.i("diagnostics/print_info/print_timing_step"); 
+
+    int nx = config.i("geometry/n_mesh_x");
+    int ny = config.i("geometry/n_mesh_y");
+
+    wmesh_e_av = fmatrix::zeros(nx, ny);
+    wmesh_i_av = fmatrix::zeros(nx,ny);
+    phi_av = fmatrix::zeros(nx, ny);
+    td = fmatrix::zeros(50);
+    td.set_zero();
+    
+    
     output_name = build_output_name();
     
     file = exdir(output_path / output_name, false);    
@@ -358,6 +378,43 @@ void output_manager::check_output_folder(){
         file = exdir(output_path / output_name, false);    
         save_initial_data();
         update_metadata();
+    }
+}
+
+
+void output_manager::fields_rf_average(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, mesh_set & mesh){
+
+    int i = state.step - state.step_offset;
+    if(i > start_progress * (double) n_steps){
+        
+        int counter_offset = n_steps % rf_period_i;
+        int counter_av = ((i - counter_offset) % rf_period_i) + 1;
+
+        if(i >= counter_offset){
+            average_field(phi_av, phi, state.step - state.step_offset);
+            average_field(wmesh_e_av, wmesh_e, state.step - state.step_offset);
+            average_field(wmesh_i_av, wmesh_i, state.step - state.step_offset);
+	    }
+
+        if(counter_av == rf_period_i){
+            save_fields_snapshot(phi_av, wmesh_e_av, wmesh_i_av, mesh, "-rfav", true);
+        }
+    }
+}
+
+
+ void output_manager::print_loop_timing(tmatrix<system_clock::time_point> & tp){
+    
+    if(verbosity >= 2)
+    {
+        for(size_t j=0; j < tp.n1 - 1; j++){
+            td.val[j] += tdiff_ms(tp.val[j], tp.val[j+1]) / (double) print_timing_step;
+        }
+
+        if((state.step+1) % print_timing_step == 0){
+            print_td(td, tp.n1 - 1);
+            td.set_zero();
+        }
     }
 }
 

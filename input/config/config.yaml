@@ -17,9 +17,9 @@ project:
   cross_sections_path: "input/cross-sections/"
 
 simulation:
-  job_name: "full-mcc-a4f30"
-  initial_state: "load"                      # Load input for simulation state or start again: 'load' or 'new'
-  verbosity: 2                               # Verbosity level: 0 means minimum messages
+  job_name: "test"
+  initial_state: "new"                      # Load input for simulation state or start again: 'load' or 'new'
+  verbosity: 1                               # Verbosity level: 0 means minimum messages
 
 physical:
   q: 1.60217662e-19                         # Elementary charge [C]
@@ -38,7 +38,7 @@ geometry:
 
 time:
   dt: 5.0e-12                               # Time step [s]
-  n_steps: 1e6                             # Number of simulation steps to be executed []
+  n_steps: 7000                             # Number of simulation steps to be executed []
   n_steps_dsmc: 0.5e6                         # Number of DSMC simulation steps to be executed []
   n_average: 1                              # Number of average steps []
   n_average_dsmc: 50000                     # Number of DSMC average steps []
@@ -89,6 +89,7 @@ diagnostics:
   
   print_info:
     print_step: 100
+    print_timing_step: 10
 
   metadata:
     update_step: 10000
@@ -106,6 +107,9 @@ diagnostics:
     measure_step: 1
     save_step: 50000
     end_save: true
+
+  rf_av:
+    start_progress: 0.0
   
   field_series:
     save_step: 1
