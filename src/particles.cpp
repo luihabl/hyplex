@@ -52,6 +52,10 @@ particle_operations::particle_operations(configuration & config, pic_operations 
 	c_cap = config.f("boundaries/c_cap");
     
     y_thruster = physical_space(n_thruster - 1, a_y, dy/dx, n_mesh_y);
+	x_max = ((double) n_mesh_x - 1);
+	y_max = ((double) n_mesh_y - 1) * (dy / dx);
+
+	tbremoved = imatrix::zeros(100000);
 }
 
 
@@ -204,6 +208,8 @@ void particle_operations::boundaries_n(fmatrix & p, int & n_active, imatrix & lp
     {
         x = p.val[i * 6 + 0];
         y = p.val[i * 6 + 1];
+
+		if (x < x_max && x > 0 && y < y_max && y > 0) continue;
         
         if (x > x_max || y > y_max || (x < 0 && y < y_thruster))
         {
@@ -232,16 +238,15 @@ void particle_operations::boundaries_ob_count(fmatrix & p, int & n_active, imatr
 	n_removed_ob = 0;
     n_removed_thr = 0;
 	int n_remove = 0;
-	static imatrix tbremoved(100000);
 
 	double x, y;
-	const double x_max = ((double) n_mesh_x - 1);
-	const double y_max = ((double) n_mesh_y - 1) * (dy / dx);
 
-	for (int i = 0; i < n_active; i++)
+	for (size_t i = 0; i < n_active; i++)
 	{
 		x = p.val[i * 6 + 0];
 		y = p.val[i * 6 + 1];
+
+		if (x < x_max && x > 0 && y < y_max && y > 0) continue;
 
 		if (x > x_max || y > y_max || (x < 0 && y < y_thruster))
 		{
@@ -250,20 +255,24 @@ void particle_operations::boundaries_ob_count(fmatrix & p, int & n_active, imatr
 
 			if(x > x_max || y > y_max){
 				n_removed_ob += 1;
+				continue;
 			}
             
             if(y < y_thruster){
                 n_removed_thr += 1;
+				continue;
             }
-
+			continue;
 		} 
 		else if (y < 0) {
             p.val[i * 6 + 1] = - p.val[i * 6 + 1];
             p.val[i * 6 + 4] = - p.val[i * 6 + 4];
+			continue;
         }
 		else if (x < 0 && y >= y_thruster) {
 			p.val[i * 6 + 0] = - p.val[i * 6 + 0];
             p.val[i * 6 + 3] = - p.val[i * 6 + 3];
+			continue;
 		}
 
 	}
@@ -293,6 +302,8 @@ void particle_operations::boundaries_e(fmatrix & p, int & n_active, imatrix & lp
 	{
 		x = p.val[i * 6 + 0];
 		y = p.val[i * 6 + 1];
+
+		if (x < x_max && x > 0 && y < y_max && y > 0) continue;
 
 		if(x <= 0 || x >= x_max || y >= y_max || y <= 0){
 			out.val[n_out] = i;
@@ -449,30 +460,6 @@ void particle_operations::reflect_particle(fmatrix & p, int & n_active, int i, d
 		p.val[i * 6 + 1] = 2*y_max - y;
 		p.val[i * 6 + 4] = - vy;
 	}
-}
-
-
-void particle_operations::remove_particle(fmatrix & p, int & n_active, int i, imatrix & lpos)
-{
-	// for (size_t j = 0; j < 6; j++)
-	// {
-	//   swap(p.val[i * 6 + j], p.val[(n_active - 1) * 6 + j]);
-	// }
-
-	// swap(lpos.val[i * 2 + 0], lpos.val[(n_active - 1) * 2 + 0]);
-	// swap(lpos.val[i * 2 + 1], lpos.val[(n_active - 1) * 2 + 1]);
-
-	p.val[i * 6 + 0] = p.val[(n_active - 1) * 6 + 0];
-	p.val[i * 6 + 1] = p.val[(n_active - 1) * 6 + 1];
-	p.val[i * 6 + 2] = p.val[(n_active - 1) * 6 + 2];
-	p.val[i * 6 + 3] = p.val[(n_active - 1) * 6 + 3];
-	p.val[i * 6 + 4] = p.val[(n_active - 1) * 6 + 4];
-	p.val[i * 6 + 5] = p.val[(n_active - 1) * 6 + 5];
-
-	lpos.val[i * 2 + 0] = lpos.val[(n_active - 1) * 2 + 0];
-	lpos.val[i * 2 + 1] = lpos.val[(n_active - 1) * 2 + 1];
-
-	n_active -= 1;
 }
 
 //  ----------------------------- Particle Movement ---------------------------

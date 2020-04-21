@@ -13,6 +13,11 @@ struct particle_operations{
 	int n_mesh_x, n_mesh_y, n_thruster;
 	pic_operations & pic;
 
+	double x_max;
+	double y_max;
+
+	imatrix tbremoved;
+
 	particle_operations(configuration & config, pic_operations & _pic);
 
 	int add_particle_copy(fmatrix & p, int & n_active, imatrix & lpos, const int & i);
@@ -41,7 +46,29 @@ struct particle_operations{
 
 };
 
+inline
+void particle_operations::remove_particle(fmatrix & p, int & n_active, int i, imatrix & lpos)
+{
+	// for (size_t j = 0; j < 6; j++)
+	// {
+	//   swap(p.val[i * 6 + j], p.val[(n_active - 1) * 6 + j]);
+	// }
 
+	// swap(lpos.val[i * 2 + 0], lpos.val[(n_active - 1) * 2 + 0]);
+	// swap(lpos.val[i * 2 + 1], lpos.val[(n_active - 1) * 2 + 1]);
+
+	p.val[i * 6 + 0] = p.val[(n_active - 1) * 6 + 0];
+	p.val[i * 6 + 1] = p.val[(n_active - 1) * 6 + 1];
+	p.val[i * 6 + 2] = p.val[(n_active - 1) * 6 + 2];
+	p.val[i * 6 + 3] = p.val[(n_active - 1) * 6 + 3];
+	p.val[i * 6 + 4] = p.val[(n_active - 1) * 6 + 4];
+	p.val[i * 6 + 5] = p.val[(n_active - 1) * 6 + 5];
+
+	lpos.val[i * 2 + 0] = lpos.val[(n_active - 1) * 2 + 0];
+	lpos.val[i * 2 + 1] = lpos.val[(n_active - 1) * 2 + 1];
+
+	n_active -= 1;
+}
 
 
 
