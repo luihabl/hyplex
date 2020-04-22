@@ -164,7 +164,6 @@ int main(int argc, char* argv[])
     if(config.s("simulation/initial_state") == "load")  load_state(p_e, p_i, state, config);
 
     // ----------------------------- Output manager ---------------------------
-
     output_manager output(start_utc, state, config, mesh);
     output.save_initial_data();
 
@@ -250,36 +249,12 @@ int main(int argc, char* argv[])
         output.save_state(p_e, p_i);
         output.save_fields_snapshot(phi, wmesh_e, wmesh_i, mesh, "");
         output.save_series(diag.series, diag.n_points_series);
+        output.save_distributions(diag, p_e, p_i);
         output.update_metadata();
         output.fields_rf_average(phi, wmesh_e, wmesh_i, mesh);
-                
-        //  if(state.step % 1 == 0) {
-        //     fmatrix dens_i = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_i / vmesh;
-        //     save_field_series(dens_i, state, 1, "_dens_i");
-        //     fmatrix dens_e = (4 / pow(DX, 2)) *  N_FACTOR * wmesh_e / vmesh;
-        //     save_field_series(dens_e, state, 1, "_dens_e");
-            
-        //      fmatrix kefield = fmatrix::zeros(N_MESH_X, N_MESH_Y);
-        //      energy_field(kefield, p_i, state.n_active_i, mesh_x, mesh_y, vmesh, lpos_i, M_I);
-        //      save_field_series(kefield, state, 1, "_ke_i");
-            
-        //      energy_field(kefield, p_e, state.n_active_e, mesh_x, mesh_y, vmesh, lpos_e, M_EL);
-        //      save_field_series(kefield, state, 1, "_ke_e");
-            
-        //      fmatrix phi_corrected = phi / K_PHI;
-        //      save_field_series(phi_corrected, state, 1, "_phi");
-        //  }
-
-        //  if(state.step - state.step_offset > 0.9 * (double) n_steps){
-        //      int i_av = average_field_over_period(phi_av, phi, rf_period_i, n_steps, state.step - state.step_offset);
-        //      average_field(wmesh_e_av, wmesh_e, state.step - state.step_offset);
-        //      average_field(wmesh_i_av, wmesh_i, state.step - state.step_offset);
-        //      if(i_av == rf_period_i){
-        //         output.save_fields_snapshot(phi_av, wmesh_e_av, wmesh_i_av, mesh, "-av");
-        //      }
-        //  }
 
         tp.val[9] = sys_now();
+        
         output.print_loop_timing(tp);
     }
 
@@ -290,13 +265,8 @@ int main(int argc, char* argv[])
     output.save_state(p_e, p_i, config.b("diagnostics/state/end_save"));
     output.save_fields_snapshot(phi, wmesh_e, wmesh_i, mesh, "", config.b("diagnostics/fields_snapshot/end_save"));
     output.save_series(diag.series, diag.n_points_series, config.b("diagnostics/series/end_save"));
+    output.save_distributions(diag, p_e, p_i, config.b("diagnostics/vdist/end_save"));
     output.update_metadata("completed", config.b("diagnostics/metadata/end_save"));
 
-    // int n_v = 100;
-    // fmatrix dist = fmatrix::zeros(n_v);
-    // diag.velocity_distribution(p_i, state.n_active_i, 4, n_v, -800, 800, dist);
-    // output.save_fmatrix(dist, "velocity-dist");
-    
-    // ----------------------------- Finalizing -------------------------------
 	return 0;
 }

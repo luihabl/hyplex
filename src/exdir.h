@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <map>
+#include <initializer_list>
 
 #include "yaml-cpp/yaml.h"
 #include "fmatrix.h"
@@ -44,6 +45,7 @@ class exdir
         template <class T> void write_attribute(ghc::filesystem::path object_path, string key, T value);
         template <class T> void write_attribute(ghc::filesystem::path object_path, tmatrix<string> & key, tmatrix<T> & value);
         template <class T> void write_attribute(ghc::filesystem::path object_path, map<string, T> & dict);
+        template <class T> void write_attribute(ghc::filesystem::path object_path, string key, initializer_list<T> list);
         void write_attribute(ghc::filesystem::path object_path, YAML::Node & other_node);
         template <class T> void read_dataset(ghc::filesystem::path dataset_path, tmatrix<T> & data);
         template <class T> void read_attribute(ghc::filesystem::path object_path, string key, T & value);
@@ -178,6 +180,22 @@ inline void exdir::write_attribute(ghc::filesystem::path object_path, string key
     
 }
 
+template <class T>
+inline void exdir::write_attribute(ghc::filesystem::path object_path, string key, initializer_list<T> list) {
+    
+    ensure_attr_exists(object_path);
+ 
+    string attr_path = file_path / object_path / ATTR_FILE;
+       
+    YAML::Node node = YAML::LoadFile(attr_path);
+    node[key] = list;
+    
+    ofstream fout(attr_path);
+    fout << node;
+    fout.close();
+    
+}
+
 
 template <class T>
 inline void exdir::write_attribute(ghc::filesystem::path object_path, tmatrix<string> & key, tmatrix<T> & value) {
@@ -271,6 +289,32 @@ inline void exdir::read_all_attributes(ghc::filesystem::path object_path, YAML::
     ensure_attr_exists(object_path);
     ghc::filesystem::path attr_path = file_path / object_path / ATTR_FILE;
     node = YAML::LoadFile(attr_path);
+}
+
+
+namespace YAML {
+    template<class T>
+    struct convert<initializer_list<T>> {
+        static Node encode(const initializer_list<T>& rhs) {
+            Node node;
+
+            for (auto & e: rhs)
+                node.push_back(e);
+            
+            return node;
+        }
+
+        // static bool decode(const Node& node, const initializer_list<T>& rhs) {
+        //     if(!node.IsSequence()) {
+        //     return false;
+        //     }
+
+        //     rhs.x = node[0].as<double>();
+        //     rhs.y = node[1].as<double>();
+        //     rhs.z = node[2].as<double>();
+        //     return true;
+        // }
+    };
 }
 
 

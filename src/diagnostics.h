@@ -18,7 +18,7 @@ class diagnostics{
         unordered_map<string, fmatrix> series;
         int n_points_series;
         diagnostics(configuration & _config, state_info & _state);
-        void velocity_distribution(fmatrix & p, int & n_active, int vcol, int n_v, double v_0, double v_1,  fmatrix & dmesh);
+        void velocity_distribution(fmatrix & p, int & n_active, int vcol, double v_0, double v_1,  fmatrix & dmesh);
         void update_series(double n_inj_el, double n_inj_i);
 
 };

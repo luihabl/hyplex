@@ -29,7 +29,7 @@ diagnostics::diagnostics(configuration & _config, state_info & _state): config(_
 	series_measure_step = config.i("diagnostics/series/measure_step");
 }
 
-void diagnostics::velocity_distribution(fmatrix & p, int & n_active, int vcol, int n_v, double v_0, double v_1,  fmatrix & dmesh){
+void diagnostics::velocity_distribution(fmatrix & p, int & n_active, int vcol, double v_0, double v_1,  fmatrix & dmesh){
 
 	dmesh.set_zero();
 
@@ -39,7 +39,7 @@ void diagnostics::velocity_distribution(fmatrix & p, int & n_active, int vcol, i
 	v_0 *= k_v;
 	v_1 *= k_v;
 
-	double dv = (v_1 - v_0) / (double) (n_v - 1);
+	double dv = (v_1 - v_0) / (double) (dmesh.n1 - 1);
 
 	for(int i = 0; i < n_active; i++){
 

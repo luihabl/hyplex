@@ -115,7 +115,6 @@ void output_manager::save_state(fmatrix & p_e, fmatrix & p_i, bool force){
 
     check_output_folder();
     const double dx = config.f("geometry/dx");
-    const double dt = config.f("time/dt");
     
     fmatrix p_e_corrected(state.n_active_e, 6);
     for(int i = 0; i < state.n_active_e; i++){
@@ -227,7 +226,6 @@ void output_manager::save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmat
     file.create_group(obj_path);
 
     double dx = config.f("geometry/dx");
-    double dt = config.f("time/dt");
     double n_factor = config.f("particles/n_factor");
     double k_phi = config.f("p/k_phi");
 
@@ -255,8 +253,6 @@ void output_manager::save_series(unordered_map<string, fmatrix> & series, int & 
 
     file.create_group("series");
 
-    double dt = config.f("time/dt");
-    
     file.write_attribute("series", "Time [s]", (double) state.step * dt);
     file.write_attribute("series", "Step", (double) state.step);
 
@@ -275,8 +271,6 @@ void output_manager::save_field_series(fmatrix & field, double conversion_consta
 
     check_output_folder();
     file.create_group("field_series");
-
-    double dt = config.f("time/dt");
     
     fmatrix field_corrected = conversion_constant * field;
 
@@ -294,6 +288,22 @@ output_manager::output_manager(system_clock::time_point _start_utc, state_info &
     n_steps = config.i("time/n_steps");
     start_progress = config.f("diagnostics/rf_av/start_progress");
     print_timing_step = config.i("diagnostics/print_info/print_timing_step"); 
+    dt = config.f("time/dt");
+
+    n_v_e = config.i("diagnostics/vdist/electrons/n_v");
+    n_v_i = config.i("diagnostics/vdist/ions/n_v");
+
+    dist_e = fmatrix::zeros(n_v_e);
+    dist_i = fmatrix::zeros(n_v_i);
+
+    step_save_vdist = config.i("diagnostics/vdist/save_step");
+
+
+    vlim_e = fmatrix({config.fs("diagnostics/vdist/electrons/vlim_x").val[0], config.fs("diagnostics/vdist/electrons/vlim_x").val[1],
+              config.fs("diagnostics/vdist/electrons/vlim_y").val[0], config.fs("diagnostics/vdist/electrons/vlim_y").val[1]});
+
+    vlim_i = fmatrix({config.fs("diagnostics/vdist/ions/vlim_x").val[0], config.fs("diagnostics/vdist/ions/vlim_x").val[1],
+              config.fs("diagnostics/vdist/ions/vlim_y").val[0], config.fs("diagnostics/vdist/ions/vlim_y").val[1]});
 
     int nx = config.i("geometry/n_mesh_x");
     int ny = config.i("geometry/n_mesh_y");
@@ -417,5 +427,45 @@ void output_manager::fields_rf_average(fmatrix & phi, fmatrix & wmesh_e, fmatrix
         }
     }
 }
+
+void output_manager::save_distributions(diagnostics diag, fmatrix & p_e, fmatrix & p_i, bool force){
+
+    if(!(force || state.step % step_save_vdist == 0)) return;
+
+    check_output_folder();
+
+    ghc::filesystem::path obj_path = "vdist", obj_path_e = obj_path / "electrons", obj_path_i = obj_path / "ions";
+
+    file.create_group(obj_path);
+    file.create_group(obj_path_e);
+    file.create_group(obj_path_i);
+
+    diag.velocity_distribution(p_i, state.n_active_i, 3, vlim_i.val[0], vlim_i.val[1], dist_i);
+    file.write_dataset(obj_path_i / "x", dist_i);
+
+    diag.velocity_distribution(p_i, state.n_active_i, 4, vlim_i.val[2], vlim_i.val[3], dist_i);
+    file.write_dataset(obj_path_i / "y", dist_i);
+
+    diag.velocity_distribution(p_e, state.n_active_e, 3, vlim_e.val[0], vlim_e.val[1], dist_e);
+    file.write_dataset(obj_path_e / "x", dist_e);
+
+    diag.velocity_distribution(p_e, state.n_active_e, 4, vlim_e.val[2], vlim_e.val[3], dist_e);
+    file.write_dataset(obj_path_e / "y", dist_e);
+    
+
+    file.write_attribute(obj_path, "Time [s]", (double) state.step * dt);
+    file.write_attribute(obj_path, "Step", (double) state.step);
+
+    file.write_attribute(obj_path_e, "n_v", n_v_e);
+    file.write_attribute(obj_path_e, "vlim_x", {vlim_e.val[0], vlim_e.val[1]});
+    file.write_attribute(obj_path_e, "vlim_y", {vlim_e.val[2], vlim_e.val[3]});
+    
+    file.write_attribute(obj_path_i, "n_v", n_v_i);
+    file.write_attribute(obj_path_i, "vlim_x", {vlim_i.val[0], vlim_i.val[1]});
+    file.write_attribute(obj_path_i, "vlim_y", {vlim_i.val[2], vlim_i.val[3]});
+    
+    verbose_log("Saved distributions", verbosity >= 1);
+}
+
 
 
