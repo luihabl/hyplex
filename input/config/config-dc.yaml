@@ -89,6 +89,7 @@ diagnostics:
   
   print_info:
     print_step: 100
+    print_timing_step: 10
 
   metadata:
     update_step: 10000
@@ -106,28 +107,25 @@ diagnostics:
     measure_step: 1
     save_step: 50000
     end_save: true
+
+  rf_av:
+    start_progress: 0.0
   
   field_series:
     save_step: 1
     end_save: true
 
   vdist:
+    save_step: 10000
+    end_save: true
     electrons:
       n_v: 200
-      x:
-        v_0: -20e6
-        v_1: 20e6
-      y:
-        v_0: -2e6
-        v_1: 2e6      
+      vlim_x: [-20e6, 20e6]
+      vlim_y: [-20e6, 20e6]
     ions:
       n_v: 200
-      x:
-        v_0: -500
-        v_1: 500
-      y:
-        v_0: -500
-        v_1: 500  
+      vlim_x: [-50000, 50000]
+      vlim_y: [-50000, 50000]  
                          
 helium:
   m_i: 6.67e-27                             # Ion mass [kg]
