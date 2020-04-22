@@ -241,7 +241,7 @@ void particle_operations::boundaries_ob_count(fmatrix & p, int & n_active, imatr
 
 	double x, y;
 
-	for (size_t i = 0; i < n_active; i++)
+	for (int i = 0; i < n_active; i++)
 	{
 		x = p.val[i * 6 + 0];
 		y = p.val[i * 6 + 1];

@@ -112,7 +112,7 @@ void pic_operations::electric_field_at_particles(fmatrix & efield_at_particles_x
 
     const size_t mesh_n2 = mesh.x.n2;
 
-	for (size_t i = 0; i < n_active; i++)
+	for (int i = 0; i < n_active; i++)
 	{
 		x_p = p.val[i * 6 + 0];
 		y_p = p.val[i * 6 + 1];

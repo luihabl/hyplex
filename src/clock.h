@@ -69,7 +69,7 @@ inline string get_utc_datetime_string()
 }
 
 inline void print_td(fmatrix & td, int n_td){
-    for(size_t j=0; j<n_td; j++){
+    for(int j=0; j<n_td; j++){
         cout << j << "-" <<  j+1 << ": " << td.val[j] << "\t";
     }
     cout << endl;
