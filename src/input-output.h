@@ -135,7 +135,7 @@ class output_manager
         void update_metadata(string status = "running", bool force = false);
         void print_info();
         void print_loop_timing(tmatrix<system_clock::time_point> & tp);
-        void save_distributions(diagnostics diag, fmatrix & p_e, fmatrix & p_i, bool force = false);
+        void save_distributions(diagnostics & diag, fmatrix & p_e, fmatrix & p_i, bool force = false);
 };
 
 template <class T>

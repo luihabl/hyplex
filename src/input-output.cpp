@@ -428,7 +428,7 @@ void output_manager::fields_rf_average(fmatrix & phi, fmatrix & wmesh_e, fmatrix
     }
 }
 
-void output_manager::save_distributions(diagnostics diag, fmatrix & p_e, fmatrix & p_i, bool force){
+void output_manager::save_distributions(diagnostics & diag, fmatrix & p_e, fmatrix & p_i, bool force){
 
     if(!(force || state.step % step_save_vdist == 0)) return;
 
