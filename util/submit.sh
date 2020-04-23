@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --comment="Running nominal and dc cases         # An arbitrary comment on the job
+#SBATCH --comment="Running nominal and dc cases"        # An arbitrary comment on the job
 #SBATCH --job-name="nom-dc"                             # Give this job an arbitrary name
 #SBATCH --mail-type=ALL                                 # When to send mail  (BEGIN, END, FAIL, REQUEUE, ALL)
 #SBATCH --mail-user=lui.habl@lpp.polytechnique.fr       # Where to send mail.  
