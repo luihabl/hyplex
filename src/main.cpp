@@ -32,10 +32,9 @@ using namespace std::chrono;
 // ----------------------------- Main function --------------------------------
 int main(int argc, char* argv[])
 {
-    MPI_Init(NULL, NULL);
+    MPI_Init(&argc,&argv);
 
     auto start_utc = sys_now();
-
     cout << "Hyplex " << GIT_VERSION << endl;
     cout << "Starting at " <<  time_to_string(start_utc) << " UTC" << endl << endl;
 
