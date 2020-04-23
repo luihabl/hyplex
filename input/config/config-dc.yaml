@@ -38,7 +38,7 @@ geometry:
 
 time:
   dt: 5.0e-12                               # Time step [s]
-  n_steps: 1e6                              # Number of simulation steps to be executed []
+  n_steps: 1.2e6                              # Number of simulation steps to be executed []
   n_steps_dsmc: 0.5e6                       # Number of DSMC simulation steps to be executed []
   n_average: 1                              # Number of average steps []
   n_average_dsmc: 50000                     # Number of DSMC average steps []

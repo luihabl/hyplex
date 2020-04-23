@@ -1,17 +1,18 @@
 #!/bin/bash
 
-#SBATCH --comment="Testing Hyplex complete run"         # An arbitrary comment on the job
-#SBATCH --job-name="hf01"                               # Give this job an arbitrary name
+#SBATCH --comment="Running nominal and dc cases         # An arbitrary comment on the job
+#SBATCH --job-name="nom-dc"                             # Give this job an arbitrary name
 #SBATCH --mail-type=ALL                                 # When to send mail  (BEGIN, END, FAIL, REQUEUE, ALL)
 #SBATCH --mail-user=lui.habl@lpp.polytechnique.fr       # Where to send mail.  
 #SBATCH --workdir="/home/LPP/lui.habl/hyplex"           # Set current directory before job starts - LOGIN is your login
-#SBATCH --error="output/log/%j.err"                         # Direct STDERR here (file identifier), %j is substituted for the job number
-#SBATCH --output="output/log/%j.out"                        # Direct STDOUT here (file identifier), %j is substituted for the job number
+#SBATCH --error="output/log/%j.err"                     # Direct STDERR here (file identifier), %j is substituted for the job number
+#SBATCH --output="output/log/%j.out"                    # Direct STDOUT here (file identifier), %j is substituted for the job number
 #SBATCH --verbose                                       # Increase informational messages
 
-#SBATCH --ntasks=1                                      # Number of core (max 64) for your parallel job
+#SBATCH --ntasks=1                                      # Number of tasks (max 64) for your parallel job
 #SBATCH --cpus-per-task=6                               # number of cores per task (e.g. OpenMP)
 #SBATCH --mem-per-cpu=1G
+#SBATCH --partition=cpu20
 
 # Put your email here to receive execution location by mail
 echo "" |mail -s "Your job $SLURM_JOB_ID is running on $HOSTNAME" lui.habl@lpp.polytechnique.fr
@@ -24,9 +25,13 @@ module load gcc/6.3.0
 module load make/4.2
 module load openmpi/gcc/64/3.1.4
 
-export PATH=$HOME/opt/bin:$PATH
+# export PATH=$HOME/opt/bin:$PATH
 
 # Here the code to execute with the SRUN command
+
+mpirun --bind-to none --mca btl openib,self,vader -np 1 ./run --config=input/config/config-nominal.yaml > output/log/${SLURM_JOB_ID}_0.out &
+mpirun --bind-to none --mca btl openib,self,vader -np 1 ./run --config=input/config/config-dc.yaml > output/log/${SLURM_JOB_ID}_1.out &
+wait
 
 #mpirun --mca btl self,openib,vader -np $SLURM_NTASKS ./run -n 1 &
 #mpirun --mca btl self,openib,vader -np $SLURM_NTASKS ./run -n 2 &
@@ -39,10 +44,6 @@ export PATH=$HOME/opt/bin:$PATH
 #    mpirun --bind-to none --mca btl openib,self,vader -np 1 ./run -n $sj > output/log/${SLURM_JOB_ID}_${sj}.out &
 #done
 #wait
-
-mpirun --bind-to none --mca btl openib,self,vader -np 1 ./run -n 0 > output/log/${SLURM_JOB_ID}_0.out &
-mpirun --bind-to none --mca btl openib,self,vader -np 1 ./run -n 1 > output/log/${SLURM_JOB_ID}_1.out &
-wait
 
 #mpi_cmd="mpirun --bind-to none --mca btl openib,self,vader -np 1"
 #parallel_cmd="parallel --delay .2 -j $SLURM_NTASKS"
