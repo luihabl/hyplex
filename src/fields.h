@@ -3,6 +3,7 @@
 
 #include "fmatrix.h"
 #include "configuration.h"
+#include "num-tools.h"
 
 struct mesh_set{
 
@@ -49,8 +50,8 @@ inline double physical_space(double logical_position, double a, double b, double
     return b * (((a / (n_mesh - 1)) * logical_position * logical_position) + ((1 - a) * logical_position));
 }
 
-inline int logical_space(const float & physical_position, const float & a, const float & b, const float & n_mesh){
-    return floor(2.0f * physical_position / (b * (1.0f - a + sqrt((1.0f - a)*(1.0f - a) + (4.0f * a * physical_position / b)/(n_mesh - 1)))));
+static inline int logical_space(const float & physical_position, const float & a, const float & b, const float & n_mesh){
+    return floorf(2.0f * physical_position / (b * (1.0f - a + sqrtf((1.0f - a)*(1.0f - a) + (4.0f * a * physical_position / b)/(n_mesh - 1)))));
 }
 
 

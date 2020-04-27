@@ -422,7 +422,7 @@ void output_manager::fields_rf_average(fmatrix & phi, fmatrix & wmesh_e, fmatrix
         }
 
         if((state.step+1) % print_timing_step == 0){
-            print_td(td, tp.n1 - 1);
+            print_td(td, (int) tp.n1 - 1);
             td.set_zero();
         }
     }

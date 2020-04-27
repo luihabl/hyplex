@@ -92,7 +92,7 @@ template <class T>
 void load_fmatrix(tmatrix<T> & m, string filename, string dataname){
     exdir file(filename);
     file.read_dataset(dataname, m);
-    verbose_log("Loaded " + filename + dataname, true);
+    verbose_log("Loaded " + filename + "/" + dataname, true);
 }
 
 // ------------------- output manager class ---------------------------------

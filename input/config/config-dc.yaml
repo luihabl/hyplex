@@ -109,7 +109,7 @@ diagnostics:
     end_save: true
 
   rf_av:
-    start_progress: 0.0
+    start_progress: 0.9
   
   field_series:
     save_step: 1

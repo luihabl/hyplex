@@ -1,13 +1,13 @@
-#   __  __                 ___                    
-#  /\ \/\ \               /\_ \                   
-#  \ \ \_\ \  __  __  ____\//\ \      __   __  _  
-#   \ \  _  \/\ \/\ \/\ '__`\ \ \   /'__`\/\ \/'\ 
-#    \ \ \ \ \ \ \_\ \ \ \L\ \_\ \_/\  __/\/>  </ 
+#   __  __                 ___
+#  /\ \/\ \               /\_ \
+#  \ \ \_\ \  __  __  ____\//\ \      __   __  _
+#   \ \  _  \/\ \/\ \/\ '__`\ \ \   /'__`\/\ \/'\
+#    \ \ \ \ \ \ \_\ \ \ \L\ \_\ \_/\  __/\/>  </
 #     \ \_\ \_\/`____ \ \ ,__/\____\ \____\/\_/\_\
 #      \/_/\/_/`/___/> \ \ \/\/____/\/____/\//\/_/
-#                 /\___/\ \_\                     
-#                 \/__/  \/_/                     
-# 
+#                 /\___/\ \_\
+#                 \/__/  \/_/
+#
 #  Configuration file for the Hyplex code
 #  Author: Lui Txai Calvoso Habl
 
@@ -17,8 +17,8 @@ project:
   cross_sections_path: "input/cross-sections/"
 
 simulation:
-  job_name: "test"
-  initial_state: "new"                      # Load input for simulation state or start again: 'load' or 'new'
+  job_name: "nominal"
+  initial_state: "load"                      # Load input for simulation state or start again: 'load' or 'new'
   verbosity: 2                               # Verbosity level: 0 means minimum messages
 
 physical:
@@ -38,7 +38,7 @@ geometry:
 
 time:
   dt: 5.0e-12                               # Time step [s]
-  n_steps: 7000                             # Number of simulation steps to be executed []
+  n_steps: 1.2e6                             # Number of simulation steps to be executed []
   n_steps_dsmc: 0.5e6                         # Number of DSMC simulation steps to be executed []
   n_average: 1                              # Number of average steps []
   n_average_dsmc: 50000                     # Number of DSMC average steps []
@@ -48,14 +48,14 @@ time:
 boundaries:
   volt_0: 0.0                               # Voltage on the thruster [V]
   volt_1: 0.0                               # Voltage on the chamber walls [V]
-  c_cap: 10.0e-12                           # Capacitance of thruster connection [F]
+  c_cap: 1.0e-11                            # Capacitance of thruster connection [F]
   ob_type: "dirichlet"                      # Type of outer boundary condition: neumann, dirichlet
 
 thruster:
   mfc: 3.0                                  # Mass flow rate of thruster [sccm]
   eta_p: 0.5                                # Propellant utilization efficiency []
   freq: 30.0e6                              # Frequency of signal [Hz]
-  v_sb: 1001.58                             # Self-bias voltage [V]
+  v_sb: 1003.02722                          # Self-bias voltage [V]
   v_rf: 1000.0                              # Amplitude of the RF signal [V]
 
 particles:
@@ -75,7 +75,7 @@ electrons:
   m_el: 9.10938356e-31                      # Electron mass [kg]
   q_el: -1.60217662e-19                     # Electron charge [C]
   t_el: 5.0                                 # Initial electron temperature [eV]
-  i_el: 5.0                                 # Electron injection current [A/m]
+  i_el: 1.1245                              # Electron injection current [A/m]
   v_drift_el: 4193828.827                   # Electron injection drift velocity [m/s]
 
 ions:
@@ -93,15 +93,15 @@ diagnostics:
 
   metadata:
     update_step: 10000
-    end_save: true  
+    end_save: true
 
   state:
     save_step: 10000
-    end_save: true                              
+    end_save: true
 
   fields_snapshot:
     save_step: 10000
-    end_save: true   
+    end_save: true
   
   series:
     measure_step: 1
@@ -109,7 +109,7 @@ diagnostics:
     end_save: true
 
   rf_av:
-    start_progress: 0.0
+    start_progress: 0.9
   
   field_series:
     save_step: 1
@@ -148,7 +148,7 @@ xenon:
   e_iz: 12.13                               # Ionization energy [eV]
   els_path: "Xe/Elastic_Xe.csv"             # Path to elastic cross section
   exc_path:                                 # Path to first excitation cross section
-  - "Xe/Excitation1_Xe.csv"      
+  - "Xe/Excitation1_Xe.csv"
   iz_path: "Xe/Ionization_Xe.csv"           # Path ionization cross section
   bs_path: "Xe/Backscattering_Xe.csv"       # Path backscattering cross section
   iso_path: "Xe/Isotropic_Xe.csv"           # Path isotropic cross section

@@ -301,7 +301,7 @@ string configuration::get_config_file_name(string config_name, string batch_path
         
         sort(paths.begin(), paths.end());
 
-        if(rank > (int) paths.size() - 1) rank = paths.size() - 1;
+        if(rank > (int) paths.size() - 1) rank = (int) paths.size() - 1;
         return paths[rank];
     }
     else {

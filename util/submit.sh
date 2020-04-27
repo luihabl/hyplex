@@ -11,7 +11,6 @@
 
 #SBATCH --ntasks=1                                      # Number of tasks (max 64) for your parallel job
 #SBATCH --cpus-per-task=6                               # number of cores per task (e.g. OpenMP)
-#SBATCH --mem-per-cpu=1G
 #SBATCH --partition=cpu20
 
 # Put your email here to receive execution location by mail

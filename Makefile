@@ -15,7 +15,7 @@ else ifeq ($(machine),hopper)
 else
   CC = g++
   LDFLAGS = -L/usr/local/lib -Llib/$(hypre_dir)/src/hypre/lib -Llib/yaml -lmpi -lHYPRE -lyaml-cpp
-  CXXFLAGS = -I/usr/local/include -Ilib -Ilib/$(hypre_dir)/src/hypre/include -Ilib/yaml -std=$(cpp_std) -O3 -march=native -Wall
+  CXXFLAGS = -I/usr/local/include -Ilib -Ilib/$(hypre_dir)/src/hypre/include -Ilib/yaml -std=$(cpp_std) -O3 -g -march=native -Wall
 endif
 
 # GIT_HASH=`git rev-parse HEAD`
