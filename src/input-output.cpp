@@ -21,10 +21,9 @@
 #include "exdir.h"
 #include "configuration.h"
 #include "fields.h"
-
 #include "num-tools.h"
-
 #include "date.h"
+#include "mpi.h"
 
 using namespace std;
 using namespace std::chrono;
@@ -49,14 +48,24 @@ void print_dsmc_info(int i, int n_active_n, int step_interval, int n_steps){
 
 void output_manager::print_info()
 {
+    int mpi_rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+    
+    int n_active_e_local = 0, n_active_i_local;
+    
+    MPI_Reduce(&state.n_active_e, &n_active_e_local, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&state.n_active_i, &n_active_i_local, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+    
+    if(mpi_rank !=0 ) return;
+    
     static high_resolution_clock::time_point t0;
     if(state.step==state.step_offset) t0 = high_resolution_clock::now();
     if ((state.step + 1) % step_print_info == 0 || state.step == 0)
     {
         printf("[%05.2f%%] ", (double) (100.0 * (state.step + 1 - state.step_offset) / config.i("time/n_steps")));
         printf("Step: %-8d ", state.step + 1);
-        printf("Active electrons: %-8d ", state.n_active_e);
-        printf("Active ions: %-8d ", state.n_active_i);
+        printf("Active electrons: %-8d ", n_active_e_local);
+        printf("Active ions: %-8d ", n_active_i_local);
         printf("Cap. voltage: %.4f V   ", state.phi_zero / config.f("p/k_phi"));
         printf("Loop time: %.2f ms ", (double) duration_cast<microseconds>(high_resolution_clock::now() - t0).count() / (1e3 * step_print_info));
         printf("\n");
