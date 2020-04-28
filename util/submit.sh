@@ -9,7 +9,7 @@
 #SBATCH --output="output/log/%j.out"                    # Direct STDOUT here (file identifier), %j is substituted for the job number
 #SBATCH --verbose                                       # Increase informational messages
 
-#SBATCH --ntasks=1                                      # Number of tasks (max 64) for your parallel job
+#SBATCH --ntasks=2                                      # Number of tasks (max 64) for your parallel job
 #SBATCH --cpus-per-task=6                               # number of cores per task (e.g. OpenMP)
 #SBATCH --partition=cpu20
 
@@ -28,9 +28,9 @@ module load openmpi/gcc/64/3.1.4
 
 # Here the code to execute with the SRUN command
 
-mpirun --bind-to none --mca btl openib,self,vader -np 1 ./run --config=input/config/config-nominal.yaml > output/log/${SLURM_JOB_ID}_0.out &
-mpirun --bind-to none --mca btl openib,self,vader -np 1 ./run --config=input/config/config-dc.yaml > output/log/${SLURM_JOB_ID}_1.out &
-wait
+mpirun --bind-to none --mca btl openib,self,vader -np 1 ./run --config=input/config/config-nominal.yaml > output/log/${SLURM_JOB_ID}_0.out
+# mpirun --bind-to none --mca btl openib,self,vader -np 1 ./run --config=input/config/config-dc.yaml > output/log/${SLURM_JOB_ID}_1.out &
+
 
 #mpirun --mca btl self,openib,vader -np $SLURM_NTASKS ./run -n 1 &
 #mpirun --mca btl self,openib,vader -np $SLURM_NTASKS ./run -n 2 &
