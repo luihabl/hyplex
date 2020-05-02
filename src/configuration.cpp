@@ -271,40 +271,5 @@ void configuration::print_all(){
 }
 
 void configuration::set_job_name(string arg_job_name){
-
-    int nproc;
-    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
-
-    string mpi_rank_label = "";
-    if(nproc > 1){
-        int rank;
-        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-        mpi_rank_label = to_string(rank);
-    }
-
-    set("p/job_name", arg_job_name == "" ? s("simulation/job_name") + mpi_rank_label : arg_job_name + mpi_rank_label);
-}
-
-string configuration::get_config_file_name(string config_name, string batch_path){
-    
-    int nproc;
-    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
-
-    if(nproc > 1 && batch_path != ""){
-        int rank;
-        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-        ghc::filesystem::path path = batch_path;
-        vector<ghc::filesystem::path> paths;
-        
-        for (const auto & entry : ghc::filesystem::directory_iterator(path))
-            paths.push_back(entry.path());
-        
-        sort(paths.begin(), paths.end());
-
-        if(rank > (int) paths.size() - 1) rank = (int) paths.size() - 1;
-        return paths[rank];
-    }
-    else {
-        return config_name;
-    }
+    set("p/job_name", arg_job_name == "" ? s("simulation/job_name") : arg_job_name);
 }

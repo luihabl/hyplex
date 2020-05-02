@@ -29,7 +29,6 @@ argparser::argparser(int argc, char* argv[]){
     
     args::ValueFlag<string> config_path(parser, "config", "Path to config .yaml file", {'c', "config"});
     args::ValueFlag<string> job_name(parser, "name", "Override job identifier name", {'n', "name"});
-    args::ValueFlag<string> batch(parser, "batch", "Path to group of config files", {'b', "batch"});
     
     try
     {
@@ -56,7 +55,6 @@ argparser::argparser(int argc, char* argv[]){
     string default_val = "";
     set_from_obj(config_path, "config", default_val);
     set_from_obj(job_name, "name", default_val);
-    set_from_obj(batch, "batch", default_val);
 }
 
 template <class T>

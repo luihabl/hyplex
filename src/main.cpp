@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
     string job_name = arg.get("name", "");
     string config_path = arg.get("config", DEFAULT_CONFIG_PATH);
 
-    configuration config(configuration::get_config_file_name(arg.get("config", DEFAULT_CONFIG_PATH), arg.get("batch", "")));
+    configuration config(arg.get("config", DEFAULT_CONFIG_PATH));
     config.set_job_name(job_name);
 
     state_info state;
@@ -75,6 +75,7 @@ int main(int argc, char* argv[])
     const double volt_1_norm    = config.f("p/volt_1_norm");
     const bool mcc_coll         = config.b("neutrals/mcc_coll");
     const string inj_model      = config.s("electrons/inj_model");
+    const int n_mesh_total      = config.i("geometry/n_mesh_x") * config.i("geometry/n_mesh_y");
 
     verbose_log("Initializing general variables", verbosity >= 1);
  
@@ -195,8 +196,8 @@ int main(int argc, char* argv[])
 
         // Step 2.0 integration of Poisson's equation
         
-        MPI_Reduce(wmesh_i.val, wmesh_i_local.val, config.i("geometry/n_mesh_x") * config.i("geometry/n_mesh_y"), MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-        MPI_Reduce(wmesh_e.val, wmesh_e_local.val, config.i("geometry/n_mesh_x") * config.i("geometry/n_mesh_y"), MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        MPI_Reduce(wmesh_i.val, wmesh_i_local.val, n_mesh_total, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        MPI_Reduce(wmesh_e.val, wmesh_e_local.val, n_mesh_total, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
         
         MPI_Reduce(&state.n_out_ob_i, &n_out_ob_i_local, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
         MPI_Reduce(&state.n_out_ob_e, &n_out_ob_e_local, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -225,8 +226,8 @@ int main(int argc, char* argv[])
             
         }
 
-        MPI_Bcast(efield_x.val, config.i("geometry/n_mesh_x") * config.i("geometry/n_mesh_y"), MPI_DOUBLE, 0, MPI_COMM_WORLD);
-        MPI_Bcast(efield_y.val, config.i("geometry/n_mesh_x") * config.i("geometry/n_mesh_y"), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Bcast(efield_x.val, n_mesh_total, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Bcast(efield_y.val, n_mesh_total, MPI_DOUBLE, 0, MPI_COMM_WORLD);
         MPI_Barrier(MPI_COMM_WORLD);
         
         // Step 2.2: field weighting
@@ -264,12 +265,16 @@ int main(int argc, char* argv[])
         tp.val[8] = sys_now();
         
         //  ----------------------------- Diagnostics -------------------------
-
+        
+        
+        
+        
         output.print_info();
-//
-//        diag.update_series(n_inj_el, n_inj_i);
-//
-//        output.save_state(p_e, p_i);
+
+        diag.update_series(n_inj_el, n_inj_i);
+        
+        output.save_state(p_e, p_i);
+        
 //        output.save_fields_snapshot(phi, wmesh_e, wmesh_i, mesh, "");
 //        output.save_series(diag.series, diag.n_points_series);
 //        output.save_distributions(diag, p_e, p_i);
@@ -290,6 +295,7 @@ int main(int argc, char* argv[])
 //    output.save_series(diag.series, diag.n_points_series, config.b("diagnostics/series/end_save"));
 //    output.save_distributions(diag, p_e, p_i, config.b("diagnostics/vdist/end_save"));
 //    output.update_metadata("completed", config.b("diagnostics/metadata/end_save"));
-
+    
+   
 	return 0;
 }

@@ -48,13 +48,11 @@ void print_dsmc_info(int i, int n_active_n, int step_interval, int n_steps){
 
 void output_manager::print_info()
 {
-    int mpi_rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
     
-    int n_active_e_local = 0, n_active_i_local;
+    int n_active_e_total, n_active_i_total;
     
-    MPI_Reduce(&state.n_active_e, &n_active_e_local, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&state.n_active_i, &n_active_i_local, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&state.n_active_e, &n_active_e_total, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&state.n_active_i, &n_active_i_total, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
     
     if(mpi_rank !=0 ) return;
     
@@ -64,8 +62,8 @@ void output_manager::print_info()
     {
         printf("[%05.2f%%] ", (double) (100.0 * (state.step + 1 - state.step_offset) / config.i("time/n_steps")));
         printf("Step: %-8d ", state.step + 1);
-        printf("Active electrons: %-8d ", n_active_e_local);
-        printf("Active ions: %-8d ", n_active_i_local);
+        printf("Active electrons: %-8d ", n_active_e_total);
+        printf("Active ions: %-8d ", n_active_i_total);
         printf("Cap. voltage: %.4f V   ", state.phi_zero / config.f("p/k_phi"));
         printf("Loop time: %.2f ms ", (double) duration_cast<microseconds>(high_resolution_clock::now() - t0).count() / (1e3 * step_print_info));
         printf("\n");
@@ -75,6 +73,11 @@ void output_manager::print_info()
 
 void print_initial_info(double p_null_e, double p_null_i, configuration & config)
 {
+    
+    int mpi_rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+    if(mpi_rank !=0 ) return;
+    
     verbose_log("\n ---- Simulation parameters ----", config.i("simulation/verbosity") >= 1);
     printf("Grid size:\t\t (%d, %d)\n", config.i("geometry/n_mesh_x"), config.i("geometry/n_mesh_y"));
     printf("Number of steps:\t %d\n", config.i("time/n_steps"));
@@ -124,49 +127,80 @@ void output_manager::save_state(fmatrix & p_e, fmatrix & p_i, bool force){
 
     check_output_folder();
     const double dx = config.f("geometry/dx");
-    
-    fmatrix p_e_corrected(state.n_active_e, 6);
-    for(int i = 0; i < state.n_active_e; i++){
-        p_e_corrected.val[i * 6 + 0] = p_e.val[i * 6 + 0] * dx;
-        p_e_corrected.val[i * 6 + 1] = p_e.val[i * 6 + 1] * dx;
-        p_e_corrected.val[i * 6 + 2] = p_e.val[i * 6 + 2] * dx;
-        p_e_corrected.val[i * 6 + 3] = p_e.val[i * 6 + 3] * dx / dt;
-        p_e_corrected.val[i * 6 + 4] = p_e.val[i * 6 + 4] * dx / dt;
-        p_e_corrected.val[i * 6 + 5] = p_e.val[i * 6 + 5] * dx / dt;
+
+    int n_active_e_total=0, n_active_i_total=0,
+        n_out_ob_e_total=0, n_out_ob_i_total=0;
+
+    MPI_Reduce(&state.n_active_e, &n_active_e_total, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&state.n_active_i, &n_active_i_total, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&state.n_out_ob_e, &n_out_ob_e_total, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&state.n_out_ob_i, &n_out_ob_i_total, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+
+    imatrix n_elements = imatrix::zeros(mpi_size);
+    imatrix displacement = imatrix::zeros(mpi_size);
+
+    fmatrix p_e_corrected(n_active_e_total, 6);
+    fmatrix p_i_corrected(n_active_i_total, 6);
+
+    MPI_Gather(&state.n_active_e, 1, MPI_INT, n_elements.val, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    for (int i = 0; i < mpi_size; i++ ) n_elements.val[i] = n_elements.val[i] * 6;
+    displacement.val[0] = 0;
+    for (int i = 1; i < mpi_size; i++ ) displacement.val[i] = displacement.val[i-1] + n_elements.val[i-1];
+    MPI_Gatherv(p_e.val, state.n_active_e * 6, MPI_DOUBLE, p_e_corrected.val,
+                n_elements.val, displacement.val, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+
+    MPI_Gather(&state.n_active_i, 1, MPI_INT, n_elements.val, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    for (int i = 0; i < mpi_size; i++ ) n_elements.val[i] = n_elements.val[i] * 6;
+    displacement.val[0] = 0;
+    for (int i = 1; i < mpi_size; i++ ) displacement.val[i] = displacement.val[i-1] + n_elements.val[i-1];
+    MPI_Gatherv(p_i.val, state.n_active_i * 6, MPI_DOUBLE, p_i_corrected.val,
+                n_elements.val, displacement.val, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+    if(mpi_rank != 0) return;
+
+
+    for(int i = 0; i < n_active_e_total; i++){
+        p_e_corrected.val[i * 6 + 0] = p_e_corrected.val[i * 6 + 0] * dx;
+        p_e_corrected.val[i * 6 + 1] = p_e_corrected.val[i * 6 + 1] * dx;
+        p_e_corrected.val[i * 6 + 2] = p_e_corrected.val[i * 6 + 2] * dx;
+        p_e_corrected.val[i * 6 + 3] = p_e_corrected.val[i * 6 + 3] * dx / dt;
+        p_e_corrected.val[i * 6 + 4] = p_e_corrected.val[i * 6 + 4] * dx / dt;
+        p_e_corrected.val[i * 6 + 5] = p_e_corrected.val[i * 6 + 5] * dx / dt;
     }
 
-    fmatrix p_i_corrected(state.n_active_i, 6);
-    for(int i = 0; i < state.n_active_i; i++){
-        p_i_corrected.val[i * 6 + 0] = p_i.val[i * 6 + 0] * dx;
-        p_i_corrected.val[i * 6 + 1] = p_i.val[i * 6 + 1] * dx;
-        p_i_corrected.val[i * 6 + 2] = p_i.val[i * 6 + 2] * dx;
-        p_i_corrected.val[i * 6 + 3] = p_i.val[i * 6 + 3] * dx / dt;
-        p_i_corrected.val[i * 6 + 4] = p_i.val[i * 6 + 4] * dx / dt;
-        p_i_corrected.val[i * 6 + 5] = p_i.val[i * 6 + 5] * dx / dt;
-    }
 
+    for(int i = 0; i < n_active_i_total; i++){
+        p_i_corrected.val[i * 6 + 0] = p_i_corrected.val[i * 6 + 0] * dx;
+        p_i_corrected.val[i * 6 + 1] = p_i_corrected.val[i * 6 + 1] * dx;
+        p_i_corrected.val[i * 6 + 2] = p_i_corrected.val[i * 6 + 2] * dx;
+        p_i_corrected.val[i * 6 + 3] = p_i_corrected.val[i * 6 + 3] * dx / dt;
+        p_i_corrected.val[i * 6 + 4] = p_i_corrected.val[i * 6 + 4] * dx / dt;
+        p_i_corrected.val[i * 6 + 5] = p_i_corrected.val[i * 6 + 5] * dx / dt;
+    }
 
     file.create_group("state");
-   
+
     file.write_dataset("state/p_i", p_i_corrected);
     file.write_dataset("state/p_e", p_e_corrected);
-
-    map<string, double> state_attrs_double = {
+    
+    map<string, double> state_attrs_double;
+    state_attrs_double = {
         {"Time [s]", (double) state.step * dt},
         {"Capacitor voltage [V]", state.phi_zero / config.f("p/k_phi")},
         {"Capacitor charge [norm. C]", state.q_cap},
         {"Surface charge density [norm. C/m^2]", state.sigma_1}
     };
-    
 
     file.write_attribute("state", state_attrs_double);
 
-    map<string, int> state_attrs_int = {
+    map<string, int> state_attrs_int;
+    state_attrs_int = {
         {"Step", state.step},
-        {"Active ions", state.n_active_i},
-        {"Removed ions", state.n_out_ob_i},
-        {"Active electrons", state.n_active_e},
-        {"Removed electrons", state.n_out_ob_e}
+        {"Active ions", n_active_i_total},
+        {"Removed ions", n_out_ob_i_total},
+        {"Active electrons", n_active_e_total},
+        {"Removed electrons", n_out_ob_e_total}
     };
 
     file.write_attribute("state", state_attrs_int);
@@ -290,6 +324,10 @@ void output_manager::save_field_series(fmatrix & field, double conversion_consta
 output_manager::output_manager(system_clock::time_point _start_utc, state_info & _state, configuration & _config, mesh_set & _mesh): state(_state), config(_config), mesh(_mesh){
     
     start_utc = _start_utc;
+    
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+    
     output_path = config.s("project/output_path");
     job_name = config.s("p/job_name");
 
@@ -298,6 +336,13 @@ output_manager::output_manager(system_clock::time_point _start_utc, state_info &
     start_progress = config.f("diagnostics/rf_av/start_progress");
     print_timing_step = config.i("diagnostics/print_info/print_timing_step"); 
     dt = config.f("time/dt");
+    
+    step_print_info  = config.i("diagnostics/print_info/print_step");
+    step_save_state  = config.i("diagnostics/state/save_step");
+    step_save_fields = config.i("diagnostics/fields_snapshot/save_step");
+    step_save_series = config.i("diagnostics/series/save_step");
+    step_save_fseries = config.i("diagnostics/field_series/save_step");
+    step_update_metadata = config.i("diagnostics/metadata/update_step");
 
     n_v_e = config.i("diagnostics/vdist/electrons/n_v");
     n_v_i = config.i("diagnostics/vdist/ions/n_v");
@@ -318,16 +363,21 @@ output_manager::output_manager(system_clock::time_point _start_utc, state_info &
     int ny = config.i("geometry/n_mesh_y");
 
     wmesh_e_av = fmatrix::zeros(nx, ny);
-    wmesh_i_av = fmatrix::zeros(nx,ny);
+    wmesh_i_av = fmatrix::zeros(nx, ny);
     phi_av = fmatrix::zeros(nx, ny);
     td = fmatrix::zeros(50);
     td.set_zero();
-    
-    
-    output_name = build_output_name();
-    
-    file = exdir(output_path / output_name, false);    
     verbosity = config.i("simulation/verbosity");
+    
+    if(mpi_rank == 0) output_name = build_output_name();
+    
+    int str_size = (int) output_name.size();
+    MPI_Bcast(&str_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    if (mpi_rank != 0) output_name.resize(str_size);
+    
+    MPI_Bcast(const_cast<char*>(output_name.data()), str_size, MPI_CHAR, 0, MPI_COMM_WORLD);
+    
+    file = exdir(output_path / output_name, false);
 }
 
 string output_manager::build_output_name(){
@@ -348,13 +398,8 @@ string output_manager::build_output_name(){
 }
 
 void output_manager::save_initial_data(){
-
-    step_print_info  = config.i("diagnostics/print_info/print_step");
-    step_save_state  = config.i("diagnostics/state/save_step"); 
-    step_save_fields = config.i("diagnostics/fields_snapshot/save_step"); 
-    step_save_series = config.i("diagnostics/series/save_step");
-    step_save_fseries = config.i("diagnostics/field_series/save_step");
-    step_update_metadata = config.i("diagnostics/metadata/update_step");
+    
+    if(mpi_rank !=0 ) return;
 
     double dx = config.f("geometry/dx");
     fmatrix mesh_x = mesh.x * dx;
@@ -393,8 +438,8 @@ void output_manager::update_metadata(string status, bool force){
 }
 
 void output_manager::check_output_folder(){
-    if(!file.file_exists()){  
-        file = exdir(output_path / output_name, false);    
+    if(!file.file_exists()){
+        file = exdir(output_path / output_name, false);
         save_initial_data();
         update_metadata();
     }
