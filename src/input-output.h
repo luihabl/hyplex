@@ -110,11 +110,11 @@ class output_manager
         mesh_set & mesh;
         
         int verbosity, step_print_info, step_save_state, step_save_fields, step_save_series, step_save_fseries, step_update_metadata,
-            rf_period_i, n_steps, print_timing_step, n_v_e, n_v_i, step_save_vdist, mpi_rank, mpi_size;
+            rf_period_i, n_steps, print_timing_step, n_v_e, n_v_i, step_save_vdist, mpi_rank, mpi_size, n_mesh_x, n_mesh_y;
         double start_progress, dt;
 
         fmatrix wmesh_e_av, wmesh_i_av, phi_av;
-        fmatrix dist_e, dist_i;
+        fmatrix dist_e, dist_e_global, dist_i, dist_i_global;
         fmatrix vlim_e, vlim_i;
         fmatrix td;
     
@@ -127,7 +127,7 @@ class output_manager
         output_manager(system_clock::time_point _start_utc, state_info & state, configuration & config, mesh_set & mesh);
         void save_state(fmatrix & p_e, fmatrix & p_i, bool force = false);
         void save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, mesh_set & mesh, string suffix, bool force = false);
-        void save_series(unordered_map<string, fmatrix> & series, int & n_points, bool force = false); 
+        void save_series(diagnostics & diag, bool force = false); 
         void save_field_series(fmatrix & field, double conversion_constant, bool force = false);
         void fields_rf_average(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, mesh_set & mesh);
         template <class T> void save_fmatrix(tmatrix<T> & m, ghc::filesystem::path datapath);

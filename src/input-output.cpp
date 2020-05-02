@@ -261,6 +261,7 @@ void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration 
 void output_manager::save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, mesh_set & mesh, string suffix, bool force)
 {
     if(!(force || state.step % step_save_fields == 0)) return;
+    if(mpi_rank != 0) return;
 
     check_output_folder();
 
@@ -288,23 +289,33 @@ void output_manager::save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmat
     verbose_log("Saved fields snapshot", verbosity >= 1);
 }
 
-void output_manager::save_series(unordered_map<string, fmatrix> & series, int & n_points, bool force)
+void output_manager::save_series(diagnostics & diag, bool force)
 {
     if(!(force || state.step % step_save_series == 0)) return;
 
-    check_output_folder();
+    if(mpi_rank == 0){
+        
+        check_output_folder();
 
-    file.create_group("series");
+        file.create_group("series");
 
-    file.write_attribute("series", "Time [s]", (double) state.step * dt);
-    file.write_attribute("series", "Step", (double) state.step);
-
-    for (auto & element : series)
-    {
-        string path = "series/" + element.first;
-        file.write_dataset(path, element.second);
+        file.write_attribute("series", "Time [s]", (double) state.step * dt);
+        file.write_attribute("series", "Step", (double) state.step);
+    
+        for (int i = 0; i < diag.gseries_keys.n1; i++){
+            string path = "series/" + diag.gseries_keys.val[i];
+            file.write_dataset(path, diag.gseries[diag.gseries_keys.val[i]]);
+        }
     }
-
+    
+    for (int i = 0; i < diag.lseries_keys.n1; i++){
+        string path = "series/" + diag.lseries_keys.val[i];
+        MPI_Reduce(diag.lseries[diag.lseries_keys.val[i]].val, diag.tmp_array.val, diag.series_size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        if(mpi_rank == 0) file.write_dataset(path, diag.tmp_array);
+    }
+    
+    if(mpi_rank != 0) return;
+    
     verbose_log("Saved time series", verbosity >= 1);
 }
 
@@ -343,12 +354,17 @@ output_manager::output_manager(system_clock::time_point _start_utc, state_info &
     step_save_series = config.i("diagnostics/series/save_step");
     step_save_fseries = config.i("diagnostics/field_series/save_step");
     step_update_metadata = config.i("diagnostics/metadata/update_step");
+    n_mesh_x = config.i("geometry/n_mesh_x");
+    n_mesh_y = config.i("geometry/n_mesh_y");
+    
 
     n_v_e = config.i("diagnostics/vdist/electrons/n_v");
     n_v_i = config.i("diagnostics/vdist/ions/n_v");
 
     dist_e = fmatrix::zeros(n_v_e);
+    dist_e_global = fmatrix::zeros(n_v_e);
     dist_i = fmatrix::zeros(n_v_i);
+    dist_i_global = fmatrix::zeros(n_v_i);
 
     step_save_vdist = config.i("diagnostics/vdist/save_step");
 
@@ -489,23 +505,30 @@ void output_manager::save_distributions(diagnostics & diag, fmatrix & p_e, fmatr
     check_output_folder();
 
     ghc::filesystem::path obj_path = "vdist", obj_path_e = obj_path / "electrons", obj_path_i = obj_path / "ions";
-
-    file.create_group(obj_path);
-    file.create_group(obj_path_e);
-    file.create_group(obj_path_i);
+    
+    if(mpi_rank == 0){
+        file.create_group(obj_path);
+        file.create_group(obj_path_e);
+        file.create_group(obj_path_i);
+    }
 
     diag.velocity_distribution(p_i, state.n_active_i, 3, vlim_i.val[0], vlim_i.val[1], dist_i);
-    file.write_dataset(obj_path_i / "x", dist_i);
+    MPI_Reduce(dist_i.val, dist_i_global.val, n_v_i, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    if (mpi_rank == 0) file.write_dataset(obj_path_i / "x", dist_i_global);
 
     diag.velocity_distribution(p_i, state.n_active_i, 4, vlim_i.val[2], vlim_i.val[3], dist_i);
-    file.write_dataset(obj_path_i / "y", dist_i);
+    MPI_Reduce(dist_i.val, dist_i_global.val, n_v_i, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    if (mpi_rank == 0) file.write_dataset(obj_path_i / "y", dist_i_global);
 
     diag.velocity_distribution(p_e, state.n_active_e, 3, vlim_e.val[0], vlim_e.val[1], dist_e);
-    file.write_dataset(obj_path_e / "x", dist_e);
+    MPI_Reduce(dist_e.val, dist_e_global.val, n_v_e, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    if (mpi_rank == 0) file.write_dataset(obj_path_e / "x", dist_e_global);
 
     diag.velocity_distribution(p_e, state.n_active_e, 4, vlim_e.val[2], vlim_e.val[3], dist_e);
-    file.write_dataset(obj_path_e / "y", dist_e);
+    MPI_Reduce(dist_e.val, dist_e_global.val, n_v_e, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    if (mpi_rank == 0) file.write_dataset(obj_path_e / "y", dist_e_global);
     
+    if(mpi_rank != 0) return;
 
     file.write_attribute(obj_path, "Time [s]", (double) state.step * dt);
     file.write_attribute(obj_path, "Step", (double) state.step);

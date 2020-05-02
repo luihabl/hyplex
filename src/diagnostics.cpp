@@ -12,21 +12,34 @@ diagnostics::diagnostics(configuration & _config, state_info & _state): config(_
 	k_phi = config.f("p/k_phi");
 	n_factor = config.f("particles/n_factor");
 	q = config.f("physical/q");
-
-	int n_steps = config.f("time/n_steps");
-	series["time"]              = fmatrix::zeros(n_steps);
-    series["v_cap"]             = fmatrix::zeros(n_steps);
-    series["n_active_e"]        = fmatrix::zeros(n_steps);
-    series["n_active_i"]        = fmatrix::zeros(n_steps);
-    series["I_out_ob_e"]        = fmatrix::zeros(n_steps);
-    series["I_out_ob_i"]        = fmatrix::zeros(n_steps);
-    series["I_out_thr_e"]       = fmatrix::zeros(n_steps);
-    series["I_out_thr_i"]       = fmatrix::zeros(n_steps);
-    series["I_in_thr_e"]        = fmatrix::zeros(n_steps);
-    series["I_in_thr_i"]        = fmatrix::zeros(n_steps);
-	n_points_series = 0;
-
+    
+    gseries_keys = tmatrix<string>({"time", "v_cap", "I_in_thr_i", "I_in_thr_e"});
+        
+    lseries_keys = tmatrix<string>({"n_active_e", "n_active_i", "I_out_ob_e", "I_out_ob_i",
+                                    "I_out_thr_e", "I_out_thr_i"});
+    
 	series_measure_step = config.i("diagnostics/series/measure_step");
+    
+    initialize_series();
+}
+
+void diagnostics::initialize_series(){
+    
+    double n_steps = config.f("time/n_steps");
+    double measure_step = config.f("diagnostics/series/measure_step");
+    series_size = ceil(n_steps / measure_step);
+    
+    cout << "AEIFJOAEJF " <<  series_size << endl;
+    
+    for(int i = 0; i < lseries_keys.n1; i++)
+        lseries[lseries_keys.val[i]] = fmatrix::zeros(series_size);
+    
+    for(int i = 0; i < gseries_keys.n1; i++)
+        gseries[gseries_keys.val[i]] = fmatrix::zeros(series_size);
+    
+    tmp_array = fmatrix::zeros(series_size);
+    
+    n_points_series = 0;
 }
 
 void diagnostics::velocity_distribution(fmatrix & p, int & n_active, int vcol, double v_0, double v_1,  fmatrix & dmesh){
@@ -58,17 +71,19 @@ void diagnostics::velocity_distribution(fmatrix & p, int & n_active, int vcol, d
 
 void diagnostics::update_series(double n_inj_el, double n_inj_i) {
 	if(state.step % series_measure_step == 0){
-		series["time"].val[n_points_series] = state.step * dt;
-		series["v_cap"].val[n_points_series] = state.phi_zero / k_phi;
-		series["n_active_i"].val[n_points_series] = state.n_active_i;
-		series["n_active_e"].val[n_points_series] = state.n_active_e;
-	
-		series["I_out_ob_e"].val[n_points_series] = state.n_out_ob_e * n_factor * q / dt;
-		series["I_out_ob_i"].val[n_points_series] = state.n_out_ob_i * n_factor * q / dt;
-		series["I_out_thr_e"].val[n_points_series] = state.n_out_thr_e * n_factor * q / dt;
-		series["I_out_thr_i"].val[n_points_series] = state.n_out_thr_i * n_factor * q / dt;
-		series["I_in_thr_e"].val[n_points_series] = n_inj_el * n_factor * q / dt;
-		series["I_in_thr_i"].val[n_points_series] = n_inj_i * n_factor * q / dt;
+        
+		gseries["time"].val[n_points_series] = state.step * dt;
+		gseries["v_cap"].val[n_points_series] = state.phi_zero / k_phi;
+        gseries["I_in_thr_e"].val[n_points_series] = n_inj_el * n_factor * q / dt;
+        gseries["I_in_thr_i"].val[n_points_series] = n_inj_i * n_factor * q / dt;
+        
+		lseries["n_active_i"].val[n_points_series] = state.n_active_i;
+		lseries["n_active_e"].val[n_points_series] = state.n_active_e;
+		lseries["I_out_ob_e"].val[n_points_series] = state.n_out_ob_e * n_factor * q / dt;
+		lseries["I_out_ob_i"].val[n_points_series] = state.n_out_ob_i * n_factor * q / dt;
+		lseries["I_out_thr_e"].val[n_points_series] = state.n_out_thr_e * n_factor * q / dt;
+		lseries["I_out_thr_i"].val[n_points_series] = state.n_out_thr_i * n_factor * q / dt;
+
 		n_points_series += 1;
     }
 }
