@@ -273,7 +273,7 @@ int main(int argc, char* argv[])
         output.save_fields_snapshot(phi, wmesh_e, wmesh_i, mesh, "");
         output.save_series(diag);
         output.save_distributions(diag, p_e, p_i);
-//        output.update_metadata();
+        output.update_metadata();
 //        output.fields_rf_average(phi, wmesh_e, wmesh_i, mesh);
 
         tp.val[9] = sys_now();
@@ -289,7 +289,7 @@ int main(int argc, char* argv[])
     output.save_fields_snapshot(phi, wmesh_e, wmesh_i, mesh, "", config.b("diagnostics/fields_snapshot/end_save"));
     output.save_series(diag, config.b("diagnostics/series/end_save"));
     output.save_distributions(diag, p_e, p_i, config.b("diagnostics/vdist/end_save"));
-//    output.update_metadata("completed", config.b("diagnostics/metadata/end_save"));
+    output.update_metadata("completed", config.b("diagnostics/metadata/end_save"));
     
    
 	return 0;

@@ -444,6 +444,7 @@ void output_manager::save_initial_data(){
 void output_manager::update_metadata(string status, bool force){
 
     if(!(force || state.step % step_update_metadata == 0)) return;
+    if(mpi_rank != 0) return;
 
     YAML::Node attributes = file.get_attributes("");
     attributes["metadata"]["stop_utc"] = time_to_string(sys_now());
