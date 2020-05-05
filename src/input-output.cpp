@@ -464,6 +464,8 @@ void output_manager::check_output_folder(){
 
 
 void output_manager::fields_rf_average(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, mesh_set & mesh){
+    
+    if(mpi_rank != 0) return;
 
     int i = state.step - state.step_offset;
     if(i > start_progress * (double) n_steps){
@@ -472,9 +474,9 @@ void output_manager::fields_rf_average(fmatrix & phi, fmatrix & wmesh_e, fmatrix
         int counter_av = ((i - counter_offset) % rf_period_i) + 1;
 
         if(i >= counter_offset){
-            average_field(phi_av, phi, state.step - state.step_offset);
-            average_field(wmesh_e_av, wmesh_e, state.step - state.step_offset);
-            average_field(wmesh_i_av, wmesh_i, state.step - state.step_offset);
+            average_field(phi_av, phi, counter_av);
+            average_field(wmesh_e_av, wmesh_e, counter_av);
+            average_field(wmesh_i_av, wmesh_i, counter_av);
 	    }
 
         if(counter_av == rf_period_i){
@@ -485,6 +487,8 @@ void output_manager::fields_rf_average(fmatrix & phi, fmatrix & wmesh_e, fmatrix
 
 
  void output_manager::print_loop_timing(tmatrix<system_clock::time_point> & tp){
+     
+     if(mpi_rank != 0) return;
     
     if(verbosity >= 2)
     {

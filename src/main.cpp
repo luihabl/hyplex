@@ -274,11 +274,11 @@ int main(int argc, char* argv[])
         output.save_series(diag);
         output.save_distributions(diag, p_e, p_i);
         output.update_metadata();
-//        output.fields_rf_average(phi, wmesh_e, wmesh_i, mesh);
+        output.fields_rf_average(phi, wmesh_e, wmesh_i, mesh);
 
         tp.val[9] = sys_now();
         
-//        output.print_loop_timing(tp);
+        output.print_loop_timing(tp);
     }
 
     auto stop = sys_now();
