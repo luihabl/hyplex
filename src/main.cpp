@@ -203,33 +203,33 @@ int main(int argc, char* argv[])
         MPI_Reduce(&state.n_out_ob_e, &n_out_ob_e_local, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
         
         if(mpi_rank == 0){
-            
+
             solver.solve(phi_poisson, voltages, wmesh_i_local, wmesh_e_local);
 
             tp.val[2] = sys_now();
-            
+
             state.sigma_0 = state.sigma_1;
-            
+
             state.phi_zero = fields.calculate_phi_zero(state.sigma_1, n_out_ob_i_local - n_out_ob_e_local, state.q_cap, sigma_laplace, phi_poisson, mesh, wmesh_e_local, wmesh_i_local, electrode_mask);
-            
+
             state.sigma_1 = fields.calculate_sigma(state.sigma_0, state.phi_zero, state.n_out_ob_i -  state.n_out_ob_e, state.q_cap);
             state.q_cap = fields.calculate_cap_charge(state.sigma_1, state.sigma_0, state.q_cap, n_out_ob_i_local - n_out_ob_e_local);
 
             phi = phi_poisson + (state.phi_zero * phi_laplace);
-            
+
             tp.val[3] = sys_now();
 
             // Step 2.1: calculation of electric field
             fields.calculate_efield(efield_x, efield_y, phi, wmesh_i, wmesh_e, mesh, electrode_mask);
 
             tp.val[4] = sys_now();
-            
+
         }
 
         MPI_Bcast(efield_x.val, n_mesh_total, MPI_DOUBLE, 0, MPI_COMM_WORLD);
         MPI_Bcast(efield_y.val, n_mesh_total, MPI_DOUBLE, 0, MPI_COMM_WORLD);
         MPI_Barrier(MPI_COMM_WORLD);
-        
+
         // Step 2.2: field weighting
         if(state.step % k_sub == 0) pic.electric_field_at_particles(efield_x_at_p_i, efield_y_at_p_i, efield_x, efield_y, p_i, state.n_active_i, mesh, lpos_i);
         pic.electric_field_at_particles(efield_x_at_p_e, efield_y_at_p_e, efield_x, efield_y, p_e, state.n_active_e, mesh, lpos_e);
@@ -263,9 +263,9 @@ int main(int argc, char* argv[])
         }
 
         tp.val[8] = sys_now();
-        
+
         //  ----------------------------- Diagnostics -------------------------
-        
+
         output.print_info();
 
         diag.update_series(n_inj_el, n_inj_i);
@@ -277,7 +277,7 @@ int main(int argc, char* argv[])
         output.fields_rf_average(phi, wmesh_e, wmesh_i, mesh);
 
         tp.val[9] = sys_now();
-        
+
         output.print_loop_timing(tp);
     }
 

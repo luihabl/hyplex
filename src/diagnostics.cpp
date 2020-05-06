@@ -29,8 +29,6 @@ void diagnostics::initialize_series(){
     double measure_step = config.f("diagnostics/series/measure_step");
     series_size = ceil(n_steps / measure_step);
     
-    cout << "AEIFJOAEJF " <<  series_size << endl;
-    
     for(int i = 0; i < lseries_keys.n1; i++)
         lseries[lseries_keys.val[i]] = fmatrix::zeros(series_size);
     

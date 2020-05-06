@@ -225,37 +225,76 @@ void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration 
     state.q_cap = attrs["Capacitor charge [norm. C]"].as<double>();
     state.sigma_1 = attrs["Surface charge density [norm. C/m^2]"].as<double>();
 
-    state.n_active_i = attrs["Active ions"].as<int>();
     state.n_out_ob_i = attrs["Removed ions"].as<int>();
-
-    state.n_active_e = attrs["Active electrons"].as<int>();
     state.n_out_ob_e = attrs["Removed electrons"].as<int>();
-
-    fmatrix p_i_load = fmatrix::zeros(state.n_active_i, 6);
-    fmatrix p_e_load = fmatrix::zeros(state.n_active_e, 6);
-
     
-    file.read_dataset("p_e", p_e_load);
-    file.read_dataset("p_i", p_i_load);
+    int mpi_rank, mpi_size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+    
+    int n_total_e = attrs["Active electrons"].as<int>();
+    int part_e = n_total_e / mpi_size;
+    int mod_e =  n_total_e % mpi_size;
 
-    p_e_load = p_e_load / dx;
+    int n_total_i = attrs["Active ions"].as<int>();
+    int part_i = n_total_i / mpi_size;
+    int mod_i =  n_total_i % mpi_size;
+
+    state.n_active_i = part_i;
+    state.n_active_e = part_e;
+    if (mpi_rank == mpi_size - 1) {
+        state.n_active_i = part_i + mod_i;
+        state.n_active_e = part_e + mod_e;
+    }
+    
+    fmatrix p_i_load;
+    fmatrix p_e_load;
+    
+    if(mpi_rank == 0){
+        p_i_load = fmatrix::zeros(n_total_i, 6);
+        p_e_load = fmatrix::zeros(n_total_e, 6);
+        file.read_dataset("p_e", p_e_load);
+        file.read_dataset("p_i", p_i_load);
+    }
+    
+    imatrix n_elements   = imatrix::zeros(mpi_size);
+    imatrix displacement = imatrix::zeros(mpi_size);
+    
+    n_elements.set_all(part_i * 6);
+    n_elements.val[mpi_size - 1] = (part_i + mod_i) * 6;
+    displacement.val[0] = 0;
+    for (int i = 1; i < mpi_size; i++ ) displacement.val[i] = displacement.val[i-1] + n_elements.val[i-1];
+    MPI_Scatterv(p_i_load.val, n_elements.val, displacement.val, MPI_DOUBLE,
+                 p_i.val, state.n_active_i * 6, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+    n_elements.set_all(part_e * 6);
+    n_elements.val[mpi_size - 1] = (part_e + mod_e) * 6;
+    displacement.val[0] = 0;
+    for (int i = 1; i < mpi_size; i++ ) displacement.val[i] = displacement.val[i-1] + n_elements.val[i-1];
+    MPI_Scatterv(p_e_load.val, n_elements.val, displacement.val, MPI_DOUBLE,
+                 p_e.val, state.n_active_e * 6, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    
     for(int i = 0; i < state.n_active_e; i++){
-        p_e_load.val[i * 6 + 3] = p_e_load.val[i * 6 + 3] * dt;
-        p_e_load.val[i * 6 + 4] = p_e_load.val[i * 6 + 4] * dt;
-        p_e_load.val[i * 6 + 5] = p_e_load.val[i * 6 + 5] * dt;
+        p_e.val[i * 6 + 0] = p_e.val[i * 6 + 0] / dx;
+        p_e.val[i * 6 + 1] = p_e.val[i * 6 + 1] / dx;
+        p_e.val[i * 6 + 2] = p_e.val[i * 6 + 2] / dx;
+        p_e.val[i * 6 + 3] = p_e.val[i * 6 + 3] * dt / dx;
+        p_e.val[i * 6 + 4] = p_e.val[i * 6 + 4] * dt / dx;
+        p_e.val[i * 6 + 5] = p_e.val[i * 6 + 5] * dt / dx;
     }
 
-    p_i_load = p_i_load / dx;
     for(int i = 0; i < state.n_active_i; i++){
-        p_i_load.val[i * 6 + 3] = p_i_load.val[i * 6 + 3] * dt;
-        p_i_load.val[i * 6 + 4] = p_i_load.val[i * 6 + 4] * dt;
-        p_i_load.val[i * 6 + 5] = p_i_load.val[i * 6 + 5] * dt;
+        p_i.val[i * 6 + 0] = p_i.val[i * 6 + 0] / dx;
+        p_i.val[i * 6 + 1] = p_i.val[i * 6 + 1] / dx;
+        p_i.val[i * 6 + 2] = p_i.val[i * 6 + 2] / dx;
+        p_i.val[i * 6 + 3] = p_i.val[i * 6 + 3] * dt / dx;
+        p_i.val[i * 6 + 4] = p_i.val[i * 6 + 4] * dt / dx;
+        p_i.val[i * 6 + 5] = p_i.val[i * 6 + 5] * dt / dx;
     }
-
-    for(int i=0; i < state.n_active_i * 6; i++) p_i.val[i] = p_i_load.val[i];
-    for(int i=0; i < state.n_active_e * 6; i++) p_e.val[i] = p_e_load.val[i];
 
     verbose_log("Loaded state: Step: " + to_string(state.step_offset) + " Active electrons: " + to_string(state.n_active_e) + " Active ions: " + to_string(state.n_active_i), true);
+
+
 }
 
 void output_manager::save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, mesh_set & mesh, string suffix, bool force)
@@ -488,7 +527,7 @@ void output_manager::fields_rf_average(fmatrix & phi, fmatrix & wmesh_e, fmatrix
 
  void output_manager::print_loop_timing(tmatrix<system_clock::time_point> & tp){
      
-     if(mpi_rank != 0) return;
+    if(mpi_rank != 0) return;
     
     if(verbosity >= 2)
     {
