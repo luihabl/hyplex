@@ -18,7 +18,7 @@ project:
 
 simulation:
   job_name: "test"
-  initial_state: "new"                      # Load input for simulation state or start again: 'load' or 'new'
+  initial_state: "load"                      # Load input for simulation state or start again: 'load' or 'new'
   verbosity: 2                               # Verbosity level: 0 means minimum messages
 
 physical:
@@ -38,8 +38,8 @@ geometry:
 
 time:
   dt: 5.0e-12                               # Time step [s]
-  n_steps: 1000                             # Number of simulation steps to be executed []
-  n_steps_dsmc: 0.5e6                         # Number of DSMC simulation steps to be executed []
+  n_steps: 200000                           # Number of simulation steps to be executed []
+  n_steps_dsmc: 0.5e6                       # Number of DSMC simulation steps to be executed []
   n_average: 1                              # Number of average steps []
   n_average_dsmc: 50000                     # Number of DSMC average steps []
   k_sub: 1                                  # Ion subcycling factor []
@@ -59,7 +59,7 @@ thruster:
   v_rf: 1000.0                              # Amplitude of the RF signal [V]
 
 particles:
-  n_factor: 1e4                           # Macro-particle weight factor (i.e. how many particles one macro-particle represents) []
+  n_factor: 3.2e5                           # Macro-particle weight factor (i.e. how many particles one macro-particle represents) []
   n_factor_dsmc: 1e8                        # Macro-particle weight factor for neutrals []
   n_max_particles: 1e7                      # Maximum number of particles in the array []
 

@@ -222,14 +222,14 @@ int main(int argc, char* argv[])
             // Step 2.1: calculation of electric field
             fields.calculate_efield(efield_x, efield_y, phi, wmesh_i, wmesh_e, mesh, electrode_mask);
 
-            tp.val[4] = sys_now();
-
         }
 
         MPI_Bcast(efield_x.val, n_mesh_total, MPI_DOUBLE, 0, MPI_COMM_WORLD);
         MPI_Bcast(efield_y.val, n_mesh_total, MPI_DOUBLE, 0, MPI_COMM_WORLD);
         MPI_Barrier(MPI_COMM_WORLD);
-
+        
+        tp.val[4] = sys_now();
+        
         // Step 2.2: field weighting
         if(state.step % k_sub == 0) pic.electric_field_at_particles(efield_x_at_p_i, efield_y_at_p_i, efield_x, efield_y, p_i, state.n_active_i, mesh, lpos_i);
         pic.electric_field_at_particles(efield_x_at_p_e, efield_y_at_p_e, efield_x, efield_y, p_e, state.n_active_e, mesh, lpos_e);
