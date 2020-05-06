@@ -51,8 +51,11 @@ void output_manager::print_info()
     
     int n_active_e_total, n_active_i_total;
     
-    MPI_Reduce(&state.n_active_e, &n_active_e_total, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&state.n_active_i, &n_active_i_total, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+//    MPI_Reduce(&state.n_active_e, &n_active_e_total, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+//    MPI_Reduce(&state.n_active_i, &n_active_i_total, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+    
+    n_active_e_total = state.n_active_e * mpi_size; // Shows the approximate number for better performance
+    n_active_i_total = state.n_active_i * mpi_size;
     
     if(mpi_rank !=0 ) return;
     
@@ -491,6 +494,8 @@ void output_manager::update_metadata(string status, bool force){
     attributes["metadata"]["status"] = status;
     attributes["metadata"]["progress"] = float (state.step - state.step_offset) / config.f("time/n_steps");
     file.write_attribute("", attributes);
+
+    verbose_log("Metadata updated", verbosity >= 1);
 }
 
 void output_manager::check_output_folder(){
