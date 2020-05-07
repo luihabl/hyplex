@@ -212,6 +212,10 @@ void output_manager::save_state(fmatrix & p_e, fmatrix & p_i, bool force){
 }
 
 void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration & config, string filename){
+    
+    int mpi_rank, mpi_size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
 
     ghc::filesystem::path input_path = config.s("project/input_path");
     input_path /= filename;
@@ -228,12 +232,10 @@ void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration 
     state.q_cap = attrs["Capacitor charge [norm. C]"].as<double>();
     state.sigma_1 = attrs["Surface charge density [norm. C/m^2]"].as<double>();
 
-    state.n_out_ob_i = attrs["Removed ions"].as<int>();
-    state.n_out_ob_e = attrs["Removed electrons"].as<int>();
-    
-    int mpi_rank, mpi_size;
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+    if (mpi_rank == 0){
+        state.n_out_ob_i = attrs["Removed ions"].as<int>();
+        state.n_out_ob_e = attrs["Removed electrons"].as<int>();
+    }
     
     int n_total_e = attrs["Active electrons"].as<int>();
     int part_e = n_total_e / mpi_size;

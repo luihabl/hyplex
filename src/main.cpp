@@ -212,7 +212,7 @@ int main(int argc, char* argv[])
 
             state.phi_zero = fields.calculate_phi_zero(state.sigma_1, n_out_ob_i_local - n_out_ob_e_local, state.q_cap, sigma_laplace, phi_poisson, mesh, wmesh_e_local, wmesh_i_local, electrode_mask);
 
-            state.sigma_1 = fields.calculate_sigma(state.sigma_0, state.phi_zero, state.n_out_ob_i -  state.n_out_ob_e, state.q_cap);
+            state.sigma_1 = fields.calculate_sigma(state.sigma_0, state.phi_zero, n_out_ob_i_local - n_out_ob_e_local, state.q_cap);
             state.q_cap = fields.calculate_cap_charge(state.sigma_1, state.sigma_0, state.q_cap, n_out_ob_i_local - n_out_ob_e_local);
 
             phi = phi_poisson + (state.phi_zero * phi_laplace);
@@ -220,7 +220,7 @@ int main(int argc, char* argv[])
             tp.val[3] = sys_now();
 
             // Step 2.1: calculation of electric field
-            fields.calculate_efield(efield_x, efield_y, phi, wmesh_i, wmesh_e, mesh, electrode_mask);
+            fields.calculate_efield(efield_x, efield_y, phi, wmesh_i_local, wmesh_e_local, mesh, electrode_mask);
 
         }
 
@@ -246,7 +246,7 @@ int main(int argc, char* argv[])
         if(state.step % k_sub == 0) pops.boundaries_ob_count(p_i, state.n_active_i, lpos_i, state.n_out_ob_i, state.n_out_thr_i);
         pops.boundaries_ob_count(p_e, state.n_active_e, lpos_e, state.n_out_ob_e, state.n_out_thr_e);
 
-       tp.val[7] = sys_now();
+        tp.val[7] = sys_now();
 
         // Step 5: particles injection
         if(state.step % k_sub == 0) pops.add_flux_particles(p_i, state.n_active_i, t_i, v_drift_i, m_i, n_inj_i / (double) mpi_size, k_sub);
