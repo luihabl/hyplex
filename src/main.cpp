@@ -101,7 +101,7 @@ int main(int argc, char* argv[])
 	fmatrix p_e             = fmatrix::zeros(n_max_particles / mpi_size, 6);
     imatrix lpos_e          = imatrix::zeros(n_max_particles / mpi_size, 2);
 	fmatrix wmesh_e         = fmatrix::zeros(n_mesh_x, n_mesh_y);
-    fmatrix wmesh_e_local   = fmatrix::zeros(n_mesh_x, n_mesh_y);
+    fmatrix wmesh_e_global   = fmatrix::zeros(n_mesh_x, n_mesh_y);
     fmatrix efield_x_at_p_e = fmatrix::zeros(n_max_particles / mpi_size);
     fmatrix efield_y_at_p_e = fmatrix::zeros(n_max_particles / mpi_size);
     double n_inj_el          = config.f("p/n_inj_el");
@@ -111,12 +111,12 @@ int main(int argc, char* argv[])
 	fmatrix p_i             = fmatrix::zeros(n_max_particles / mpi_size, 6);
     imatrix lpos_i          = imatrix::zeros(n_max_particles / mpi_size, 2);
 	fmatrix wmesh_i         = fmatrix::zeros(n_mesh_x, n_mesh_y);
-    fmatrix wmesh_i_local   = fmatrix::zeros(n_mesh_x, n_mesh_y);
+    fmatrix wmesh_i_global   = fmatrix::zeros(n_mesh_x, n_mesh_y);
 	fmatrix efield_x_at_p_i = fmatrix::zeros(n_max_particles / mpi_size);
     fmatrix efield_y_at_p_i = fmatrix::zeros(n_max_particles / mpi_size);
     double n_inj_i          = config.f("p/n_inj_i");
     
-    int n_out_ob_i_local = 0, n_out_ob_e_local = 0;
+    int n_out_ob_i_global = 0, n_out_ob_e_global = 0;
     
     // Particle 3 - Neutrals
     verbose_log("Initializing neutral variables", verbosity >= 1);
@@ -196,31 +196,31 @@ int main(int argc, char* argv[])
 
         // Step 2.0 integration of Poisson's equation
         
-        MPI_Reduce(wmesh_i.val, wmesh_i_local.val, n_mesh_total, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-        MPI_Reduce(wmesh_e.val, wmesh_e_local.val, n_mesh_total, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        MPI_Reduce(wmesh_i.val, wmesh_i_global.val, n_mesh_total, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        MPI_Reduce(wmesh_e.val, wmesh_e_global.val, n_mesh_total, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
         
-        MPI_Reduce(&state.n_out_ob_i, &n_out_ob_i_local, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-        MPI_Reduce(&state.n_out_ob_e, &n_out_ob_e_local, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+        MPI_Reduce(&state.n_out_ob_i, &n_out_ob_i_global, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+        MPI_Reduce(&state.n_out_ob_e, &n_out_ob_e_global, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
         
         if(mpi_rank == 0){
 
-            solver.solve(phi_poisson, voltages, wmesh_i_local, wmesh_e_local);
+            solver.solve(phi_poisson, voltages, wmesh_i_global, wmesh_e_global);
 
             tp.val[2] = sys_now();
 
             state.sigma_0 = state.sigma_1;
 
-            state.phi_zero = fields.calculate_phi_zero(state.sigma_1, n_out_ob_i_local - n_out_ob_e_local, state.q_cap, sigma_laplace, phi_poisson, mesh, wmesh_e_local, wmesh_i_local, electrode_mask);
+            state.phi_zero = fields.calculate_phi_zero(state.sigma_1, n_out_ob_i_global - n_out_ob_e_global, state.q_cap, sigma_laplace, phi_poisson, mesh, wmesh_e_global, wmesh_i_global, electrode_mask);
 
-            state.sigma_1 = fields.calculate_sigma(state.sigma_0, state.phi_zero, n_out_ob_i_local - n_out_ob_e_local, state.q_cap);
-            state.q_cap = fields.calculate_cap_charge(state.sigma_1, state.sigma_0, state.q_cap, n_out_ob_i_local - n_out_ob_e_local);
+            state.sigma_1 = fields.calculate_sigma(state.sigma_0, state.phi_zero, n_out_ob_i_global - n_out_ob_e_global, state.q_cap);
+            state.q_cap = fields.calculate_cap_charge(state.sigma_1, state.sigma_0, state.q_cap, n_out_ob_i_global - n_out_ob_e_global);
 
             phi = phi_poisson + (state.phi_zero * phi_laplace);
 
             tp.val[3] = sys_now();
 
             // Step 2.1: calculation of electric field
-            fields.calculate_efield(efield_x, efield_y, phi, wmesh_i_local, wmesh_e_local, mesh, electrode_mask);
+            fields.calculate_efield(efield_x, efield_y, phi, wmesh_i_global, wmesh_e_global, mesh, electrode_mask);
 
         }
 
