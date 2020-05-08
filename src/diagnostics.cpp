@@ -13,10 +13,10 @@ diagnostics::diagnostics(configuration & _config, state_info & _state): config(_
 	n_factor = config.f("particles/n_factor");
 	q = config.f("physical/q");
     
-    gseries_keys = tmatrix<string>({"time", "v_cap", "I_in_thr_i", "I_in_thr_e"});
+    gseries_keys = tmatrix<string>({"time", "v_cap"});
         
     lseries_keys = tmatrix<string>({"n_active_e", "n_active_i", "I_out_ob_e", "I_out_ob_i",
-                                    "I_out_thr_e", "I_out_thr_i"});
+                                    "I_out_thr_e", "I_out_thr_i", "I_in_thr_i", "I_in_thr_e"});
     
 	series_measure_step = config.i("diagnostics/series/measure_step");
     
@@ -72,9 +72,9 @@ void diagnostics::update_series(double n_inj_el, double n_inj_i) {
         
 		gseries["time"].val[n_points_series] = state.step * dt;
 		gseries["v_cap"].val[n_points_series] = state.phi_zero / k_phi;
-        gseries["I_in_thr_e"].val[n_points_series] = n_inj_el * n_factor * q / dt;
-        gseries["I_in_thr_i"].val[n_points_series] = n_inj_i * n_factor * q / dt;
         
+        lseries["I_in_thr_e"].val[n_points_series] = state.n_in_thr_e * n_factor * q / dt;
+        lseries["I_in_thr_i"].val[n_points_series] = state.n_in_thr_i * n_factor * q / dt;
 		lseries["n_active_i"].val[n_points_series] = state.n_active_i;
 		lseries["n_active_e"].val[n_points_series] = state.n_active_e;
 		lseries["I_out_ob_e"].val[n_points_series] = state.n_out_ob_e * n_factor * q / dt;

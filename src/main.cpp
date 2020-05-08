@@ -37,6 +37,7 @@ int main(int argc, char* argv[])
     int mpi_rank, mpi_size;
     MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
     MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+    double mpi_size_double = (double) mpi_size;
 
     auto start_utc = sys_now();
     cout << "Hyplex " << GIT_VERSION << endl;
@@ -223,10 +224,9 @@ int main(int argc, char* argv[])
             fields.calculate_efield(efield_x, efield_y, phi, wmesh_i_global, wmesh_e_global, mesh, electrode_mask);
 
         }
-
+        MPI_Bcast(phi.val, n_mesh_total, MPI_DOUBLE, 0, MPI_COMM_WORLD);
         MPI_Bcast(efield_x.val, n_mesh_total, MPI_DOUBLE, 0, MPI_COMM_WORLD);
         MPI_Bcast(efield_y.val, n_mesh_total, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-        MPI_Barrier(MPI_COMM_WORLD);
         
         tp.val[4] = sys_now();
         
@@ -249,13 +249,15 @@ int main(int argc, char* argv[])
         tp.val[7] = sys_now();
 
         // Step 5: particles injection
-        if(state.step % k_sub == 0) pops.add_flux_particles(p_i, state.n_active_i, t_i, v_drift_i, m_i, n_inj_i / (double) mpi_size, k_sub);
+        if(state.step % k_sub == 0) state.n_in_thr_i = pops.add_flux_particles(p_i, state.n_active_i, t_i, v_drift_i, m_i, n_inj_i / mpi_size_double, k_sub);
+        else state.n_in_thr_i = 0;
+        
         if(inj_model == "constant");  //n_inj_el = n_inj_el;
         else if(inj_model == "balanced")  n_inj_el = pops.balanced_injection(n_inj_el, 0.01, wmesh_i, wmesh_e, 0, 0, 0, n_thruster - 1);
         else if(inj_model == "pulsed")    n_inj_el = pops.pulsed_injection(state.step);
         else if(inj_model == "square")    n_inj_el = pops.square_injection(state.step);
-        pops.add_flux_particles(p_e, state.n_active_e, t_el, v_drift_el, m_el, n_inj_el / (double) mpi_size, 1);
-
+        state.n_in_thr_e = pops.add_flux_particles(p_e, state.n_active_e, t_el, v_drift_el, m_el, n_inj_el / mpi_size_double, 1);
+        
         // Step 6: Monte-Carlo collisions
         if(mcc_coll){
             if(state.step % k_sub == 0) coll.collisions_i(p_i, state.n_active_i, lpos_i, mesh, dens_n);
@@ -270,11 +272,11 @@ int main(int argc, char* argv[])
 
         diag.update_series(n_inj_el, n_inj_i);
         output.save_state(p_e, p_i);
-        output.save_fields_snapshot(phi, wmesh_e, wmesh_i, mesh, "");
+        output.save_fields_snapshot(phi, wmesh_e_global, wmesh_i_global, mesh, "");
         output.save_series(diag);
         output.save_distributions(diag, p_e, p_i);
         output.update_metadata();
-        output.fields_rf_average(phi, wmesh_e, wmesh_i, mesh);
+        output.fields_rf_average(phi, wmesh_e_global, wmesh_i_global, mesh);
 
         tp.val[9] = sys_now();
 
@@ -286,7 +288,7 @@ int main(int argc, char* argv[])
 
     // ----------------------------- Saving outputs ---------------------------
     output.save_state(p_e, p_i, config.b("diagnostics/state/end_save"));
-    output.save_fields_snapshot(phi, wmesh_e, wmesh_i, mesh, "", config.b("diagnostics/fields_snapshot/end_save"));
+    output.save_fields_snapshot(phi, wmesh_e_global, wmesh_i_global, mesh, "", config.b("diagnostics/fields_snapshot/end_save"));
     output.save_series(diag, config.b("diagnostics/series/end_save"));
     output.save_distributions(diag, p_e, p_i, config.b("diagnostics/vdist/end_save"));
     output.update_metadata("completed", config.b("diagnostics/metadata/end_save"));

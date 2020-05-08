@@ -77,7 +77,7 @@ void particle_operations::add_maxwellian_particles(fmatrix & p, int & n_active, 
 	n_active += n_add;
 }
 
-void particle_operations::add_flux_particles(fmatrix & p, int & n_active, const double temperature, const double v_drift, const double mass, const double n_add, double k_sub){
+int particle_operations::add_flux_particles(fmatrix & p, int & n_active, const double temperature, const double v_drift, const double mass, const double n_add, double k_sub){
 	
 	double f_n_add = floor(k_sub * n_add);
 	int n_new = (r_unif() <= (k_sub * n_add - f_n_add) ?  f_n_add + 1 : f_n_add);
@@ -99,6 +99,8 @@ void particle_operations::add_flux_particles(fmatrix & p, int & n_active, const 
 		p.val[i * 6 + 2] = 0.0;
 	}
 	n_active += n_new;
+    
+    return n_new;
 }
 
 void particle_operations::add_maxwellian_flux_particles(fmatrix & p, int & n_active, const double temperature, const double v_drift, const double mass, const double n_add, double k_sub){
