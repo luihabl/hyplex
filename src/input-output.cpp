@@ -451,7 +451,7 @@ string output_manager::build_output_name(){
     int n_file = 1;
     while (ghc::filesystem::exists(output_path / tmp_filename))
     {
-        tmp_filename = filename_preffix + "(" + to_string(n_file) + ")" + EXDIR_EXT;
+        tmp_filename = filename_preffix + "-" + to_string(n_file) + EXDIR_EXT;
         n_file += 1;
     }
     return tmp_filename;
