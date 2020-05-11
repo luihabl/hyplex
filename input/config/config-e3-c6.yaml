@@ -19,7 +19,7 @@ project:
 simulation:
   job_name: "nominal"
   initial_state: "new"                      # Load input for simulation state or start again: 'load' or 'new'
-  verbosity: 1                               # Verbosity level: 0 means minimum messages
+  verbosity: 1                              # Verbosity level: 0 means minimum messages
 
 physical:
   q: 1.60217662e-19                         # Elementary charge [C]
@@ -29,7 +29,7 @@ physical:
 
 geometry:
   l_x: 0.11242                              # Spatial step in x [m]
-  l_y: 0.02794                             # Spatial step in y [m]
+  l_y: 0.02794                              # Spatial step in y [m]
   n_mesh_x: 512                             # Number of grid points in the x direction []
   n_mesh_y: 128                             # Number of grid points in the y direction []
   n_thruster: 16                            # Number of nodes that represent the thruster []
@@ -38,8 +38,8 @@ geometry:
 
 time:
   dt: 5.0e-12                               # Time step [s]
-  n_steps: 1.8e6                             # Number of simulation steps to be executed []
-  n_steps_dsmc: 0.5e6                         # Number of DSMC simulation steps to be executed []
+  n_steps: 1.8e6                            # Number of simulation steps to be executed []
+  n_steps_dsmc: 0.5e6                       # Number of DSMC simulation steps to be executed []
   n_average: 1                              # Number of average steps []
   n_average_dsmc: 50000                     # Number of DSMC average steps []
   k_sub: 1                                  # Ion subcycling factor []
@@ -48,7 +48,7 @@ time:
 boundaries:
   volt_0: 0.0                               # Voltage on the thruster [V]
   volt_1: 0.0                               # Voltage on the chamber walls [V]
-  c_cap: 1.0e-11                            # Capacitance of thruster connection [F]
+  c_cap: 1.0e-6                             # Capacitance of thruster connection [F]
   ob_type: "dirichlet"                      # Type of outer boundary condition: neumann, dirichlet
 
 thruster:
@@ -64,8 +64,8 @@ particles:
   n_max_particles: 1e7                      # Maximum number of particles in the array []
 
 neutrals:
-  expm_neutral: "load"                  # Expansion model of neutral flow: 'dsmc', 'constant' or 'load'
-  mcc_coll: true                           # Toggle MCC collisions: true or false
+  expm_neutral: "load"                      # Expansion model of neutral flow: 'dsmc', 'constant' or 'load'
+  mcc_coll: true                            # Toggle MCC collisions: true or false
   t_neutral: 0.02585                        # Temperature of neutral gas [eV]
   n_neutral: 4.82e18                        # Density of neutral gas [m^-3]
 

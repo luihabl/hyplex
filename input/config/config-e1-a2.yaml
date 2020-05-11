@@ -55,7 +55,7 @@ thruster:
   mfc: 3.0                                  # Mass flow rate of thruster [sccm]
   eta_p: 0.5                                # Propellant utilization efficiency []
   freq: 30.0e6                              # Frequency of signal [Hz]
-  v_sb: 1003.02722                          # Self-bias voltage [V]
+  v_sb: 1005.05454                          # Self-bias voltage [V]
   v_rf: 1000.0                              # Amplitude of the RF signal [V]
 
 particles:

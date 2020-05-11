@@ -17,7 +17,7 @@ project:
   cross_sections_path: "input/cross-sections/"
 
 simulation:
-  job_name: "nominal"
+  job_name: "e2-f50"
   initial_state: "new"                      # Load input for simulation state or start again: 'load' or 'new'
   verbosity: 1                               # Verbosity level: 0 means minimum messages
 
@@ -54,7 +54,7 @@ boundaries:
 thruster:
   mfc: 3.0                                  # Mass flow rate of thruster [sccm]
   eta_p: 0.5                                # Propellant utilization efficiency []
-  freq: 30.0e6                              # Frequency of signal [Hz]
+  freq: 50.0e6                              # Frequency of signal [Hz]
   v_sb: 1003.02722                          # Self-bias voltage [V]
   v_rf: 1000.0                              # Amplitude of the RF signal [V]
 

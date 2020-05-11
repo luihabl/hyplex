@@ -48,7 +48,7 @@ time:
 boundaries:
   volt_0: 0.0                               # Voltage on the thruster [V]
   volt_1: 0.0                               # Voltage on the chamber walls [V]
-  c_cap: 1.0e-11                            # Capacitance of thruster connection [F]
+  c_cap: 1.0e-10                            # Capacitance of thruster connection [F]
   ob_type: "dirichlet"                      # Type of outer boundary condition: neumann, dirichlet
 
 thruster:
