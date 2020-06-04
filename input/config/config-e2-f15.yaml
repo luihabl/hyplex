@@ -1,0 +1,154 @@
+#   __  __                 ___                    
+#  /\ \/\ \               /\_ \                   
+#  \ \ \_\ \  __  __  ____\//\ \      __   __  _  
+#   \ \  _  \/\ \/\ \/\ '__`\ \ \   /'__`\/\ \/'\ 
+#    \ \ \ \ \ \ \_\ \ \ \L\ \_\ \_/\  __/\/>  </ 
+#     \ \_\ \_\/`____ \ \ ,__/\____\ \____\/\_/\_\
+#      \/_/\/_/`/___/> \ \ \/\/____/\/____/\//\/_/
+#                 /\___/\ \_\                     
+#                 \/__/  \/_/                     
+# 
+#  Configuration file for the Hyplex code
+#  Author: Lui Txai Calvoso Habl
+
+project:
+  output_path: "output/"
+  input_path: "input/"
+  cross_sections_path: "input/cross-sections/"
+
+simulation:
+  job_name: "e2-f15"
+  initial_state: "new"                      # Load input for simulation state or start again: 'load' or 'new'
+  verbosity: 1                               # Verbosity level: 0 means minimum messages
+
+physical:
+  q: 1.60217662e-19                         # Elementary charge [C]
+  eps_0: 8.854187817620389e-12              # Vacuum permittivity [F * m^-1]
+  pi: 3.14159265359                         # Pi []
+  k_boltz: 1.38064852e-23                   # Boltzmann constant [J * K^-1]
+
+geometry:
+  l_x: 0.11242                              # Spatial step in x [m]
+  l_y: 0.02794                             # Spatial step in y [m]
+  n_mesh_x: 512                             # Number of grid points in the x direction []
+  n_mesh_y: 128                             # Number of grid points in the y direction []
+  n_thruster: 16                            # Number of nodes that represent the thruster []
+  a_x: 0.0                                  # Grid distorsion coefficient in the x direction []
+  a_y: 0.0                                  # Grid distorsion coefficient in the y direction []
+
+time:
+  dt: 5.0e-12                               # Time step [s]
+  n_steps: 2.4e6                             # Number of simulation steps to be executed []
+  n_steps_dsmc: 0.5e6                         # Number of DSMC simulation steps to be executed []
+  n_average: 1                              # Number of average steps []
+  n_average_dsmc: 50000                     # Number of DSMC average steps []
+  k_sub: 1                                  # Ion subcycling factor []
+  k_sub_dsmc: 400                           # DSMC subcycling factor []
+
+boundaries:
+  volt_0: 0.0                               # Voltage on the thruster [V]
+  volt_1: 0.0                               # Voltage on the chamber walls [V]
+  c_cap: 1.0e-11                            # Capacitance of thruster connection [F]
+  ob_type: "dirichlet"                      # Type of outer boundary condition: neumann, dirichlet
+
+thruster:
+  mfc: 3.0                                  # Mass flow rate of thruster [sccm]
+  eta_p: 0.5                                # Propellant utilization efficiency []
+  freq: 15.0e6                              # Frequency of signal [Hz]
+  v_sb: 1003.02722                          # Self-bias voltage [V]
+  v_rf: 1000.0                              # Amplitude of the RF signal [V]
+
+particles:
+  n_factor: 3.2e5                           # Macro-particle weight factor (i.e. how many particles one macro-particle represents) []
+  n_factor_dsmc: 1e8                        # Macro-particle weight factor for neutrals []
+  n_max_particles: 1e7                      # Maximum number of particles in the array []
+
+neutrals:
+  expm_neutral: "load"                  # Expansion model of neutral flow: 'dsmc', 'constant' or 'load'
+  mcc_coll: true                           # Toggle MCC collisions: true or false
+  t_neutral: 0.02585                        # Temperature of neutral gas [eV]
+  n_neutral: 4.82e18                        # Density of neutral gas [m^-3]
+
+electrons:
+  inj_model: "pulsed"                       # Electron injection model: 'constant', 'pulsed', 'balanced', or 'square'
+  sqr_duty_cycle: 0.1                       # Duty cycle of square pulsed injection []
+  m_el: 9.10938356e-31                      # Electron mass [kg]
+  q_el: -1.60217662e-19                     # Electron charge [C]
+  t_el: 5.0                                 # Initial electron temperature [eV]
+  i_el: 1.1245                              # Electron injection current [A/m]
+  v_drift_el: 4193828.827                   # Electron injection drift velocity [m/s]
+
+ions:
+  gas_name: "xenon"                         # Name of gas: 'helium' or 'xenon'
+  q_i: 1.60217662e-19                       # Ion charge [kg]
+  t_i: 0.025                                # Initial ion temperature [eV]
+  i_i: 0.1155                               # Ion injection current [A/m]
+  v_drift_i: 38427.34                       # Ion injection drift velocity [m/s]
+
+diagnostics:
+  
+  print_info:
+    print_step: 100
+    print_timing_step: 10
+
+  metadata:
+    update_step: 10000
+    end_save: true  
+
+  state:
+    save_step: 10000
+    end_save: true                              
+
+  fields_snapshot:
+    save_step: 10000
+    end_save: true   
+  
+  series:
+    measure_step: 1
+    save_step: 50000
+    end_save: true
+
+  rf_av:
+    start_progress: 0.9
+  
+  field_series:
+    save_step: 1
+    end_save: true
+
+  vdist:
+    save_step: 10000
+    end_save: true
+    electrons:
+      n_v: 200
+      vlim_x: [-20e6, 20e6]
+      vlim_y: [-20e6, 20e6]
+    ions:
+      n_v: 200
+      vlim_x: [-50000, 50000]
+      vlim_y: [-50000, 50000]
+                         
+helium:
+  m_i: 6.67e-27                             # Ion mass [kg]
+  e_exc:                                    # Excitation energies [eV]
+  - 19.82
+  - 20.61                                   #
+  e_iz: 24.59                               # Ionization energy [eV]
+  els_path: "He/Elastic_He.csv"             # Path to elastic cross section
+  exc_path:                                 # Path to elastic cross section
+  - "He/Excitation1_He.csv"
+  - "He/Excitation2_He.csv"
+  iz_path: "He/Ionization_He.csv"           # Path ionization cross section
+  bs_path: "He/Backscattering_He.csv"       # Path backscattering cross section
+  iso_path: "He/Isotropic_He.csv"           # Path isotropic cross section
+
+xenon:
+  m_i: 2.18e-25                             # Ion mass [kg]
+  e_exc:                                    # Excitation energies [eV]
+  - 8.32                                    #
+  e_iz: 12.13                               # Ionization energy [eV]
+  els_path: "Xe/Elastic_Xe.csv"             # Path to elastic cross section
+  exc_path:                                 # Path to first excitation cross section
+  - "Xe/Excitation1_Xe.csv"      
+  iz_path: "Xe/Ionization_Xe.csv"           # Path ionization cross section
+  bs_path: "Xe/Backscattering_Xe.csv"       # Path backscattering cross section
+  iso_path: "Xe/Isotropic_Xe.csv"           # Path isotropic cross section
