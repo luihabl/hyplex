@@ -9,19 +9,38 @@
 
 ## Building
 
-The code uses C++17. Before using the code it is necessary to install:
+The code uses C++11. Before using the code it is necessary to install:
 
 - Open MPI - https://www.open-mpi.org/
 - HYPRE - https://github.com/hypre-space/hypre
 - yaml-cpp - https://github.com/jbeder/yaml-cpp
 
-Make sure to place the files of HYPRE and yaml-cpp in `/lib/`.  After building MPI and HYPRE it is necessary to modify the `Makefile` to include the version of HYPRE, this is done modifying the variable `hypre_dir`  to the folder name that contains the library, e.g. , `hypre-2.16.0`. Finally, to build the code, just execute the command `make`. 
+After installing Open MPI, place the files of HYPRE in `/lib/` and build it.
+
+Then, build `yaml-cpp` and create a folder called `yaml` in `lib`. Place the file `libyaml-cpp.a` (from `<yaml-cpp folder>/build`) and the folder `yaml-cpp` (from `<yaml-cpp folder>/include`) in this new folder. After doing this you can delete the original `yaml-cpp` code and your `lib` file structure should look similar to this:
+
+```
+lib
+├── args.h
+├── date.h
+├── filesystem.hpp
+├── hypre-2.19.0
+│   └── ...
+└── yaml
+    ├── libyaml-cpp.a
+    └── yaml-cpp
+        ├── contrib
+        │   └── ...
+        ├── node
+        │   └── ...
+        ├── yaml.h
+        └── ...
+```
+
+After building MPI and HYPRE it is necessary to modify the `Makefile` to include the version of HYPRE, this is done modifying the variable `hypre_dir`  to the folder name that contains the library, e.g. , `hypre-2.16.0`. Finally, to build the code, just execute the command `make`. 
 
 Compile with the `-D VERBOSE` flag in the variable `CXXFLAGS` to print more information during runtime.
 
-## To do
-
-- Try to convert code back to C++11 - DONE!
 
 ### Backlog:
 

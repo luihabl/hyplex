@@ -1,13 +1,13 @@
-#   __  __                 ___
-#  /\ \/\ \               /\_ \
-#  \ \ \_\ \  __  __  ____\//\ \      __   __  _
-#   \ \  _  \/\ \/\ \/\ '__`\ \ \   /'__`\/\ \/'\
-#    \ \ \ \ \ \ \_\ \ \ \L\ \_\ \_/\  __/\/>  </
+#   __  __                 ___                    
+#  /\ \/\ \               /\_ \                   
+#  \ \ \_\ \  __  __  ____\//\ \      __   __  _  
+#   \ \  _  \/\ \/\ \/\ '__`\ \ \   /'__`\/\ \/'\ 
+#    \ \ \ \ \ \ \_\ \ \ \L\ \_\ \_/\  __/\/>  </ 
 #     \ \_\ \_\/`____ \ \ ,__/\____\ \____\/\_/\_\
 #      \/_/\/_/`/___/> \ \ \/\/____/\/____/\//\/_/
-#                 /\___/\ \_\
-#                 \/__/  \/_/
-#
+#                 /\___/\ \_\                     
+#                 \/__/  \/_/                     
+# 
 #  Configuration file for the Hyplex code
 #  Author: Lui Txai Calvoso Habl
 
@@ -18,7 +18,7 @@ project:
 
 simulation:
   job_name: "test"
-  initial_state: "new"                      # Load input for simulation state or start again: 'load' or 'new'
+  initial_state: "load"                      # Load input for simulation state or start again: 'load' or 'new'
   verbosity: 1                               # Verbosity level: 0 means minimum messages
 
 physical:
@@ -38,8 +38,8 @@ geometry:
 
 time:
   dt: 5.0e-12                               # Time step [s]
-  n_steps: 200000                           # Number of simulation steps to be executed []
-  n_steps_dsmc: 0.5e6                       # Number of DSMC simulation steps to be executed []
+  n_steps: 2.4e6                             # Number of simulation steps to be executed []
+  n_steps_dsmc: 0.5e6                         # Number of DSMC simulation steps to be executed []
   n_average: 1                              # Number of average steps []
   n_average_dsmc: 50000                     # Number of DSMC average steps []
   k_sub: 1                                  # Ion subcycling factor []
@@ -64,8 +64,8 @@ particles:
   n_max_particles: 1e7                      # Maximum number of particles in the array []
 
 neutrals:
-  expm_neutral: "constant"                  # Expansion model of neutral flow: 'dsmc', 'constant' or 'load'
-  mcc_coll: false                           # Toggle MCC collisions: true or false
+  expm_neutral: "load"                  # Expansion model of neutral flow: 'dsmc', 'constant' or 'load'
+  mcc_coll: true                           # Toggle MCC collisions: true or false
   t_neutral: 0.02585                        # Temperature of neutral gas [eV]
   n_neutral: 4.82e18                        # Density of neutral gas [m^-3]
 
@@ -93,15 +93,15 @@ diagnostics:
 
   metadata:
     update_step: 10000
-    end_save: true
+    end_save: true  
 
   state:
     save_step: 10000
-    end_save: true
+    end_save: true                              
 
   fields_snapshot:
     save_step: 10000
-    end_save: true
+    end_save: true   
   
   series:
     measure_step: 1
@@ -148,7 +148,7 @@ xenon:
   e_iz: 12.13                               # Ionization energy [eV]
   els_path: "Xe/Elastic_Xe.csv"             # Path to elastic cross section
   exc_path:                                 # Path to first excitation cross section
-  - "Xe/Excitation1_Xe.csv"
+  - "Xe/Excitation1_Xe.csv"      
   iz_path: "Xe/Ionization_Xe.csv"           # Path ionization cross section
   bs_path: "Xe/Backscattering_Xe.csv"       # Path backscattering cross section
   iso_path: "Xe/Isotropic_Xe.csv"           # Path isotropic cross section
