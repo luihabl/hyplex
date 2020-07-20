@@ -1,7 +1,7 @@
 exe = run
 sdr = src
 bdr = build
-hypre_dir=hypre-2.16.0
+hypre_dir=hypre-2.19.0
 cpp_std=c++11
 
 ifeq ($(machine),zoidberg)
