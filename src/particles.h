@@ -9,7 +9,7 @@
 
 struct particle_operations{
 
-	double dx, dy, y_thruster, dt, q, k_inj, v_sb, v_rf, m_el, freq, duty_cycle, n_factor, k_sub, i_i, alpha, omega_i,c_cap, temp_e, a_x, a_y, k_phi;
+	double dx, dy, y_thruster, dt, q, k_inj, v_sb, v_rf, m_el, freq, duty_cycle, n_factor, k_sub, i_i, alpha, omega_i,c_cap, temp_e, a_x, a_y, k_phi, pi;
 	int n_mesh_x, n_mesh_y, n_thruster;
 	pic_operations & pic;
 
@@ -34,9 +34,12 @@ struct particle_operations{
 	void boundaries_e(fmatrix & p, int & n_active, imatrix & lpos, int n_out_i);
 	void boundaries_e_cap(fmatrix & p, int & n_active, imatrix & lpos, int & n_out_e, double v_cap, fmatrix & phi, mesh_set & mesh);
 	void boundaries_n(fmatrix & p, int & n_active, imatrix & lpos);
+	void boundaries_n_pump(fmatrix & p, int & n_active, imatrix & lpos, double pump_prob, double boundary_roughness);
 	double cap_voltage(double voltage, int n_out_e, int n_out_i);
 	void remove_particle(fmatrix & p, int & n_active, int i, imatrix & lpos);
 	void reflect_particle(fmatrix & p, int & n_active, int i, double x, double y, double vx, double vy);
+	void reflect_particle_specular(fmatrix & p, int & _active, int i, double x, double y, int boundary_number);
+	void reflect_particle_diffuse(fmatrix & p, int & n_active, int i, double x, double y, int boundary_number);
 	double find_e_crit(int n_out_i, imatrix & out, int n_out, fmatrix & p, int n_active);
 	void find_phi_at_particles(fmatrix & phi_at_patricles, fmatrix & phi, mesh_set & mesh, imatrix & out, int n_out, fmatrix & p, int n_active, imatrix & lpos);
 	

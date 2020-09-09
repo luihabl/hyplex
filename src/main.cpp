@@ -152,7 +152,8 @@ int main(int argc, char* argv[])
 
     if (expm_neutral == "dsmc"){
         verbose_log(" ---- Starting DSMC loop ---- ", verbosity >= 1);
-        run_dsmc(mesh, dens_n, config, "dens_n" + job_name + ".exdir");
+        // run_dsmc(mesh, dens_n, config, "dens_n" + job_name + ".exdir");
+        run_dsmc_pump(mesh, dens_n, config, "dens_n" + job_name + ".exdir");
     }
     else if (expm_neutral == "constant") {
         verbose_log(" ---- Setting constant neutral density ---- ", verbosity >= 1);

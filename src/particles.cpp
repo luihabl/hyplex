@@ -35,6 +35,7 @@ particle_operations::particle_operations(configuration & config, pic_operations 
 	temp_e = config.f("electrons/t_el");
 	m_el = config.f("electrons/m_el");
 	q = config.f("physical/q");
+	pi = config.f("physical/pi");
 
 	k_inj = config.f("p/k_inj_el");
 	v_sb = config.f("thruster/v_sb");
@@ -234,6 +235,53 @@ void particle_operations::boundaries_n(fmatrix & p, int & n_active, imatrix & lp
         remove_particle(p, n_active, tbremoved.val[i], lpos);
     }
 }
+
+void particle_operations::boundaries_n_pump(fmatrix & p, int & n_active, imatrix & lpos, double pump_prob, double boundary_roughness){
+	
+	int n_remove = 0;
+    imatrix tbremoved((size_t) (n_active * 0.5) + 150); 
+
+    double x, y;
+    const double x_max = ((double) n_mesh_x - 1);
+    const double y_max = ((double) n_mesh_y - 1) * (dy / dx);
+    
+    for (int i = 0; i < n_active; i++)
+    {
+        x = p.val[i * 6 + 0];
+        y = p.val[i * 6 + 1];
+
+		if (x < x_max && x > 0 && y < y_max && y > 0) continue;
+
+
+        if (x > x_max || y > y_max)
+        {
+			if (r_unif() > pump_prob){
+				tbremoved.val[n_remove] = i;
+            	n_remove += 1;
+			}
+			else if (y > y_max) {
+				if(r_unif() > boundary_roughness) reflect_particle_specular(p, n_active, i, x, y, 1);
+				else reflect_particle_diffuse(p, n_active, i, x, y, 1);
+			}
+			else if (x > x_max) {
+				if(r_unif() > boundary_roughness) reflect_particle_specular(p, n_active, i, x, y, 2);
+				else reflect_particle_diffuse(p, n_active, i, x, y, 2);
+			}
+        }
+		else if (y < 0) {
+            reflect_particle_specular(p, n_active, i, x, y, 3);
+        }
+		else if (x < 0) {
+			reflect_particle_specular(p, n_active, i, x, y, 0);
+		}
+    }
+    
+    for (int i = n_remove - 1; i >= 0; i--)
+    {
+        remove_particle(p, n_active, tbremoved.val[i], lpos);
+    }
+}
+
 
 void particle_operations::boundaries_ob_count(fmatrix & p, int & n_active, imatrix & lpos, int & n_removed_ob, int & n_removed_thr)
 {
@@ -443,9 +491,6 @@ double particle_operations::find_e_crit(int n_out_i, imatrix & out, int n_out, f
 
 void particle_operations::reflect_particle(fmatrix & p, int & n_active, int i, double x, double y, double vx, double vy)
 {
-	static const double x_max = ((double) n_mesh_x - 1);
-	static const double y_max = ((double) n_mesh_y - 1) * (dy / dx);
-
 	if(x <= 0){
 		p.val[i * 6 + 0] = - x;
 		p.val[i * 6 + 3] = - vx;
@@ -461,6 +506,78 @@ void particle_operations::reflect_particle(fmatrix & p, int & n_active, int i, d
 	} else if(y >= y_max){
 		p.val[i * 6 + 1] = 2*y_max - y;
 		p.val[i * 6 + 4] = - vy;
+	}
+}
+
+void particle_operations::reflect_particle_specular(fmatrix & p, int & n_active, int i, double x, double y, int boundary_number)
+{
+	// Boundary number: 0: left, 1: top, 2: right, 3: bottom
+
+	switch(boundary_number){
+		case 0:
+			p.val[i * 6 + 0] = - x;
+			p.val[i * 6 + 3] = - p.val[i * 6 + 3];
+			break;
+		
+		case 1:
+			p.val[i * 6 + 1] = 2*y_max - y;
+			p.val[i * 6 + 4] = - p.val[i * 6 + 4];
+			break;
+		
+		case 2:
+			p.val[i * 6 + 0] = 2*x_max - x;
+			p.val[i * 6 + 3] = - p.val[i * 6 + 3];
+			break;
+		
+		case 3:
+			p.val[i * 6 + 1] = - y;
+			p.val[i * 6 + 4] = - p.val[i * 6 + 4];
+			break;
+	
+		default:
+			break;
+	}
+}
+
+
+void particle_operations::reflect_particle_diffuse(fmatrix & p, int & n_active, int i, double x, double y, int boundary_number)
+{
+	// Boundary number: 0: left, 1: top, 2: right, 3: bottom
+	double r1 = r_norm();
+	double xu = cos(2 * pi * r1);
+	double yu = sin(2 * pi * r1);
+	
+	double vx = p.val[i * 6 + 3];
+	double vy = p.val[i * 6 + 4];
+	double v_mod = sqrt(vx*vx + vy*vy);
+
+	switch(boundary_number){
+		case 0:
+			p.val[i * 6 + 0] = - x;
+			p.val[i * 6 + 3] = v_mod * abs(xu);
+			p.val[i * 6 + 4] = v_mod * yu;
+			break;
+		
+		case 1:
+			p.val[i * 6 + 1] = 2*y_max - y;
+			p.val[i * 6 + 3] = v_mod * xu;
+			p.val[i * 6 + 4] = - v_mod * abs(yu);
+			break;
+		
+		case 2:
+			p.val[i * 6 + 0] = 2*x_max - x;
+			p.val[i * 6 + 3] = - v_mod * abs(xu);
+			p.val[i * 6 + 4] = v_mod * yu;
+			break;
+		
+		case 3:
+			p.val[i * 6 + 1] = - y;
+			p.val[i * 6 + 3] = v_mod * xu;
+			p.val[i * 6 + 4] = v_mod * abs(yu);
+			break;
+	
+		default:
+			break;
 	}
 }
 
