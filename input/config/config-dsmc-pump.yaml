@@ -39,17 +39,18 @@ geometry:
 time:
   dt: 5.0e-12                               # Time step [s]
   n_steps: 1                                # Number of simulation steps to be executed []
-  n_steps_dsmc: 5e6                         # Number of DSMC simulation steps to be executed []
+  n_steps_dsmc: 10e6                        # Number of DSMC simulation steps to be executed []
   n_average: 1                              # Number of average steps []
-  n_average_dsmc: 50000                     # Number of DSMC average steps []
+  n_average_dsmc: 1e6                       # Number of DSMC average steps []
   k_sub: 1                                  # Ion subcycling factor []
-  k_sub_dsmc: 800                           # DSMC subcycling factor []
+  k_sub_dsmc: 400                           # DSMC subcycling factor []
 
 boundaries:
   volt_0: 0.0                               # Voltage on the thruster [V]
   volt_1: 0.0                               # Voltage on the chamber walls [V]
   c_cap: 1.0e-11                            # Capacitance of thruster connection [F]
   ob_type: "dirichlet"                      # Type of outer boundary condition: neumann, dirichlet
+  n_pump_prob: 0.6                          # Neutral pumping capacity of boundaries: 0 - all flow escape, 1 - all flow is reflected
 
 thruster:
   mfc: 3.0                                  # Mass flow rate of thruster [sccm]
@@ -60,7 +61,7 @@ thruster:
 
 particles:
   n_factor: 3.2e5                           # Macro-particle weight factor (i.e. how many particles one macro-particle represents) []
-  n_factor_dsmc: 5e9                        # Macro-particle weight factor for neutrals []
+  n_factor_dsmc: 1e8                        # Macro-particle weight factor for neutrals []
   n_max_particles: 1e7                      # Maximum number of particles in the array []
 
 neutrals:

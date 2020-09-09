@@ -30,8 +30,8 @@ void run_dsmc(mesh_set & mesh, fmatrix & dens_n, configuration & config){
     const double t_neutral = config.f("neutrals/t_neutral");
     const double m_i = config.f("ugas/m_i");
     const double n_inj_n = config.f("p/n_inj_n");
+    const double pump_prob = config.f("boundaries/n_pump_prob"); // 0: full pump, 1: no pump
 
-    const double pump_prob = 0.6; // 0: full pump, 1: no pump
     const double boundary_roughness = 0.0; // 0: only specular reflecion, 1: only diffuse reflection
 
     int size, rank;
