@@ -5,7 +5,6 @@
 #include "configuration.h"
 #include "fields.h"
 
-void run_dsmc(mesh_set & mesh, fmatrix & dens_n, configuration & config, string output_name);
-void run_dsmc_pump(mesh_set & mesh, fmatrix & dens_n, configuration & config, string output_name);
+void run_dsmc(mesh_set & mesh, fmatrix & dens_n, configuration & config);
 
 #endif

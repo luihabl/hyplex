@@ -429,7 +429,7 @@ output_manager::output_manager(system_clock::time_point _start_utc, state_info &
     td.set_zero();
     verbosity = config.i("simulation/verbosity");
     
-    if(mpi_rank == 0) output_name = build_output_name();
+    if(mpi_rank == 0) output_name = build_output_name("hy_" + format("%Y-%m-%d", start_utc));
     
     int str_size = (int) output_name.size();
     MPI_Bcast(&str_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -440,9 +440,31 @@ output_manager::output_manager(system_clock::time_point _start_utc, state_info &
     file = exdir(output_path / output_name, false);
 }
 
-string output_manager::build_output_name(){
-    string initial_datetime = format("%Y-%m-%d", start_utc);    
-    string filename_preffix = "hy_" + initial_datetime;
+
+output_manager::output_manager(string prefix, state_info & _state, configuration & _config, mesh_set & _mesh): state(_state), config(_config), mesh(_mesh){
+    
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+    
+    output_path = config.s("project/output_path");
+    job_name = config.s("p/job_name");
+
+    verbosity = config.i("simulation/verbosity");
+    
+    if(mpi_rank == 0) output_name = build_output_name(prefix);
+    
+    int str_size = (int) output_name.size();
+    MPI_Bcast(&str_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    if (mpi_rank != 0) output_name.resize(str_size);
+    
+    MPI_Bcast(const_cast<char*>(output_name.data()), str_size, MPI_CHAR, 0, MPI_COMM_WORLD);
+    
+    file = exdir(output_path / output_name, false);
+}
+
+
+
+string output_manager::build_output_name(string filename_preffix){
 
     if(config.s("p/job_name") != "") filename_preffix += "_" + config.s("p/job_name");
 

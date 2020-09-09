@@ -46,12 +46,9 @@ int main(int argc, char* argv[])
     // ------------------- Loading configuration ------------------------------
 
     argparser arg(argc, argv);
-
-    string job_name = arg.get("name", "");
     string config_path = arg.get("config", DEFAULT_CONFIG_PATH);
-
     configuration config(arg.get("config", DEFAULT_CONFIG_PATH));
-    config.set_job_name(job_name);
+    config.set_job_name(arg.get("name", ""));
 
     state_info state;
 
@@ -152,8 +149,7 @@ int main(int argc, char* argv[])
 
     if (expm_neutral == "dsmc"){
         verbose_log(" ---- Starting DSMC loop ---- ", verbosity >= 1);
-        // run_dsmc(mesh, dens_n, config, "dens_n" + job_name + ".exdir");
-        run_dsmc_pump(mesh, dens_n, config, "dens_n" + job_name + ".exdir");
+        run_dsmc(mesh, dens_n, config);
     }
     else if (expm_neutral == "constant") {
         verbose_log(" ---- Setting constant neutral density ---- ", verbosity >= 1);
