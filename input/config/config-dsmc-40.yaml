@@ -17,7 +17,7 @@ project:
   cross_sections_path: "input/cross-sections/"
 
 simulation:
-  job_name: "dsmc-pump"
+  job_name: "dsmc-40"
   initial_state: "new"                      # Load input for simulation state or start again: 'load' or 'new'
   verbosity: 1                               # Verbosity level: 0 means minimum messages
 
@@ -38,8 +38,8 @@ geometry:
 
 time:
   dt: 5.0e-12                               # Time step [s]
-  n_steps: 1                                # Number of simulation steps to be executed []
-  n_steps_dsmc: 10e6                        # Number of DSMC simulation steps to be executed []
+  n_steps: 2.4e6                            # Number of simulation steps to be executed []
+  n_steps_dsmc: 8e6                         # Number of DSMC simulation steps to be executed []
   n_average: 1                              # Number of average steps []
   n_average_dsmc: 1e6                       # Number of DSMC average steps []
   k_sub: 1                                  # Ion subcycling factor []
@@ -50,7 +50,7 @@ boundaries:
   volt_1: 0.0                               # Voltage on the chamber walls [V]
   c_cap: 1.0e-11                            # Capacitance of thruster connection [F]
   ob_type: "dirichlet"                      # Type of outer boundary condition: neumann, dirichlet
-  n_pump_prob: 0.6                          # Neutral pumping capacity of boundaries: 0 - all flow escape, 1 - all flow is reflected
+  n_pump_prob: 0.4                          # Neutral pumping capacity of boundaries: 0 - all flow escape, 1 - all flow is reflected
 
 thruster:
   mfc: 3.0                                  # Mass flow rate of thruster [sccm]
