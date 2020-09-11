@@ -85,17 +85,7 @@ inline
 void particle_operations::remove_particles(imatrix & tbremoved, int & n_remove, fmatrix & p, int & n_active, imatrix & lpos){
 	for (int i = n_remove - 1; i >= 0; i--)
     {
-        p.val[i * 6 + 0] = p.val[(n_active - 1) * 6 + 0];
-		p.val[i * 6 + 1] = p.val[(n_active - 1) * 6 + 1];
-		p.val[i * 6 + 2] = p.val[(n_active - 1) * 6 + 2];
-		p.val[i * 6 + 3] = p.val[(n_active - 1) * 6 + 3];
-		p.val[i * 6 + 4] = p.val[(n_active - 1) * 6 + 4];
-		p.val[i * 6 + 5] = p.val[(n_active - 1) * 6 + 5];
-
-		lpos.val[i * 2 + 0] = lpos.val[(n_active - 1) * 2 + 0];
-		lpos.val[i * 2 + 1] = lpos.val[(n_active - 1) * 2 + 1];
-
-		n_active -= 1;
+        remove_particle(p, n_active, tbremoved.val[i], lpos);
     }
 }
 

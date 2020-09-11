@@ -237,11 +237,43 @@ void particle_operations::boundaries_n(fmatrix & p, int & n_active, imatrix & lp
 }
 
 void particle_operations::boundaries_n_pump(fmatrix & p, int & n_active, imatrix & lpos, double pump_prob){
-	
+
+	// int n_remove = 0;
+    // imatrix tbremoved((size_t) (n_active * 0.5) + 150); 
+
+    // double x, y;
+    // const double x_max = ((double) n_mesh_x - 1);
+    // const double y_max = ((double) n_mesh_y - 1) * (dy / dx);
+    
+    // for (int i = 0; i < n_active; i++)
+    // {
+    //     x = p.val[i * 6 + 0];
+    //     y = p.val[i * 6 + 1];
+
+	// 	if (x < x_max && x > 0 && y < y_max && y > 0) continue;
+        
+    //     if (x > x_max || y > y_max || (x < 0 && y < y_thruster))
+    //     {
+    //         tbremoved.val[n_remove] = i;
+    //         n_remove += 1;
+
+    //     }
+	// 	else if (y < 0) {
+    //         p.val[i * 6 + 1] = - p.val[i * 6 + 1];
+    //         p.val[i * 6 + 4] = - p.val[i * 6 + 4];
+    //     }
+	// 	else if (x < 0 && y >= y_thruster) {
+	// 		p.val[i * 6 + 0] = - p.val[i * 6 + 0];
+    //         p.val[i * 6 + 3] = - p.val[i * 6 + 3];
+	// 	}
+    // }
+
 	int n_remove = 0;
     imatrix tbremoved((size_t) (n_active * 0.5) + 150); 
 
     double x, y;
+	const double x_max = ((double) n_mesh_x - 1);
+    const double y_max = ((double) n_mesh_y - 1) * (dy / dx);
     
     for (int i = 0; i < n_active; i++)
     {
@@ -251,7 +283,7 @@ void particle_operations::boundaries_n_pump(fmatrix & p, int & n_active, imatrix
 		if (x < x_max && x > 0 && y < y_max && y > 0) continue;
 
 
-        if ((x > x_max || y > y_max) && r_unif() > pump_prob){
+        if ((x > x_max || y > y_max || (x < 0 && y < y_thruster)) && r_unif() > pump_prob){
 			add_for_removal(tbremoved, n_remove, i);
 			continue;
 		}
