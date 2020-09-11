@@ -34,11 +34,13 @@ struct particle_operations{
 	void boundaries_e(fmatrix & p, int & n_active, imatrix & lpos, int n_out_i);
 	void boundaries_e_cap(fmatrix & p, int & n_active, imatrix & lpos, int & n_out_e, double v_cap, fmatrix & phi, mesh_set & mesh);
 	void boundaries_n(fmatrix & p, int & n_active, imatrix & lpos);
-	void boundaries_n_pump(fmatrix & p, int & n_active, imatrix & lpos, double pump_prob, double boundary_roughness);
+	void boundaries_n_pump(fmatrix & p, int & n_active, imatrix & lpos, double pump_prob);
 	double cap_voltage(double voltage, int n_out_e, int n_out_i);
 	void remove_particle(fmatrix & p, int & n_active, int i, imatrix & lpos);
+	void remove_particles(imatrix & tbremoved, int & n_remove, fmatrix & p, int & n_active, imatrix & lpos);
+	void add_for_removal(imatrix & tbremoved, int & n_remove, int i);
 	void reflect_particle(fmatrix & p, int & n_active, int i, double x, double y, double vx, double vy);
-	void reflect_particle_specular(fmatrix & p, int & _active, int i, double x, double y, int boundary_number);
+	void reflect_particle_specular(fmatrix & p, int i, double x, double y, int boundary_number);
 	void reflect_particle_diffuse(fmatrix & p, int & n_active, int i, double x, double y, int boundary_number);
 	double find_e_crit(int n_out_i, imatrix & out, int n_out, fmatrix & p, int n_active);
 	void find_phi_at_particles(fmatrix & phi_at_patricles, fmatrix & phi, mesh_set & mesh, imatrix & out, int n_out, fmatrix & p, int n_active, imatrix & lpos);
@@ -73,11 +75,28 @@ void particle_operations::remove_particle(fmatrix & p, int & n_active, int i, im
 	n_active -= 1;
 }
 
+inline
+void particle_operations::add_for_removal(imatrix & tbremoved, int & n_remove, int i){
+	tbremoved.val[n_remove] = i;
+    n_remove += 1;
+}
 
+inline
+void particle_operations::remove_particles(imatrix & tbremoved, int & n_remove, fmatrix & p, int & n_active, imatrix & lpos){
+	for (int i = n_remove - 1; i >= 0; i--)
+    {
+        p.val[i * 6 + 0] = p.val[(n_active - 1) * 6 + 0];
+		p.val[i * 6 + 1] = p.val[(n_active - 1) * 6 + 1];
+		p.val[i * 6 + 2] = p.val[(n_active - 1) * 6 + 2];
+		p.val[i * 6 + 3] = p.val[(n_active - 1) * 6 + 3];
+		p.val[i * 6 + 4] = p.val[(n_active - 1) * 6 + 4];
+		p.val[i * 6 + 5] = p.val[(n_active - 1) * 6 + 5];
 
+		lpos.val[i * 2 + 0] = lpos.val[(n_active - 1) * 2 + 0];
+		lpos.val[i * 2 + 1] = lpos.val[(n_active - 1) * 2 + 1];
 
-
-
-
+		n_active -= 1;
+    }
+}
 
 #endif // !PARTICLES_H

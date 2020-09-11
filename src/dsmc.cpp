@@ -32,8 +32,6 @@ void run_dsmc(mesh_set & mesh, fmatrix & dens_n, configuration & config){
     const double n_inj_n = config.f("p/n_inj_n");
     const double pump_prob = config.f("boundaries/n_pump_prob"); // 0: full pump, 1: no pump
 
-    const double boundary_roughness = 0.0; // 0: only specular reflecion, 1: only diffuse reflection
-
     int size, rank;
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -47,7 +45,7 @@ void run_dsmc(mesh_set & mesh, fmatrix & dens_n, configuration & config){
         }
         
         pops.move_n(p_n, n_active_n, k_sub_dsmc);
-        pops.boundaries_n_pump(p_n, n_active_n, lpos_n, pump_prob, boundary_roughness);
+        pops.boundaries_n_pump(p_n, n_active_n, lpos_n, pump_prob);
         if(rank == 0) print_dsmc_info(i, n_active_n * size, 1000, n_steps_dsmc);
     }
 
