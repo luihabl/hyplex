@@ -257,7 +257,7 @@ int main(int argc, char* argv[])
         
         // Step 6: Monte-Carlo collisions
         if(mcc_coll){
-            if(state.step % k_sub == 0) coll.collisions_i(p_i, state.n_active_i, lpos_i, mesh, dens_n);
+            //if(state.step % k_sub == 0) coll.collisions_i(p_i, state.n_active_i, lpos_i, mesh, dens_n);
             coll.collisions_e(p_e, state.n_active_e, lpos_e, p_i, state.n_active_i, lpos_i, mesh, dens_n);
         }
 
