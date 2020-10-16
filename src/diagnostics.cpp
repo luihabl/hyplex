@@ -1,17 +1,36 @@
 
 #include "diagnostics.h"
 #include "fmatrix.h"
+#include "mpi.h"
 
 #include <unordered_map>
 
 using namespace std;
 
-diagnostics::diagnostics(configuration & _config, state_info & _state): config(_config), state(_state){
+diagnostics::diagnostics(configuration & _config, state_info & _state, fmatrix & _p_e, fmatrix & _p_i): config(_config), state(_state), p_e(_p_e), p_i(_p_i){
 	k_v  = config.f("p/k_v");
 	dt = config.f("time/dt");
 	k_phi = config.f("p/k_phi");
 	n_factor = config.f("particles/n_factor");
 	q = config.f("physical/q");
+
+	n_v_e = config.i("diagnostics/vdist/electrons/n_v");
+    n_v_i = config.i("diagnostics/vdist/ions/n_v");
+
+	dist_e_x = fmatrix::zeros(n_v_e);
+	dist_e_y = fmatrix::zeros(n_v_e);
+    dist_e_global_x = fmatrix::zeros(n_v_e);
+	dist_e_global_y = fmatrix::zeros(n_v_e);
+    dist_i_x = fmatrix::zeros(n_v_i);
+	dist_i_y = fmatrix::zeros(n_v_i);
+    dist_i_global_x = fmatrix::zeros(n_v_i);
+	dist_i_global_y = fmatrix::zeros(n_v_i);
+
+    vlim_e = fmatrix({config.fs("diagnostics/vdist/electrons/vlim_x").val[0], config.fs("diagnostics/vdist/electrons/vlim_x").val[1],
+              config.fs("diagnostics/vdist/electrons/vlim_y").val[0], config.fs("diagnostics/vdist/electrons/vlim_y").val[1]});
+
+    vlim_i = fmatrix({config.fs("diagnostics/vdist/ions/vlim_x").val[0], config.fs("diagnostics/vdist/ions/vlim_x").val[1],
+              config.fs("diagnostics/vdist/ions/vlim_y").val[0], config.fs("diagnostics/vdist/ions/vlim_y").val[1]});
     
     gseries_keys = tmatrix<string>({"time", "v_cap"});
         
@@ -66,6 +85,21 @@ void diagnostics::velocity_distribution(fmatrix & p, int & n_active, int vcol, d
 		dmesh.val[left_index + 1] += s;
 	}
 }
+
+void diagnostics::update_distributions(){
+	velocity_distribution(p_i, state.n_active_i, 3, vlim_i.val[0], vlim_i.val[1], dist_i_x);
+    MPI_Reduce(dist_i_x.val, dist_i_global_x.val, n_v_i, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+    velocity_distribution(p_i, state.n_active_i, 4, vlim_i.val[2], vlim_i.val[3], dist_i_y);
+    MPI_Reduce(dist_i_y.val, dist_i_global_y.val, n_v_i, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+    velocity_distribution(p_e, state.n_active_e, 3, vlim_e.val[0], vlim_e.val[1], dist_e_x);
+    MPI_Reduce(dist_e_x.val, dist_e_global_x.val, n_v_e, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+    velocity_distribution(p_e, state.n_active_e, 4, vlim_e.val[2], vlim_e.val[3], dist_e_y);
+    MPI_Reduce(dist_e_y.val, dist_e_global_y.val, n_v_e, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+}
+
 
 void diagnostics::update_series(double n_inj_el, double n_inj_i) {
 	if(state.step % series_measure_step == 0){

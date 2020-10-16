@@ -110,12 +110,10 @@ class output_manager
         mesh_set & mesh;
         
         int verbosity, step_print_info, step_save_state, step_save_fields, step_save_series, step_save_fseries, step_update_metadata,
-            rf_period_i, n_steps, print_timing_step, n_v_e, n_v_i, step_save_vdist, mpi_rank, mpi_size, n_mesh_x, n_mesh_y;
+            rf_period_i, n_steps, print_timing_step, step_save_vdist, mpi_rank, mpi_size, n_mesh_x, n_mesh_y;
         double start_progress, dt;
 
         fmatrix wmesh_e_av, wmesh_i_av, phi_av;
-        fmatrix dist_e, dist_e_global, dist_i, dist_i_global;
-        fmatrix vlim_e, vlim_i;
         fmatrix td;
     
 
@@ -136,7 +134,7 @@ class output_manager
         void update_metadata(string status = "running", bool force = false);
         void print_info();
         void print_loop_timing(tmatrix<system_clock::time_point> & tp);
-        void save_distributions(diagnostics & diag, fmatrix & p_e, fmatrix & p_i, bool force = false);
+        void save_distributions(diagnostics & diag, bool force = false);
 };
 
 template <class T>

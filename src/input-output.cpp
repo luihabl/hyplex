@@ -400,24 +400,8 @@ output_manager::output_manager(system_clock::time_point _start_utc, state_info &
     step_update_metadata = config.i("diagnostics/metadata/update_step");
     n_mesh_x = config.i("geometry/n_mesh_x");
     n_mesh_y = config.i("geometry/n_mesh_y");
-    
-
-    n_v_e = config.i("diagnostics/vdist/electrons/n_v");
-    n_v_i = config.i("diagnostics/vdist/ions/n_v");
-
-    dist_e = fmatrix::zeros(n_v_e);
-    dist_e_global = fmatrix::zeros(n_v_e);
-    dist_i = fmatrix::zeros(n_v_i);
-    dist_i_global = fmatrix::zeros(n_v_i);
 
     step_save_vdist = config.i("diagnostics/vdist/save_step");
-
-
-    vlim_e = fmatrix({config.fs("diagnostics/vdist/electrons/vlim_x").val[0], config.fs("diagnostics/vdist/electrons/vlim_x").val[1],
-              config.fs("diagnostics/vdist/electrons/vlim_y").val[0], config.fs("diagnostics/vdist/electrons/vlim_y").val[1]});
-
-    vlim_i = fmatrix({config.fs("diagnostics/vdist/ions/vlim_x").val[0], config.fs("diagnostics/vdist/ions/vlim_x").val[1],
-              config.fs("diagnostics/vdist/ions/vlim_y").val[0], config.fs("diagnostics/vdist/ions/vlim_y").val[1]});
 
     int nx = config.i("geometry/n_mesh_x");
     int ny = config.i("geometry/n_mesh_y");
@@ -571,7 +555,7 @@ void output_manager::fields_rf_average(fmatrix & phi, fmatrix & wmesh_e, fmatrix
     }
 }
 
-void output_manager::save_distributions(diagnostics & diag, fmatrix & p_e, fmatrix & p_i, bool force){
+void output_manager::save_distributions(diagnostics & diag, bool force){
 
     if(!(force || state.step % step_save_vdist == 0)) return;
 
@@ -583,36 +567,25 @@ void output_manager::save_distributions(diagnostics & diag, fmatrix & p_e, fmatr
         file.create_group(obj_path);
         file.create_group(obj_path_e);
         file.create_group(obj_path_i);
+
+        file.write_dataset(obj_path_i / "x", diag.dist_i_global_x);
+        file.write_dataset(obj_path_i / "y", diag.dist_i_global_y);
+        file.write_dataset(obj_path_e / "x", diag.dist_e_global_x);
+        file.write_dataset(obj_path_e / "y", diag.dist_e_global_y);
     }
-
-    diag.velocity_distribution(p_i, state.n_active_i, 3, vlim_i.val[0], vlim_i.val[1], dist_i);
-    MPI_Reduce(dist_i.val, dist_i_global.val, n_v_i, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    if (mpi_rank == 0) file.write_dataset(obj_path_i / "x", dist_i_global);
-
-    diag.velocity_distribution(p_i, state.n_active_i, 4, vlim_i.val[2], vlim_i.val[3], dist_i);
-    MPI_Reduce(dist_i.val, dist_i_global.val, n_v_i, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    if (mpi_rank == 0) file.write_dataset(obj_path_i / "y", dist_i_global);
-
-    diag.velocity_distribution(p_e, state.n_active_e, 3, vlim_e.val[0], vlim_e.val[1], dist_e);
-    MPI_Reduce(dist_e.val, dist_e_global.val, n_v_e, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    if (mpi_rank == 0) file.write_dataset(obj_path_e / "x", dist_e_global);
-
-    diag.velocity_distribution(p_e, state.n_active_e, 4, vlim_e.val[2], vlim_e.val[3], dist_e);
-    MPI_Reduce(dist_e.val, dist_e_global.val, n_v_e, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    if (mpi_rank == 0) file.write_dataset(obj_path_e / "y", dist_e_global);
     
     if(mpi_rank != 0) return;
 
     file.write_attribute(obj_path, "Time [s]", (double) state.step * dt);
     file.write_attribute(obj_path, "Step", (double) state.step);
 
-    file.write_attribute(obj_path_e, "n_v", n_v_e);
-    file.write_attribute(obj_path_e, "vlim_x", {vlim_e.val[0], vlim_e.val[1]});
-    file.write_attribute(obj_path_e, "vlim_y", {vlim_e.val[2], vlim_e.val[3]});
+    file.write_attribute(obj_path_e, "n_v", diag.n_v_e);
+    file.write_attribute(obj_path_e, "vlim_x", {diag.vlim_e.val[0], diag.vlim_e.val[1]});
+    file.write_attribute(obj_path_e, "vlim_y", {diag.vlim_e.val[2], diag.vlim_e.val[3]});
     
-    file.write_attribute(obj_path_i, "n_v", n_v_i);
-    file.write_attribute(obj_path_i, "vlim_x", {vlim_i.val[0], vlim_i.val[1]});
-    file.write_attribute(obj_path_i, "vlim_y", {vlim_i.val[2], vlim_i.val[3]});
+    file.write_attribute(obj_path_i, "n_v", diag.n_v_i);
+    file.write_attribute(obj_path_i, "vlim_x", {diag.vlim_i.val[0], diag.vlim_i.val[1]});
+    file.write_attribute(obj_path_i, "vlim_y", {diag.vlim_i.val[2], diag.vlim_i.val[3]});
     
     verbose_log("Saved distributions", verbosity >= 1);
 }
