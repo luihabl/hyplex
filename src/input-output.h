@@ -125,7 +125,7 @@ class output_manager
         output_manager(system_clock::time_point _start_utc, state_info & state, configuration & config, mesh_set & mesh);
         output_manager(string prefix, state_info & state, configuration & config, mesh_set & mesh);
         void save_state(fmatrix & p_e, fmatrix & p_i, bool force = false);
-        void save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, mesh_set & mesh, string suffix, bool force = false);
+        void save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vfield_e_x, fmatrix & vfield_e_y, fmatrix & vfield_i_x, fmatrix & vfield_i_y, fmatrix & efield_e, fmatrix & efield_i, mesh_set & mesh, string suffix, bool force = false);
         void save_series(diagnostics & diag, bool force = false); 
         void save_field_series(fmatrix & field, double conversion_constant, bool force = false);
         void fields_rf_average(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, mesh_set & mesh);

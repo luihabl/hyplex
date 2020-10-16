@@ -1,13 +1,15 @@
 
 #include "diagnostics.h"
 #include "fmatrix.h"
+#include "particles-in-mesh.h"
+#include "fields.h"
 #include "mpi.h"
 
 #include <unordered_map>
 
 using namespace std;
 
-diagnostics::diagnostics(configuration & _config, state_info & _state, fmatrix & _p_e, fmatrix & _p_i): config(_config), state(_state), p_e(_p_e), p_i(_p_i){
+diagnostics::diagnostics(configuration & _config, state_info & _state): config(_config), state(_state){
 	k_v  = config.f("p/k_v");
 	dt = config.f("time/dt");
 	k_phi = config.f("p/k_phi");
@@ -17,6 +19,9 @@ diagnostics::diagnostics(configuration & _config, state_info & _state, fmatrix &
 	n_v_e = config.i("diagnostics/vdist/electrons/n_v");
     n_v_i = config.i("diagnostics/vdist/ions/n_v");
 
+	n_mesh_x = config.i("geometry/n_mesh_x");
+	n_mesh_y = config.i("geometry/n_mesh_y");
+
 	dist_e_x = fmatrix::zeros(n_v_e);
 	dist_e_y = fmatrix::zeros(n_v_e);
     dist_e_global_x = fmatrix::zeros(n_v_e);
@@ -25,6 +30,20 @@ diagnostics::diagnostics(configuration & _config, state_info & _state, fmatrix &
 	dist_i_y = fmatrix::zeros(n_v_i);
     dist_i_global_x = fmatrix::zeros(n_v_i);
 	dist_i_global_y = fmatrix::zeros(n_v_i);
+
+	kefield_e = fmatrix::zeros(n_mesh_x, n_mesh_y);
+	kefield_i = fmatrix::zeros(n_mesh_x, n_mesh_y);
+	vfield_e_x = fmatrix::zeros(n_mesh_x, n_mesh_y);
+	vfield_e_y = fmatrix::zeros(n_mesh_x, n_mesh_y);
+	vfield_i_x = fmatrix::zeros(n_mesh_x, n_mesh_y);
+	vfield_i_y = fmatrix::zeros(n_mesh_x, n_mesh_y);
+
+	kefield_e_global = fmatrix::zeros(n_mesh_x, n_mesh_y);
+	kefield_i_global = fmatrix::zeros(n_mesh_x, n_mesh_y);
+	vfield_e_x_global = fmatrix::zeros(n_mesh_x, n_mesh_y);
+	vfield_e_y_global = fmatrix::zeros(n_mesh_x, n_mesh_y);
+	vfield_i_x_global = fmatrix::zeros(n_mesh_x, n_mesh_y);
+	vfield_i_y_global = fmatrix::zeros(n_mesh_x, n_mesh_y);
 
     vlim_e = fmatrix({config.fs("diagnostics/vdist/electrons/vlim_x").val[0], config.fs("diagnostics/vdist/electrons/vlim_x").val[1],
               config.fs("diagnostics/vdist/electrons/vlim_y").val[0], config.fs("diagnostics/vdist/electrons/vlim_y").val[1]});
@@ -86,7 +105,7 @@ void diagnostics::velocity_distribution(fmatrix & p, int & n_active, int vcol, d
 	}
 }
 
-void diagnostics::update_distributions(){
+void diagnostics::update_distributions(fmatrix & p_e, fmatrix & p_i){
 	velocity_distribution(p_i, state.n_active_i, 3, vlim_i.val[0], vlim_i.val[1], dist_i_x);
     MPI_Reduce(dist_i_x.val, dist_i_global_x.val, n_v_i, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
@@ -119,4 +138,68 @@ void diagnostics::update_series(double n_inj_el, double n_inj_i) {
 		n_points_series += 1;
     }
 }
+
+
+
+void diagnostics::update_velocity_field(mesh_set & mesh, fmatrix & p_e, fmatrix & p_i, fmatrix & wmesh_e_global, fmatrix & wmesh_i_global, imatrix & lpos_e, imatrix & lpos_i){
+
+	pic_operations::flux_field(p_e, state.n_active_e, vfield_e_x, vfield_e_y, mesh, lpos_e); 
+	MPI_Reduce(vfield_e_x.val, vfield_e_x_global.val, n_mesh_x * n_mesh_y, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce(vfield_e_y.val, vfield_e_y_global.val, n_mesh_x * n_mesh_y, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+	for (int i = 0; i < n_mesh_x * n_mesh_y; i++){
+		if(wmesh_e_global.val[i] > 0){
+			vfield_e_x_global.val[i] = vfield_e_x_global.val[i] / wmesh_e_global.val[i];
+			vfield_e_y_global.val[i] = vfield_e_y_global.val[i] / wmesh_e_global.val[i];
+		}
+		else {
+			vfield_e_x_global.val[i] = 0;
+			vfield_e_y_global.val[i] = 0;
+		}
+	}
+
+	pic_operations::flux_field(p_i, state.n_active_i, vfield_i_x, vfield_i_y, mesh, lpos_i); 
+	MPI_Reduce(vfield_i_x.val, vfield_i_x_global.val, n_mesh_x * n_mesh_y, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce(vfield_i_y.val, vfield_i_y_global.val, n_mesh_x * n_mesh_y, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+	for (int i = 0; i < n_mesh_x * n_mesh_y; i++){
+		if(wmesh_i_global.val[i] > 0){
+			vfield_i_x_global.val[i] = vfield_i_x_global.val[i] / wmesh_i_global.val[i];
+			vfield_i_y_global.val[i] = vfield_i_y_global.val[i] / wmesh_i_global.val[i];
+		}
+		else {
+			vfield_i_x_global.val[i] = 0;
+			vfield_i_y_global.val[i] = 0;
+		}
+	}
+}
+
+
+void diagnostics::update_energy_field(mesh_set & mesh, fmatrix & p_e, fmatrix & p_i, fmatrix & wmesh_e_global, fmatrix & wmesh_i_global, imatrix & lpos_e, imatrix & lpos_i){
+
+	pic_operations::energy_field(p_e, state.n_active_e, kefield_e, mesh, lpos_e); 
+	MPI_Reduce(kefield_e.val, kefield_e_global.val, n_mesh_x * n_mesh_y, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+	for (int i = 0; i < n_mesh_x * n_mesh_y; i++){
+		if(wmesh_e_global.val[i] > 0)
+			kefield_e_global.val[i] = kefield_e_global.val[i] / wmesh_e_global.val[i];
+		else 
+			kefield_e_global.val[i] = 0;
+		
+	}
+
+	pic_operations::energy_field(p_i, state.n_active_i, kefield_i, mesh, lpos_i); 
+	MPI_Reduce(kefield_i.val, kefield_i_global.val, n_mesh_x * n_mesh_y, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+	for (int i = 0; i < n_mesh_x * n_mesh_y; i++){
+		if(wmesh_i_global.val[i] > 0)
+			kefield_i_global.val[i] = kefield_i_global.val[i] / wmesh_i_global.val[i];
+		else 
+			kefield_i_global.val[i] = 0;
+		
+	}
+}
+
+
+
 

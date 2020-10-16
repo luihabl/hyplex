@@ -302,7 +302,7 @@ void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration 
 
 }
 
-void output_manager::save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, mesh_set & mesh, string suffix, bool force)
+void output_manager::save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vfield_e_x, fmatrix & vfield_e_y, fmatrix & vfield_i_x, fmatrix & vfield_i_y, fmatrix & efield_e, fmatrix & efield_i, mesh_set & mesh, string suffix, bool force)
 {
     if(!(force || state.step % step_save_fields == 0)) return;
     if(mpi_rank != 0) return;
@@ -314,6 +314,7 @@ void output_manager::save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmat
     file.create_group(obj_path);
 
     double dx = config.f("geometry/dx");
+    double dt = config.f("time/dt");
     double n_factor = config.f("particles/n_factor");
     double k_phi = config.f("p/k_phi");
 
@@ -329,9 +330,29 @@ void output_manager::save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmat
 
     fmatrix dens_i = (4 / pow(dx, 2)) *  n_factor * wmesh_i / mesh.v;
     file.write_dataset(obj_path / "dens_i", dens_i);
+
+
+    ghc::filesystem::path vfield_group = obj_path / "vfields";
+
+    file.create_group(vfield_group);
     
+    fmatrix vfield_e_x_corrected = (dx / dt) * vfield_e_x; 
+    file.write_dataset(vfield_group / "vfield_e_x", vfield_e_x_corrected);
+
+    fmatrix vfield_e_y_corrected = (dx / dt) * vfield_e_y; 
+    file.write_dataset(vfield_group / "vfield_e_y", vfield_e_y_corrected);
+
+    fmatrix vfield_i_x_corrected = (dx / dt) * vfield_i_x; 
+    file.write_dataset(vfield_group / "vfield_i_x", vfield_i_x_corrected);
+
+    fmatrix vfield_i_y_corrected = (dx / dt) * vfield_i_y; 
+    file.write_dataset(vfield_group / "vfield_i_y", vfield_i_y_corrected);
+
+
     verbose_log("Saved fields snapshot", verbosity >= 1);
 }
+
+
 
 void output_manager::save_series(diagnostics & diag, bool force)
 {
@@ -531,9 +552,9 @@ void output_manager::fields_rf_average(fmatrix & phi, fmatrix & wmesh_e, fmatrix
             average_field(wmesh_i_av, wmesh_i, counter_av);
 	    }
 
-        if(counter_av == rf_period_i){
-            save_fields_snapshot(phi_av, wmesh_e_av, wmesh_i_av, mesh, "-rfav", true);
-        }
+        // if(counter_av == rf_period_i){
+        //     save_fields_snapshot(phi_av, wmesh_e_av, wmesh_i_av, mesh, "-rfav", true);
+        // }
     }
 }
 
