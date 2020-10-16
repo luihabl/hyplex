@@ -18,8 +18,8 @@ class diagnostics{
     
     public:
         int series_size;
-        unordered_map<string, fmatrix> gseries;
-        unordered_map<string, fmatrix> lseries;
+        unordered_map<string, fmatrix> gseries; //global series
+        unordered_map<string, fmatrix> lseries; //local series - MPI_Reduce before saving
         fmatrix tmp_array;
         tmatrix<string> gseries_keys;
         tmatrix<string> lseries_keys;
