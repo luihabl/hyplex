@@ -183,7 +183,7 @@ double pic_operations::field_at_position(fmatrix & field, mesh_set & mesh, doubl
 }
 
 
-void pic_operations::energy_field(fmatrix & p, int & n_active, fmatrix & kefield, mesh_set & mesh, imatrix & lpos)
+void pic_operations::pres_field(fmatrix & p, int & n_active, fmatrix & kefield, mesh_set & mesh, imatrix & lpos)
 {
     
     kefield.set_zero();
@@ -206,7 +206,12 @@ void pic_operations::energy_field(fmatrix & p, int & n_active, fmatrix & kefield
     
     // const int mesh_n1 = (int) mesh_x.n1;
     // const double factor = 0.5 * mass * (dx * dx) / (q * dt * dt); // in eV
-	const int mesh_n2 = (int) mesh_x.n2;
+	const int mesh_n1 = (int) mesh_x.n1;
+    const int mesh_n2 = (int) mesh_x.n2;
+    const double a_x = mesh.a_x;
+	const double a_y = mesh.a_x;
+	const double dx = mesh.dx;
+	const double dy = mesh.dy;
 
     for (int i = 0; i < n_active; i++)
     {
@@ -223,6 +228,20 @@ void pic_operations::energy_field(fmatrix & p, int & n_active, fmatrix & kefield
         x_1_mesh = mesh_x.val[(left_index_x + 1) * mesh_n2 + left_index_y];
         y_0_mesh = mesh_y.val[left_index_x * mesh_n2 + left_index_y];
         y_1_mesh = mesh_y.val[left_index_x * mesh_n2 + (left_index_y + 1)];
+
+		if(x_p < x_0_mesh || x_p > x_1_mesh)
+		{
+			lpos.val[i * 2 + 0] = left_index_x = logical_space(x_p, a_x, 1, mesh_n1);
+			x_0_mesh = mesh_x.val[left_index_x * mesh_n2 + left_index_y];
+			x_1_mesh = mesh_x.val[(left_index_x + 1) * mesh_n2 + left_index_y];
+		}
+		
+		if(y_p < y_0_mesh || y_p > y_1_mesh)
+		{
+			lpos.val[i * 2 + 1] = left_index_y = logical_space(y_p, a_y, dy/dx, mesh_n2);
+			y_0_mesh = mesh_y.val[left_index_x * mesh_n2 + left_index_y];
+			y_1_mesh = mesh_y.val[left_index_x * mesh_n2 + (left_index_y + 1)];
+		}
         
         cell_area = (x_1_mesh - x_0_mesh) * (y_1_mesh - y_0_mesh);
         
@@ -261,8 +280,13 @@ void pic_operations::flux_field(fmatrix & p, int & n_active, fmatrix & ffield_x,
 
 	double w1, w2, w3, w4;
     
+	const int mesh_n1 = (int) mesh_x.n1;
     const int mesh_n2 = (int) mesh_x.n2;
-    
+    const double a_x = mesh.a_x;
+	const double a_y = mesh.a_x;
+	const double dx = mesh.dx;
+	const double dy = mesh.dy;
+
     for (int i = 0; i < n_active; i++)
     {
 		x_p = p.val[i * 6 + 0];
@@ -277,6 +301,20 @@ void pic_operations::flux_field(fmatrix & p, int & n_active, fmatrix & ffield_x,
 		x_1_mesh = mesh_x.val[(left_index_x + 1) * mesh_n2 + left_index_y];
 		y_0_mesh = mesh_y.val[left_index_x * mesh_n2 + left_index_y];
 		y_1_mesh = mesh_y.val[left_index_x * mesh_n2 + (left_index_y + 1)];
+
+		if(x_p < x_0_mesh || x_p > x_1_mesh)
+		{
+			lpos.val[i * 2 + 0] = left_index_x = logical_space(x_p, a_x, 1, mesh_n1);
+			x_0_mesh = mesh_x.val[left_index_x * mesh_n2 + left_index_y];
+			x_1_mesh = mesh_x.val[(left_index_x + 1) * mesh_n2 + left_index_y];
+		}
+		
+		if(y_p < y_0_mesh || y_p > y_1_mesh)
+		{
+			lpos.val[i * 2 + 1] = left_index_y = logical_space(y_p, a_y, dy/dx, mesh_n2);
+			y_0_mesh = mesh_y.val[left_index_x * mesh_n2 + left_index_y];
+			y_1_mesh = mesh_y.val[left_index_x * mesh_n2 + (left_index_y + 1)];
+		}
         
 		cell_area = (x_1_mesh - x_0_mesh) * (y_1_mesh - y_0_mesh);
         w1 = (x_1_mesh - x_p) * (y_1_mesh - y_p) / cell_area;

@@ -269,11 +269,11 @@ int main(int argc, char* argv[])
 
         diag.update_series(n_inj_el, n_inj_i);
         diag.update_distributions(p_e, p_i);
-        diag.update_velocity_field(mesh, p_e, p_i, wmesh_e_global, wmesh_i_global, lpos_e, lpos_i);
-        diag.update_energy_field(mesh, p_e, p_i, wmesh_e_global, wmesh_i_global, lpos_e, lpos_i);
+        diag.update_ffield(mesh, p_e, p_i, wmesh_e_global, wmesh_i_global, lpos_e, lpos_i);
+        diag.update_pfield(mesh, p_e, p_i, wmesh_e_global, wmesh_i_global, lpos_e, lpos_i);
 
         output.save_state(p_e, p_i);
-        output.save_fields_snapshot(phi, wmesh_e_global, wmesh_i_global, diag.vfield_e_x_global, diag.vfield_e_y_global, diag.vfield_i_x_global, diag.vfield_i_y_global, diag.kefield_e_global, diag.kefield_i_global, mesh, "");
+        output.save_fields_snapshot(phi, wmesh_e_global, wmesh_i_global, diag, mesh, "");
         output.save_series(diag);
         output.save_distributions(diag);
         output.update_metadata();

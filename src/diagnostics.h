@@ -18,9 +18,9 @@ class diagnostics{
 
         fmatrix dist_e_x, dist_e_y;
         fmatrix dist_i_x, dist_i_y;
-        fmatrix kefield_e, kefield_i;
-        fmatrix vfield_e_x, vfield_e_y;
-        fmatrix vfield_i_x, vfield_i_y;
+        fmatrix pfield_e, pfield_i;
+        fmatrix ffield_e_x, ffield_e_y;
+        fmatrix ffield_i_x, ffield_i_y;
 
 
         void initialize_series();
@@ -38,17 +38,17 @@ class diagnostics{
         fmatrix dist_i_global_x, dist_i_global_y;
         fmatrix vlim_e, vlim_i;
 
-        fmatrix kefield_e_global, kefield_i_global;
-        fmatrix vfield_e_x_global, vfield_e_y_global;
-        fmatrix vfield_i_x_global, vfield_i_y_global;
+        fmatrix pfield_e_global, pfield_i_global;
+        fmatrix ffield_e_x_global, ffield_e_y_global;
+        fmatrix ffield_i_x_global, ffield_i_y_global;
 
         int n_points_series;
         diagnostics(configuration & _config, state_info & _state);
         void velocity_distribution(fmatrix & p, int & n_active, int vcol, double v_0, double v_1,  fmatrix & dmesh);
         void update_distributions(fmatrix & p_e, fmatrix & p_i);
         void update_series(double n_inj_el, double n_inj_i);
-        void update_velocity_field(mesh_set & mesh, fmatrix & p_e, fmatrix & p_i, fmatrix & wmesh_e_global, fmatrix & wmesh_i_global, imatrix & lpos_e, imatrix & lpos_i);
-        void update_energy_field(mesh_set & mesh, fmatrix & p_e, fmatrix & p_i, fmatrix & wmesh_e_global, fmatrix & wmesh_i_global, imatrix & lpos_e, imatrix & lpos_i);
+        void update_ffield(mesh_set & mesh, fmatrix & p_e, fmatrix & p_i, fmatrix & wmesh_e_global, fmatrix & wmesh_i_global, imatrix & lpos_e, imatrix & lpos_i);
+        void update_pfield(mesh_set & mesh, fmatrix & p_e, fmatrix & p_i, fmatrix & wmesh_e_global, fmatrix & wmesh_i_global, imatrix & lpos_e, imatrix & lpos_i);
 };
 
 

@@ -24,6 +24,7 @@
 #include "num-tools.h"
 #include "date.h"
 #include "mpi.h"
+#include "diagnostics.h"
 
 using namespace std;
 using namespace std::chrono;
@@ -302,7 +303,7 @@ void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration 
 
 }
 
-void output_manager::save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, fmatrix & vfield_e_x, fmatrix & vfield_e_y, fmatrix & vfield_i_x, fmatrix & vfield_i_y, fmatrix & efield_e, fmatrix & efield_i, mesh_set & mesh, string suffix, bool force)
+void output_manager::save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, diagnostics & diag, mesh_set & mesh, string suffix, bool force)
 {
     if(!(force || state.step % step_save_fields == 0)) return;
     if(mpi_rank != 0) return;
@@ -313,40 +314,55 @@ void output_manager::save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmat
 
     file.create_group(obj_path);
 
-    double dx = config.f("geometry/dx");
-    double dt = config.f("time/dt");
-    double n_factor = config.f("particles/n_factor");
-    double k_phi = config.f("p/k_phi");
+    const double dx = config.f("geometry/dx");
+    const double dt = config.f("time/dt");
+    const double n_factor = config.f("particles/n_factor");
+    const double k_phi = config.f("p/k_phi");
+    const double m_el = config.f("electrons/m_el");
+    const double m_i = config.f("ugas/m_i");
+    const double q = config.f("physical/q");
 
     file.write_attribute(obj_path, "Time [s]", (double) state.step * dt);
     file.write_attribute(obj_path, "Step", (double) state.step);
 
-
     fmatrix phi_corrected = phi / k_phi;
     file.write_dataset(obj_path / "phi", phi_corrected);
 
-    fmatrix dens_e = (4 / pow(dx, 2)) *  n_factor * wmesh_e / mesh.v;
+    fmatrix k_dens = mesh.v / ((4 / pow(dx, 2)) *  n_factor);
+
+    fmatrix dens_e = wmesh_e / k_dens;
     file.write_dataset(obj_path / "dens_e", dens_e);
 
-    fmatrix dens_i = (4 / pow(dx, 2)) *  n_factor * wmesh_i / mesh.v;
+    fmatrix dens_i = wmesh_i / k_dens;
     file.write_dataset(obj_path / "dens_i", dens_i);
 
 
-    ghc::filesystem::path vfield_group = obj_path / "vfields";
+    ghc::filesystem::path vfield_group = obj_path / "flux";
 
     file.create_group(vfield_group);
     
-    fmatrix vfield_e_x_corrected = (dx / dt) * vfield_e_x; 
-    file.write_dataset(vfield_group / "vfield_e_x", vfield_e_x_corrected);
+    fmatrix ffield_e_x_corrected = (dx / dt) * diag.ffield_e_x_global / k_dens; 
+    file.write_dataset(vfield_group / "flux_e_x", ffield_e_x_corrected);
 
-    fmatrix vfield_e_y_corrected = (dx / dt) * vfield_e_y; 
-    file.write_dataset(vfield_group / "vfield_e_y", vfield_e_y_corrected);
+    fmatrix ffield_e_y_corrected = (dx / dt) * diag.ffield_e_y_global / k_dens; 
+    file.write_dataset(vfield_group / "flux_e_y", ffield_e_y_corrected);
 
-    fmatrix vfield_i_x_corrected = (dx / dt) * vfield_i_x; 
-    file.write_dataset(vfield_group / "vfield_i_x", vfield_i_x_corrected);
+    fmatrix ffield_i_x_corrected = (dx / dt) * diag.ffield_i_x_global / k_dens; 
+    file.write_dataset(vfield_group / "flux_i_x", ffield_i_x_corrected);
 
-    fmatrix vfield_i_y_corrected = (dx / dt) * vfield_i_y; 
-    file.write_dataset(vfield_group / "vfield_i_y", vfield_i_y_corrected);
+    fmatrix ffield_i_y_corrected = (dx / dt) * diag.ffield_i_y_global / k_dens; 
+    file.write_dataset(vfield_group / "flux_i_y", ffield_i_y_corrected);
+
+
+    ghc::filesystem::path pfield_group = obj_path / "kpressure";
+
+    file.create_group(pfield_group);
+    
+    fmatrix pfield_e_corrected = (0.5 * m_el * (dx * dx) / (dt * dt)) * diag.pfield_e_global / k_dens; 
+    file.write_dataset(pfield_group / "kpressure_e", pfield_e_corrected);
+
+    fmatrix pfield_i_corrected = (0.5 * m_i * (dx * dx) / (dt * dt)) * diag.pfield_i_global / k_dens; 
+    file.write_dataset(pfield_group / "kpressure_i", pfield_i_corrected);
 
 
     verbose_log("Saved fields snapshot", verbosity >= 1);
