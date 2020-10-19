@@ -320,7 +320,6 @@ void output_manager::save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmat
     const double k_phi = config.f("p/k_phi");
     const double m_el = config.f("electrons/m_el");
     const double m_i = config.f("ugas/m_i");
-    const double q = config.f("physical/q");
 
     file.write_attribute(obj_path, "Time [s]", (double) state.step * dt);
     file.write_attribute(obj_path, "Step", (double) state.step);
@@ -365,6 +364,11 @@ void output_manager::save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmat
     file.write_dataset(pfield_group / "kpressure_i", pfield_i_corrected);
 
 
+    ghc::filesystem::path izfield_group = obj_path / "coll";
+
+    file.create_group(izfield_group);
+    file.write_dataset(izfield_group / "ionization", diag.izfield_global);
+
     verbose_log("Saved fields snapshot", verbosity >= 1);
 }
 
@@ -383,13 +387,13 @@ void output_manager::save_series(diagnostics & diag, bool force)
         file.write_attribute("series", "Time [s]", (double) state.step * dt);
         file.write_attribute("series", "Step", (double) state.step);
     
-        for (int i = 0; i < diag.gseries_keys.n1; i++){
+        for (int i = 0; i < (int) diag.gseries_keys.n1; i++){
             string path = "series/" + diag.gseries_keys.val[i];
             file.write_dataset(path, diag.gseries[diag.gseries_keys.val[i]]);
         }
     }
     
-    for (int i = 0; i < diag.lseries_keys.n1; i++){
+    for (int i = 0; i < (int) diag.lseries_keys.n1; i++){
         string path = "series/" + diag.lseries_keys.val[i];
         MPI_Reduce(diag.lseries[diag.lseries_keys.val[i]].val, diag.tmp_array.val, diag.series_size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
         if(mpi_rank == 0) file.write_dataset(path, diag.tmp_array);

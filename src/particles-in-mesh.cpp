@@ -335,3 +335,64 @@ void pic_operations::flux_field(fmatrix & p, int & n_active, fmatrix & ffield_x,
     }
 		
 }
+
+void pic_operations::weight_n(fmatrix & p, int & n_active_start, int & n_active_end, fmatrix & f, mesh_set & mesh, imatrix & lpos)
+{
+	fmatrix & mesh_x = mesh.x;
+	fmatrix & mesh_y = mesh.y;
+    
+    double x_p, y_p;
+    
+    double x_0_mesh = 0;
+    double x_1_mesh = 0;
+    double y_0_mesh = 0;
+    double y_1_mesh = 0;
+    
+    double cell_area;
+    
+    int left_index_x = 0;
+    int left_index_y = 0;
+    
+
+	const int mesh_n1 = (int) mesh_x.n1;
+    const int mesh_n2 = (int) mesh_x.n2;
+    const double a_x = mesh.a_x;
+	const double a_y = mesh.a_x;
+	const double dx = mesh.dx;
+	const double dy = mesh.dy;
+
+    for (int i = n_active_start; i < n_active_end; i++)
+    {
+        x_p = p.val[i * 6 + 0];
+        y_p = p.val[i * 6 + 1];
+        
+        left_index_x = lpos.val[i * 2 + 0];
+        left_index_y = lpos.val[i * 2 + 1];
+        
+        x_0_mesh = mesh_x.val[left_index_x * mesh_n2 + left_index_y];
+        x_1_mesh = mesh_x.val[(left_index_x + 1) * mesh_n2 + left_index_y];
+        y_0_mesh = mesh_y.val[left_index_x * mesh_n2 + left_index_y];
+        y_1_mesh = mesh_y.val[left_index_x * mesh_n2 + (left_index_y + 1)];
+
+		if(x_p < x_0_mesh || x_p > x_1_mesh)
+		{
+			lpos.val[i * 2 + 0] = left_index_x = logical_space(x_p, a_x, 1, mesh_n1);
+			x_0_mesh = mesh_x.val[left_index_x * mesh_n2 + left_index_y];
+			x_1_mesh = mesh_x.val[(left_index_x + 1) * mesh_n2 + left_index_y];
+		}
+		
+		if(y_p < y_0_mesh || y_p > y_1_mesh)
+		{
+			lpos.val[i * 2 + 1] = left_index_y = logical_space(y_p, a_y, dy/dx, mesh_n2);
+			y_0_mesh = mesh_y.val[left_index_x * mesh_n2 + left_index_y];
+			y_1_mesh = mesh_y.val[left_index_x * mesh_n2 + (left_index_y + 1)];
+		}
+        
+        cell_area = (x_1_mesh - x_0_mesh) * (y_1_mesh - y_0_mesh);
+        
+        f.val[left_index_x * mesh_n2 + left_index_y] +=              (x_1_mesh - x_p) * (y_1_mesh - y_p) / cell_area;
+        f.val[(left_index_x + 1) * mesh_n2 + left_index_y] +=        (x_p - x_0_mesh) * (y_1_mesh - y_p) / cell_area;
+        f.val[(left_index_x + 1) * mesh_n2 + (left_index_y + 1)] +=  (x_p - x_0_mesh) * (y_p - y_0_mesh) / cell_area;
+        f.val[left_index_x * mesh_n2 + (left_index_y + 1)] +=        (x_1_mesh - x_p) * (y_p - y_0_mesh) / cell_area;
+    }
+}

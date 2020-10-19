@@ -22,6 +22,9 @@ diagnostics::diagnostics(configuration & _config, state_info & _state): config(_
 	n_mesh_x = config.i("geometry/n_mesh_x");
 	n_mesh_y = config.i("geometry/n_mesh_y");
 
+	step_save_vdist = config.i("diagnostics/vdist/save_step");
+	step_save_fields = config.i("diagnostics/fields_snapshot/save_step");
+
 	dist_e_x = fmatrix::zeros(n_v_e);
 	dist_e_y = fmatrix::zeros(n_v_e);
     dist_e_global_x = fmatrix::zeros(n_v_e);
@@ -37,6 +40,7 @@ diagnostics::diagnostics(configuration & _config, state_info & _state): config(_
 	ffield_e_y = fmatrix::zeros(n_mesh_x, n_mesh_y);
 	ffield_i_x = fmatrix::zeros(n_mesh_x, n_mesh_y);
 	ffield_i_y = fmatrix::zeros(n_mesh_x, n_mesh_y);
+	izfield = fmatrix::zeros(n_mesh_x, n_mesh_y);
 
 	pfield_e_global = fmatrix::zeros(n_mesh_x, n_mesh_y);
 	pfield_i_global = fmatrix::zeros(n_mesh_x, n_mesh_y);
@@ -44,6 +48,7 @@ diagnostics::diagnostics(configuration & _config, state_info & _state): config(_
 	ffield_e_y_global = fmatrix::zeros(n_mesh_x, n_mesh_y);
 	ffield_i_x_global = fmatrix::zeros(n_mesh_x, n_mesh_y);
 	ffield_i_y_global = fmatrix::zeros(n_mesh_x, n_mesh_y);
+	izfield_global = fmatrix::zeros(n_mesh_x, n_mesh_y);
 
     vlim_e = fmatrix({config.fs("diagnostics/vdist/electrons/vlim_x").val[0], config.fs("diagnostics/vdist/electrons/vlim_x").val[1],
               config.fs("diagnostics/vdist/electrons/vlim_y").val[0], config.fs("diagnostics/vdist/electrons/vlim_y").val[1]});
@@ -67,10 +72,10 @@ void diagnostics::initialize_series(){
     double measure_step = config.f("diagnostics/series/measure_step");
     series_size = ceil(n_steps / measure_step);
     
-    for(int i = 0; i < lseries_keys.n1; i++)
+    for(int i = 0; i < (int) lseries_keys.n1; i++)
         lseries[lseries_keys.val[i]] = fmatrix::zeros(series_size);
     
-    for(int i = 0; i < gseries_keys.n1; i++)
+    for(int i = 0; i < (int) gseries_keys.n1; i++)
         gseries[gseries_keys.val[i]] = fmatrix::zeros(series_size);
     
     tmp_array = fmatrix::zeros(series_size);
@@ -106,6 +111,8 @@ void diagnostics::velocity_distribution(fmatrix & p, int & n_active, int vcol, d
 }
 
 void diagnostics::update_distributions(fmatrix & p_e, fmatrix & p_i){
+	if(state.step % step_save_vdist != 0) return;
+	
 	velocity_distribution(p_i, state.n_active_i, 3, vlim_i.val[0], vlim_i.val[1], dist_i_x);
     MPI_Reduce(dist_i_x.val, dist_i_global_x.val, n_v_i, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
@@ -143,6 +150,8 @@ void diagnostics::update_series(double n_inj_el, double n_inj_i) {
 
 void diagnostics::update_ffield(mesh_set & mesh, fmatrix & p_e, fmatrix & p_i, fmatrix & wmesh_e_global, fmatrix & wmesh_i_global, imatrix & lpos_e, imatrix & lpos_i){
 
+	if(state.step % step_save_fields != 0) return;
+
 	pic_operations::flux_field(p_e, state.n_active_e, ffield_e_x, ffield_e_y, mesh, lpos_e); 
 	MPI_Reduce(ffield_e_x.val, ffield_e_x_global.val, n_mesh_x * n_mesh_y, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 	MPI_Reduce(ffield_e_y.val, ffield_e_y_global.val, n_mesh_x * n_mesh_y, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -155,6 +164,8 @@ void diagnostics::update_ffield(mesh_set & mesh, fmatrix & p_e, fmatrix & p_i, f
 
 void diagnostics::update_pfield(mesh_set & mesh, fmatrix & p_e, fmatrix & p_i, fmatrix & wmesh_e_global, fmatrix & wmesh_i_global, imatrix & lpos_e, imatrix & lpos_i){
 
+	if(state.step % step_save_fields != 0) return;
+
 	pic_operations::pres_field(p_e, state.n_active_e, pfield_e, mesh, lpos_e); 
 	MPI_Reduce(pfield_e.val, pfield_e_global.val, n_mesh_x * n_mesh_y, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
@@ -164,4 +175,9 @@ void diagnostics::update_pfield(mesh_set & mesh, fmatrix & p_e, fmatrix & p_i, f
 
 
 
-
+void diagnostics::update_izfield(mesh_set & mesh, fmatrix & p_i, imatrix & lpos_i, int n_iz){
+	int n_start =  state.n_active_i - n_iz;
+	izfield_global.set_zero();
+	pic_operations::weight_n(p_i, n_start, state.n_active_i, izfield, mesh, lpos_i);
+	MPI_Reduce(izfield.val, izfield_global.val, n_mesh_x * n_mesh_y, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+}

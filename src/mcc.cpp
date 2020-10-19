@@ -158,7 +158,7 @@ double mcc::kinetic_energy_ev(const fmatrix & p, const int & i, double const & m
 
 // ------------------------------ Electron collisions ------------------------------------
 
-void mcc::collisions_e(fmatrix & p, int & n_active, imatrix & lpos, fmatrix & p_i, int & n_active_i, imatrix & lpos_i, mesh_set mesh, fmatrix & dens_n)
+int mcc::collisions_e(fmatrix & p, int & n_active, imatrix & lpos, fmatrix & p_i, int & n_active_i, imatrix & lpos_i, mesh_set mesh, fmatrix & dens_n)
 {   
     
 	imatrix particle_samples;
@@ -175,6 +175,8 @@ void mcc::collisions_e(fmatrix & p, int & n_active, imatrix & lpos, fmatrix & p_
 //        particle_samples = sample_from_sequence_naive(n_null, n_active);
 //    else
 //        particle_samples = sample_from_sequence_shuffle(n_null, n_active);
+
+    int n_iz = 0;
 
 	int i = 0;
     double random_number_1 = 0.0;
@@ -216,9 +218,11 @@ void mcc::collisions_e(fmatrix & p, int & n_active, imatrix & lpos, fmatrix & p_
             electron_ionization_collision(p, i, kinetic_energy, e_iz);
             electron_ionization_collision(p, new_electron_index, kinetic_energy, e_iz);
             pops.add_maxwellian_particle_at_position(p_i, n_active_i, lpos_i, t_neutral, m_i, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0] , lpos.val[i * 2 + 1]); // <========== particle is added here
-			continue;
+            n_iz += 1;
+            continue;
 		}
 	}
+    return n_iz;
 }
 
 void mcc::electron_elastic_collision(fmatrix & p, const int & i, const double & kinetic_energy)

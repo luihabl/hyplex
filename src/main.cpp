@@ -103,6 +103,7 @@ int main(int argc, char* argv[])
     fmatrix efield_x_at_p_e = fmatrix::zeros(n_max_particles / mpi_size);
     fmatrix efield_y_at_p_e = fmatrix::zeros(n_max_particles / mpi_size);
     double n_inj_el          = config.f("p/n_inj_el");
+    int n_e_iz = 0;
 	
 	// Particle 2 - Ions
     verbose_log("Initializing ions variables", verbosity >= 1);
@@ -258,7 +259,7 @@ int main(int argc, char* argv[])
         // Step 6: Monte-Carlo collisions
         if(mcc_coll){
             if(state.step % k_sub == 0) coll.collisions_i(p_i, state.n_active_i, lpos_i, mesh, dens_n);
-            coll.collisions_e(p_e, state.n_active_e, lpos_e, p_i, state.n_active_i, lpos_i, mesh, dens_n);
+            n_e_iz = coll.collisions_e(p_e, state.n_active_e, lpos_e, p_i, state.n_active_i, lpos_i, mesh, dens_n);
         }
 
         tp.val[8] = sys_now();
@@ -271,6 +272,7 @@ int main(int argc, char* argv[])
         diag.update_distributions(p_e, p_i);
         diag.update_ffield(mesh, p_e, p_i, wmesh_e_global, wmesh_i_global, lpos_e, lpos_i);
         diag.update_pfield(mesh, p_e, p_i, wmesh_e_global, wmesh_i_global, lpos_e, lpos_i);
+        diag.update_izfield(mesh, p_i, lpos_i, n_e_iz);
 
         output.save_state(p_e, p_i);
         output.save_fields_snapshot(phi, wmesh_e_global, wmesh_i_global, diag, mesh, "");
@@ -289,7 +291,7 @@ int main(int argc, char* argv[])
 
     // ----------------------------- Saving outputs ---------------------------
     output.save_state(p_e, p_i, config.b("diagnostics/state/end_save"));
-    // output.save_fields_snapshot(phi, wmesh_e_global, wmesh_i_global, mesh, "", config.b("diagnostics/fields_snapshot/end_save"));
+    output.save_fields_snapshot(phi, wmesh_e_global, wmesh_i_global, diag, mesh, "",  config.b("diagnostics/fields_snapshot/end_save"));
     output.save_series(diag, config.b("diagnostics/series/end_save"));
     output.save_distributions(diag, config.b("diagnostics/vdist/end_save"));
     output.update_metadata("completed", config.b("diagnostics/metadata/end_save"));

@@ -51,7 +51,7 @@ struct mcc
     void electron_ionization_collision(fmatrix & p, const int & i, const double kinetic_energy,  const double ionization_energy);
     void ion_isotropic_collision(fmatrix & p, const int & i, const double kinetic_energy);
 
-    void collisions_e(fmatrix & p, int & n_active, imatrix & lpos, fmatrix & p_i, int & n_active_i, imatrix & lpos_i, mesh_set mesh, fmatrix & dens_n);
+    int collisions_e(fmatrix & p, int & n_active, imatrix & lpos, fmatrix & p_i, int & n_active_i, imatrix & lpos_i, mesh_set mesh, fmatrix & dens_n);
     void collisions_i(fmatrix & p, int & n_active, imatrix & lpos, mesh_set & mesh, fmatrix & dens_n);
 
 };
