@@ -1,7 +1,7 @@
 /run
 /build/
 /lib/hypre*/*
-/lib/yaml/*
+/lib/yaml*/*
 /output/**/*.csv
 /output/**/*.h5
 /output/**/*.txt
