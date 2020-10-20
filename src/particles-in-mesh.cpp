@@ -52,7 +52,12 @@ void pic_operations::weight(fmatrix & p, int & n_active, fmatrix & wmesh, mesh_s
 	int left_index_x = 0;
 	int left_index_y = 0;
 
-	const int mesh_n2 = (int) mesh_x.n2;
+	const int mesh_n1 = (int) mesh_x.n1;
+    const int mesh_n2 = (int) mesh_x.n2;
+    const double a_x = mesh.a_x;
+	const double a_y = mesh.a_x;
+	const double dx = mesh.dx;
+	const double dy = mesh.dy;
 
 	for (int i = 0; i < n_active; i++)
 	{
@@ -69,14 +74,14 @@ void pic_operations::weight(fmatrix & p, int & n_active, fmatrix & wmesh, mesh_s
 
 		if(x_p < x_0_mesh || x_p > x_1_mesh)
 		{
-			lpos.val[i * 2 + 0] = left_index_x = logical_space(x_p, a_x, 1, n_mesh_x);
+			lpos.val[i * 2 + 0] = left_index_x = logical_space(x_p, a_x, 1, mesh_n1);
 			x_0_mesh = mesh_x.val[left_index_x * mesh_n2 + left_index_y];
 			x_1_mesh = mesh_x.val[(left_index_x + 1) * mesh_n2 + left_index_y];
 		}
 		
 		if(y_p < y_0_mesh || y_p > y_1_mesh)
 		{
-			lpos.val[i * 2 + 1] = left_index_y = logical_space(y_p, a_y, dy/dx, n_mesh_y);
+			lpos.val[i * 2 + 1] = left_index_y = logical_space(y_p, a_y, dy/dx, mesh_n2);
 			y_0_mesh = mesh_y.val[left_index_x * mesh_n2 + left_index_y];
 			y_1_mesh = mesh_y.val[left_index_x * mesh_n2 + (left_index_y + 1)];
 		}
@@ -183,7 +188,7 @@ double pic_operations::field_at_position(fmatrix & field, mesh_set & mesh, doubl
 }
 
 
-void pic_operations::pres_field(fmatrix & p, int & n_active, fmatrix & kefield, mesh_set & mesh, imatrix & lpos)
+void pic_operations::kfield(fmatrix & p, int & n_active, fmatrix & kefield, mesh_set & mesh, imatrix & lpos)
 {
     
     kefield.set_zero();
@@ -254,10 +259,10 @@ void pic_operations::pres_field(fmatrix & p, int & n_active, fmatrix & kefield, 
     }
 }
 
-void pic_operations::flux_field(fmatrix & p, int & n_active, fmatrix & ffield_x, fmatrix & ffield_y, mesh_set & mesh,imatrix & lpos){
+void pic_operations::ufield(fmatrix & p, int & n_active, fmatrix & ufield_x, fmatrix & ufield_y, mesh_set & mesh,imatrix & lpos){
     
-    ffield_x.set_zero();
-    ffield_y.set_zero();
+    ufield_x.set_zero();
+    ufield_y.set_zero();
 
 	fmatrix & mesh_x = mesh.x;
 	fmatrix & mesh_y = mesh.y;
@@ -323,15 +328,15 @@ void pic_operations::flux_field(fmatrix & p, int & n_active, fmatrix & ffield_x,
         w4 = (x_1_mesh - x_p) * (y_p - y_0_mesh) / cell_area;
         
         
-        ffield_x.val[left_index_x * mesh_n2 + left_index_y] +=              vx * w1;
-        ffield_x.val[(left_index_x + 1) * mesh_n2 + left_index_y] +=        vx * w2;
-        ffield_x.val[(left_index_x + 1) * mesh_n2 + (left_index_y + 1)] +=  vx * w3;
-        ffield_x.val[left_index_x * mesh_n2 + (left_index_y + 1)] +=        vx * w4;
+        ufield_x.val[left_index_x * mesh_n2 + left_index_y] +=              vx * w1;
+        ufield_x.val[(left_index_x + 1) * mesh_n2 + left_index_y] +=        vx * w2;
+        ufield_x.val[(left_index_x + 1) * mesh_n2 + (left_index_y + 1)] +=  vx * w3;
+        ufield_x.val[left_index_x * mesh_n2 + (left_index_y + 1)] +=        vx * w4;
         
-        ffield_y.val[left_index_x * mesh_n2 + left_index_y] +=              vy * w1;
-        ffield_y.val[(left_index_x + 1) * mesh_n2 + left_index_y] +=        vy * w2;
-        ffield_y.val[(left_index_x + 1) * mesh_n2 + (left_index_y + 1)] +=  vy * w3;
-        ffield_y.val[left_index_x * mesh_n2 + (left_index_y + 1)] +=        vy * w4;
+        ufield_y.val[left_index_x * mesh_n2 + left_index_y] +=              vy * w1;
+        ufield_y.val[(left_index_x + 1) * mesh_n2 + left_index_y] +=        vy * w2;
+        ufield_y.val[(left_index_x + 1) * mesh_n2 + (left_index_y + 1)] +=  vy * w3;
+        ufield_y.val[left_index_x * mesh_n2 + (left_index_y + 1)] +=        vy * w4;
     }
 		
 }

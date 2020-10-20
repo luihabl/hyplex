@@ -320,6 +320,7 @@ void output_manager::save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmat
     const double k_phi = config.f("p/k_phi");
     const double m_el = config.f("electrons/m_el");
     const double m_i = config.f("ugas/m_i");
+    const double q = config.f("physical/q");
 
     file.write_attribute(obj_path, "Time [s]", (double) state.step * dt);
     file.write_attribute(obj_path, "Step", (double) state.step);
@@ -336,32 +337,32 @@ void output_manager::save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmat
     file.write_dataset(obj_path / "dens_i", dens_i);
 
 
-    ghc::filesystem::path vfield_group = obj_path / "flux";
+    ghc::filesystem::path ufield_group = obj_path / "u";
 
-    file.create_group(vfield_group);
+    file.create_group(ufield_group);
     
-    fmatrix ffield_e_x_corrected = (dx / dt) * diag.ffield_e_x_global / k_dens; 
-    file.write_dataset(vfield_group / "flux_e_x", ffield_e_x_corrected);
+    fmatrix ufield_e_x_corrected = (dx / dt) * diag.ufield_e_x_global; 
+    file.write_dataset(ufield_group / "u_e_x", ufield_e_x_corrected);
 
-    fmatrix ffield_e_y_corrected = (dx / dt) * diag.ffield_e_y_global / k_dens; 
-    file.write_dataset(vfield_group / "flux_e_y", ffield_e_y_corrected);
+    fmatrix ufield_e_y_corrected = (dx / dt) * diag.ufield_e_y_global ; 
+    file.write_dataset(ufield_group / "u_e_y", ufield_e_y_corrected);
 
-    fmatrix ffield_i_x_corrected = (dx / dt) * diag.ffield_i_x_global / k_dens; 
-    file.write_dataset(vfield_group / "flux_i_x", ffield_i_x_corrected);
+    fmatrix ufield_i_x_corrected = (dx / dt) * diag.ufield_i_x_global; 
+    file.write_dataset(ufield_group / "u_i_x", ufield_i_x_corrected);
 
-    fmatrix ffield_i_y_corrected = (dx / dt) * diag.ffield_i_y_global / k_dens; 
-    file.write_dataset(vfield_group / "flux_i_y", ffield_i_y_corrected);
+    fmatrix ufield_i_y_corrected = (dx / dt) * diag.ufield_i_y_global; 
+    file.write_dataset(ufield_group / "u_i_y", ufield_i_y_corrected);
 
 
-    ghc::filesystem::path pfield_group = obj_path / "kpressure";
+    ghc::filesystem::path pfield_group = obj_path / "E_k";
 
     file.create_group(pfield_group);
     
-    fmatrix pfield_e_corrected = (0.5 * m_el * (dx * dx) / (dt * dt)) * diag.pfield_e_global / k_dens; 
-    file.write_dataset(pfield_group / "kpressure_e", pfield_e_corrected);
+    fmatrix kfield_e_corrected = (0.5 * m_el * (dx * dx) / (dt * dt * q)) * diag.kfield_e_global; 
+    file.write_dataset(pfield_group / "E_e", kfield_e_corrected);
 
-    fmatrix pfield_i_corrected = (0.5 * m_i * (dx * dx) / (dt * dt)) * diag.pfield_i_global / k_dens; 
-    file.write_dataset(pfield_group / "kpressure_i", pfield_i_corrected);
+    fmatrix kfield_i_corrected = (0.5 * m_i * (dx * dx) / (dt * dt * q)) * diag.kfield_i_global; 
+    file.write_dataset(pfield_group / "E_i", kfield_i_corrected);
 
 
     ghc::filesystem::path izfield_group = obj_path / "coll";
@@ -556,7 +557,7 @@ void output_manager::check_output_folder(){
 }
 
 
-void output_manager::fields_rf_average(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, mesh_set & mesh){
+void output_manager::fields_rf_average(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, diagnostics & diag, mesh_set & mesh){
     
     if(mpi_rank != 0) return;
 
@@ -572,9 +573,9 @@ void output_manager::fields_rf_average(fmatrix & phi, fmatrix & wmesh_e, fmatrix
             average_field(wmesh_i_av, wmesh_i, counter_av);
 	    }
 
-        // if(counter_av == rf_period_i){
-        //     save_fields_snapshot(phi_av, wmesh_e_av, wmesh_i_av, mesh, "-rfav", true);
-        // }
+        if(counter_av == rf_period_i){
+            save_fields_snapshot(phi_av, wmesh_e_av, wmesh_i_av, diag, mesh, "-rfav", true);
+        }
     }
 }
 

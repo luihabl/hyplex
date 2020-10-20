@@ -188,8 +188,8 @@ int main(int argc, char* argv[])
         tp.val[0] = sys_now();
 
 		// Step 1.0: particle weighting
-        if(state.step % k_sub == 0) pic.weight(p_i, state.n_active_i, wmesh_i, mesh, lpos_i);
-        pic.weight(p_e, state.n_active_e, wmesh_e, mesh, lpos_e);
+        if(state.step % k_sub == 0) pic_operations::weight(p_i, state.n_active_i, wmesh_i, mesh, lpos_i);
+        pic_operations::weight(p_e, state.n_active_e, wmesh_e, mesh, lpos_e);
 
         tp.val[1] = sys_now();
 
@@ -270,8 +270,10 @@ int main(int argc, char* argv[])
 
         diag.update_series(n_inj_el, n_inj_i);
         diag.update_distributions(p_e, p_i);
-        diag.update_ffield(mesh, p_e, p_i, wmesh_e_global, wmesh_i_global, lpos_e, lpos_i);
-        diag.update_pfield(mesh, p_e, p_i, wmesh_e_global, wmesh_i_global, lpos_e, lpos_i);
+        
+        diag.update_internal_wmesh(mesh, p_e, p_i, lpos_e, lpos_i);
+        diag.update_ufield(mesh, p_e, p_i, lpos_e, lpos_i);
+        diag.update_kfield(mesh, p_e, p_i, lpos_e, lpos_i);
         diag.update_izfield(mesh, p_i, lpos_i, n_e_iz);
 
         output.save_state(p_e, p_i);
@@ -279,7 +281,7 @@ int main(int argc, char* argv[])
         output.save_series(diag);
         output.save_distributions(diag);
         output.update_metadata();
-        output.fields_rf_average(phi, wmesh_e_global, wmesh_i_global, mesh);
+        output.fields_rf_average(phi, wmesh_e_global, wmesh_i_global, diag, mesh);
 
         tp.val[9] = sys_now();
 

@@ -128,7 +128,7 @@ class output_manager
         void save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, diagnostics & diag, mesh_set & mesh, string suffix, bool force = false);
         void save_series(diagnostics & diag, bool force = false); 
         void save_field_series(fmatrix & field, double conversion_constant, bool force = false);
-        void fields_rf_average(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, mesh_set & mesh);
+        void fields_rf_average(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, diagnostics & diag, mesh_set & mesh);
         template <class T> void save_fmatrix(tmatrix<T> & m, ghc::filesystem::path datapath);
         void save_initial_data();
         void update_metadata(string status = "running", bool force = false);
