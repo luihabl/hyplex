@@ -292,6 +292,10 @@ int main(int argc, char* argv[])
     if(mpi_rank==0) std::cout << "Total execution duration: " << tdiff_h(start, stop) << " hours" << endl;
 
     // ----------------------------- Saving outputs ---------------------------
+    diag.update_internal_wmesh(mesh, p_e, p_i, lpos_e, lpos_i, config.b("diagnostics/fields_snapshot/end_save"));
+    diag.update_ufield(mesh, p_e, p_i, lpos_e, lpos_i, config.b("diagnostics/fields_snapshot/end_save"));
+    diag.update_kfield(mesh, p_e, p_i, lpos_e, lpos_i, config.b("diagnostics/fields_snapshot/end_save"));
+    
     output.save_state(p_e, p_i, config.b("diagnostics/state/end_save"));
     output.save_fields_snapshot(phi, wmesh_e_global, wmesh_i_global, diag, mesh, "",  config.b("diagnostics/fields_snapshot/end_save"));
     output.save_series(diag, config.b("diagnostics/series/end_save"));

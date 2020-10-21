@@ -11,8 +11,8 @@ using namespace std;
 class diagnostics{
 
     private:
-        double k_v, dt, k_phi, n_factor, q;
-        int series_measure_step, n_mesh_x, n_mesh_y, step_save_vdist, step_save_fields;
+        double k_v, dt, k_phi, n_factor, q, izfield_start_progress;
+        int series_measure_step, n_mesh_x, n_mesh_y, step_save_vdist, step_save_fields, steps_since_last_izfield_save, n_steps;
         configuration & config;
         state_info & state;
 
@@ -51,10 +51,11 @@ class diagnostics{
         void velocity_distribution(fmatrix & p, int & n_active, int vcol, double v_0, double v_1,  fmatrix & dmesh);
         void update_distributions(fmatrix & p_e, fmatrix & p_i);
         void update_series(double n_inj_el, double n_inj_i);
-        void update_ufield(mesh_set & mesh, fmatrix & p_e, fmatrix & p_i, imatrix & lpos_e, imatrix & lpos_i);
-        void update_kfield(mesh_set & mesh, fmatrix & p_e, fmatrix & p_i, imatrix & lpos_e, imatrix & lpos_i);
+        void update_ufield(mesh_set & mesh, fmatrix & p_e, fmatrix & p_i, imatrix & lpos_e, imatrix & lpos_i, bool force = false);
+        void update_kfield(mesh_set & mesh, fmatrix & p_e, fmatrix & p_i, imatrix & lpos_e, imatrix & lpos_i, bool force = false);
         void update_izfield(mesh_set & mesh, fmatrix & p_i, imatrix & lpos_i, int n_iz);
-        void update_internal_wmesh(mesh_set & mesh, fmatrix & p_e, fmatrix & p_i, imatrix & lpos_e, imatrix & lpos_i);
+        void izfield_set_zero();
+        void update_internal_wmesh(mesh_set & mesh, fmatrix & p_e, fmatrix & p_i, imatrix & lpos_e, imatrix & lpos_i, bool force = false);
         void set_internal_wmesh(fmatrix & _wmesh_e_global, fmatrix & _wmesh_i_global);
 };
 

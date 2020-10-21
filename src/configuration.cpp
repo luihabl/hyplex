@@ -69,9 +69,9 @@ void configuration::select_gas(){
     select_gas_on_map(_ms);
 }
 
-configuration::configuration(string _filename)
+configuration::configuration(ghc::filesystem::path _filename)
 {
-    filename = _filename;
+    filename = ghc::filesystem::canonical(_filename);
     YAML::Node config_node = YAML::LoadFile(filename);
     flatten_map(config_node);
     select_gas();

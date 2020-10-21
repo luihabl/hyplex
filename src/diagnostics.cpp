@@ -25,6 +25,11 @@ diagnostics::diagnostics(configuration & _config, state_info & _state): config(_
 	step_save_vdist = config.i("diagnostics/vdist/save_step");
 	step_save_fields = config.i("diagnostics/fields_snapshot/save_step");
 
+    n_steps = config.i("time/n_steps");
+	izfield_start_progress = config.f("diagnostics/iz_field/start_progress");
+
+	steps_since_last_izfield_save = 0;
+
 	dist_e_x = fmatrix::zeros(n_v_e);
 	dist_e_y = fmatrix::zeros(n_v_e);
     dist_e_global_x = fmatrix::zeros(n_v_e);
@@ -152,9 +157,9 @@ void diagnostics::update_series(double n_inj_el, double n_inj_i) {
 }
 
 
-void diagnostics::update_internal_wmesh(mesh_set & mesh, fmatrix & p_e, fmatrix & p_i, imatrix & lpos_e, imatrix & lpos_i){
+void diagnostics::update_internal_wmesh(mesh_set & mesh, fmatrix & p_e, fmatrix & p_i, imatrix & lpos_e, imatrix & lpos_i, bool force){
 		
-		if(state.step % step_save_fields != 0) return;
+		if(!(force||state.step % step_save_fields == 0)) return;
 		
 		wmesh_e_global.set_zero();
 		wmesh_i_global.set_zero();
@@ -174,9 +179,9 @@ void diagnostics::set_internal_wmesh(fmatrix & _wmesh_e_global, fmatrix & _wmesh
 }
 
 
-void diagnostics::update_ufield(mesh_set & mesh, fmatrix & p_e, fmatrix & p_i, imatrix & lpos_e, imatrix & lpos_i){
+void diagnostics::update_ufield(mesh_set & mesh, fmatrix & p_e, fmatrix & p_i, imatrix & lpos_e, imatrix & lpos_i, bool force){
 
-	if(state.step % step_save_fields != 0) return;
+	if(!(force||state.step % step_save_fields == 0)) return;
 
 	ufield_e_x_global.set_zero();
 	ufield_e_y_global.set_zero();
@@ -216,9 +221,9 @@ void diagnostics::update_ufield(mesh_set & mesh, fmatrix & p_e, fmatrix & p_i, i
 }
 
 
-void diagnostics::update_kfield(mesh_set & mesh, fmatrix & p_e, fmatrix & p_i, imatrix & lpos_e, imatrix & lpos_i){
+void diagnostics::update_kfield(mesh_set & mesh, fmatrix & p_e, fmatrix & p_i, imatrix & lpos_e, imatrix & lpos_i, bool force){
 
-	if(state.step % step_save_fields != 0) return;
+	if(!(force||state.step % step_save_fields == 0)) return;
 
 	kfield_e_global.set_zero();
 	kfield_i_global.set_zero();
@@ -246,8 +251,14 @@ void diagnostics::update_kfield(mesh_set & mesh, fmatrix & p_e, fmatrix & p_i, i
 }
 
 void diagnostics::update_izfield(mesh_set & mesh, fmatrix & p_i, imatrix & lpos_i, int n_iz){
+	if(state.step < izfield_start_progress * (double) n_steps) return;
 	int n_start =  state.n_active_i - n_iz;
 	izfield_global.set_zero();
 	pic_operations::weight_n(p_i, n_start, state.n_active_i, izfield, mesh, lpos_i);
 	MPI_Reduce(izfield.val, izfield_global.val, n_mesh_x * n_mesh_y, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+}
+
+void diagnostics::izfield_set_zero(){
+	izfield_global.set_zero();
+	izfield.set_zero();
 }

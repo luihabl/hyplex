@@ -7,6 +7,7 @@
 #include <unordered_map>
 
 #include "yaml-cpp/yaml.h"
+#include "filesystem.hpp" 
 #include "fmatrix.h"
 
 #define ERROR_MSG(Map, Type) "ERROR: Key not found in Configuration." #Map "(" Type "): "
@@ -28,8 +29,8 @@ class configuration {
         template<typename T> void select_gas_on_map(unordered_map<string, T> & map);
 
     public:
-        string filename;
-        configuration(string filename);
+        ghc::filesystem::path filename;
+        configuration(ghc::filesystem::path filename);
         void print_all();
         void print_m();
         void print_ms();

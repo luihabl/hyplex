@@ -368,7 +368,10 @@ void output_manager::save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmat
     ghc::filesystem::path izfield_group = obj_path / "coll";
 
     file.create_group(izfield_group);
+
+    fmatrix izfield_corrected = diag.izfield_global / (k_dens * dt * (double) step_save_fields);
     file.write_dataset(izfield_group / "ionization", diag.izfield_global);
+    diag.izfield_set_zero();
 
     verbose_log("Saved fields snapshot", verbosity >= 1);
 }
