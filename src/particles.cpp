@@ -310,7 +310,43 @@ void particle_operations::boundaries_n_pump(fmatrix & p, int & n_active, imatrix
     remove_particles(tbremoved, n_remove, p, n_active, lpos);
 }
 
-void particle_operations::boundaries_ob_count(fmatrix & p, int & n_active, imatrix & lpos, int & n_removed_ob, int & n_removed_thr)
+void particle_operations::select_particles(fmatrix & p, int & n_active, fmatrix & p_select, int & n_active_select, fmatrix & vmin, fmatrix & vmax){
+
+	int j = 0;
+	for (int i = 0; i < n_active; i++){
+		
+		for (int h=0; h<6; h++){
+			if (p.val[i * 6 + h] < vmin.val[h] || p.val[i * 6 + h] > vmax.val[h]) continue;
+		}
+
+		p_select.val[j * 6 + 0] = p.val[i * 6 + 0];
+		p_select.val[j * 6 + 1] = p.val[i * 6 + 1];
+		p_select.val[j * 6 + 2] = p.val[i * 6 + 2];
+		p_select.val[j * 6 + 3] = p.val[i * 6 + 3];
+		p_select.val[j * 6 + 4] = p.val[i * 6 + 4];
+		p_select.val[j * 6 + 5] = p.val[i * 6 + 5];
+				
+		j += 1;
+	}
+
+	n_active_select = j;
+}
+
+
+void particle_operations::copy_removed_particles(fmatrix & p, fmatrix & p_removed, int & n_remove){
+		int i = 0;
+		for(int j = 0; j < n_remove; j++){
+			i = tbremoved.val[j];
+			p_removed.val[j * 6 + 0] = p.val[i * 6 + 0];
+			p_removed.val[j * 6 + 1] = p.val[i * 6 + 1];
+			p_removed.val[j * 6 + 2] = p.val[i * 6 + 2];
+			p_removed.val[j * 6 + 3] = p.val[i * 6 + 3];
+			p_removed.val[j * 6 + 4] = p.val[i * 6 + 4];
+			p_removed.val[j * 6 + 5] = p.val[i * 6 + 5];
+		}
+}
+
+void particle_operations::boundaries_ob_count(fmatrix & p, int & n_active, imatrix & lpos, int & n_removed_ob, int & n_removed_thr, fmatrix & p_removed, int & n_removed, bool copy_removed)
 {
 	n_removed_ob = 0;
     n_removed_thr = 0;
@@ -354,11 +390,15 @@ void particle_operations::boundaries_ob_count(fmatrix & p, int & n_active, imatr
 
 	}
 
+	if (copy_removed) copy_removed_particles(p, p_removed, n_remove);
+	n_removed = n_remove;
+
 	for (int i = n_remove - 1; i >= 0; i--)
 	{
 		remove_particle(p, n_active, tbremoved.val[i], lpos);
 	}
 }
+
 
 
 void particle_operations::boundaries_e(fmatrix & p, int & n_active, imatrix & lpos, int n_out_i)

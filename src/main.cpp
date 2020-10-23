@@ -241,8 +241,8 @@ int main(int argc, char* argv[])
         tp.val[6] = sys_now();
 
         // // Step 4: particle loss at boundaries
-        if(state.step % k_sub == 0) pops.boundaries_ob_count(p_i, state.n_active_i, lpos_i, state.n_out_ob_i, state.n_out_thr_i);
-        pops.boundaries_ob_count(p_e, state.n_active_e, lpos_e, state.n_out_ob_e, state.n_out_thr_e);
+        if(state.step % k_sub == 0) pops.boundaries_ob_count(p_i, state.n_active_i, lpos_i, state.n_out_ob_i, state.n_out_thr_i, diag.p_i_removed, diag.n_removed_i, true);
+        pops.boundaries_ob_count(p_e, state.n_active_e, lpos_e, state.n_out_ob_e, state.n_out_thr_e, diag.p_e_removed, diag.n_removed_e, true);
 
         tp.val[7] = sys_now();
 
@@ -269,7 +269,8 @@ int main(int argc, char* argv[])
         output.print_info();
 
         diag.update_series(n_inj_el, n_inj_i);
-        diag.update_distributions(p_e, p_i);
+        diag.update_velocity_distributions(p_e, p_i);
+        diag.update_boundary_current_distributions();
         
         diag.update_internal_wmesh(mesh, p_e, p_i, lpos_e, lpos_i);
         diag.update_ufield(mesh, p_e, p_i, lpos_e, lpos_i);

@@ -606,17 +606,24 @@ void output_manager::save_distributions(diagnostics & diag, bool force){
 
     check_output_folder();
 
-    ghc::filesystem::path obj_path = "vdist", obj_path_e = obj_path / "electrons", obj_path_i = obj_path / "ions";
+    ghc::filesystem::path obj_path = "dist", obj_path_e = obj_path / "electrons", obj_path_i = obj_path / "ions";
+
+    diag.reduce_distributions();
     
     if(mpi_rank == 0){
         file.create_group(obj_path);
         file.create_group(obj_path_e);
         file.create_group(obj_path_i);
 
-        file.write_dataset(obj_path_i / "x", diag.dist_i_global_x);
-        file.write_dataset(obj_path_i / "y", diag.dist_i_global_y);
-        file.write_dataset(obj_path_e / "x", diag.dist_e_global_x);
-        file.write_dataset(obj_path_e / "y", diag.dist_e_global_y);
+        file.write_dataset(obj_path_i / "vx", diag.vdist_i_global_x);
+        file.write_dataset(obj_path_i / "vy", diag.vdist_i_global_y);
+        file.write_dataset(obj_path_e / "vx", diag.vdist_e_global_x);
+        file.write_dataset(obj_path_e / "vy", diag.vdist_e_global_y);
+
+        file.write_dataset(obj_path_i / "i_top", diag.top_dist_i_global);
+        file.write_dataset(obj_path_i / "i_rhs", diag.rhs_dist_i_global);
+        file.write_dataset(obj_path_e / "i_top", diag.top_dist_e_global);
+        file.write_dataset(obj_path_e / "i_rhs", diag.rhs_dist_e_global);
     }
     
     if(mpi_rank != 0) return;

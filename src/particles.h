@@ -30,7 +30,9 @@ struct particle_operations{
 	double pulsed_injection(int i);
 	double square_injection(int i);
 
-	void boundaries_ob_count(fmatrix & p, int & n_active, imatrix & lpos, int & n_removed_ob, int & n_removed_thr);
+	void boundaries_ob_count(fmatrix & p, int & n_active, imatrix & lpos, int & n_removed_ob, int & n_removed_thr, fmatrix & p_removed, int & n_removed, bool copy_removed);
+	void copy_removed_particles(fmatrix & p, fmatrix & p_removed, int & n_remove);
+	static void select_particles(fmatrix & p, int & n_active, fmatrix & p_select, int & n_active_select, fmatrix & vmin, fmatrix & vmax);
 	void boundaries_e(fmatrix & p, int & n_active, imatrix & lpos, int n_out_i);
 	void boundaries_e_cap(fmatrix & p, int & n_active, imatrix & lpos, int & n_out_e, double v_cap, fmatrix & phi, mesh_set & mesh);
 	void boundaries_n(fmatrix & p, int & n_active, imatrix & lpos);

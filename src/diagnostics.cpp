@@ -2,10 +2,14 @@
 #include "diagnostics.h"
 #include "fmatrix.h"
 #include "particles-in-mesh.h"
+#include "particles.h"
 #include "fields.h"
 #include "mpi.h"
 
 #include <unordered_map>
+
+#define HIGH 1e99
+#define LOW -1e99
 
 using namespace std;
 
@@ -21,6 +25,11 @@ diagnostics::diagnostics(configuration & _config, state_info & _state): config(_
 
 	n_mesh_x = config.i("geometry/n_mesh_x");
 	n_mesh_y = config.i("geometry/n_mesh_y");
+	
+	double dx = config.f("geometry/dx");
+	double dy = config.f("geometry/dy");
+	x_max = ((double) n_mesh_x - 1);
+	y_max = ((double) n_mesh_y - 1) * (dy / dx);
 
 	step_save_vdist = config.i("diagnostics/vdist/save_step");
 	step_save_fields = config.i("diagnostics/fields_snapshot/save_step");
@@ -30,14 +39,28 @@ diagnostics::diagnostics(configuration & _config, state_info & _state): config(_
 
 	steps_since_last_izfield_save = 0;
 
-	dist_e_x = fmatrix::zeros(n_v_e);
-	dist_e_y = fmatrix::zeros(n_v_e);
-    dist_e_global_x = fmatrix::zeros(n_v_e);
-	dist_e_global_y = fmatrix::zeros(n_v_e);
-    dist_i_x = fmatrix::zeros(n_v_i);
-	dist_i_y = fmatrix::zeros(n_v_i);
-    dist_i_global_x = fmatrix::zeros(n_v_i);
-	dist_i_global_y = fmatrix::zeros(n_v_i);
+	vdist_e_x = fmatrix::zeros(n_v_e);
+	vdist_e_y = fmatrix::zeros(n_v_e);
+    vdist_e_global_x = fmatrix::zeros(n_v_e);
+	vdist_e_global_y = fmatrix::zeros(n_v_e);
+    vdist_i_x = fmatrix::zeros(n_v_i);
+	vdist_i_y = fmatrix::zeros(n_v_i);
+    vdist_i_global_x = fmatrix::zeros(n_v_i);
+	vdist_i_global_y = fmatrix::zeros(n_v_i);
+
+
+	top_dist_e = fmatrix::zeros(n_v_e);
+	top_dist_i = fmatrix::zeros(n_v_i);
+	top_dist_e_global = fmatrix::zeros(n_v_e);
+	top_dist_i_global = fmatrix::zeros(n_v_i);
+
+	rhs_dist_e = fmatrix::zeros(n_v_e);
+	rhs_dist_i = fmatrix::zeros(n_v_i);
+	rhs_dist_e_global = fmatrix::zeros(n_v_e);
+	rhs_dist_i_global = fmatrix::zeros(n_v_i);
+
+	vmin = fmatrix::zeros(6);
+	vmax = fmatrix::zeros(6);
 
 	kfield_e = fmatrix::zeros(n_mesh_x, n_mesh_y);
 	kfield_i = fmatrix::zeros(n_mesh_x, n_mesh_y);
@@ -59,6 +82,11 @@ diagnostics::diagnostics(configuration & _config, state_info & _state): config(_
 	wmesh_i = fmatrix::zeros(n_mesh_x, n_mesh_y);
 	wmesh_e_global = fmatrix::zeros(n_mesh_x, n_mesh_y);
 	wmesh_i_global = fmatrix::zeros(n_mesh_x, n_mesh_y);
+
+	p_select = fmatrix::zeros(100000, 6);
+	p_e_removed = fmatrix::zeros(100000, 6);
+	p_i_removed = fmatrix::zeros(100000,6);
+	n_removed_e = n_removed_i = 0;
 
     vlim_e = fmatrix({config.fs("diagnostics/vdist/electrons/vlim_x").val[0], config.fs("diagnostics/vdist/electrons/vlim_x").val[1],
               config.fs("diagnostics/vdist/electrons/vlim_y").val[0], config.fs("diagnostics/vdist/electrons/vlim_y").val[1]});
@@ -93,21 +121,16 @@ void diagnostics::initialize_series(){
     n_points_series = 0;
 }
 
-void diagnostics::velocity_distribution(fmatrix & p, int & n_active, int vcol, double v_0, double v_1,  fmatrix & dmesh){
-
-	dmesh.set_zero();
+void diagnostics::dist(fmatrix & p, int & n_active, int col, double v_0, double v_1,  fmatrix & dmesh){
 
 	double v_p, v_p_norm, s;
 	int left_index;
-
-	v_0 *= k_v;
-	v_1 *= k_v;
 
 	double dv = (v_1 - v_0) / (double) (dmesh.n1 - 1);
 
 	for(int i = 0; i < n_active; i++){
 
-	    v_p = p.val[i * 6 + vcol];
+	    v_p = p.val[i * 6 + col];
 
 		if(v_p < v_0 || v_p > v_1) continue;
 	
@@ -120,21 +143,63 @@ void diagnostics::velocity_distribution(fmatrix & p, int & n_active, int vcol, d
 	}
 }
 
-void diagnostics::update_distributions(fmatrix & p_e, fmatrix & p_i){
+
+void diagnostics::update_velocity_distributions(fmatrix & p_e, fmatrix & p_i){
 	if(state.step % step_save_vdist != 0) return;
 	
-	velocity_distribution(p_i, state.n_active_i, 3, vlim_i.val[0], vlim_i.val[1], dist_i_x);
-    MPI_Reduce(dist_i_x.val, dist_i_global_x.val, n_v_i, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+	vdist_i_x.set_zero();
+	vdist_i_y.set_zero();
+	vdist_e_x.set_zero();
+	vdist_e_y.set_zero();
 
-    velocity_distribution(p_i, state.n_active_i, 4, vlim_i.val[2], vlim_i.val[3], dist_i_y);
-    MPI_Reduce(dist_i_y.val, dist_i_global_y.val, n_v_i, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-
-    velocity_distribution(p_e, state.n_active_e, 3, vlim_e.val[0], vlim_e.val[1], dist_e_x);
-    MPI_Reduce(dist_e_x.val, dist_e_global_x.val, n_v_e, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-
-    velocity_distribution(p_e, state.n_active_e, 4, vlim_e.val[2], vlim_e.val[3], dist_e_y);
-    MPI_Reduce(dist_e_y.val, dist_e_global_y.val, n_v_e, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+	dist(p_i, state.n_active_i, 3, k_v * vlim_i.val[0], k_v * vlim_i.val[1], vdist_i_x);
+    dist(p_i, state.n_active_i, 4, k_v * vlim_i.val[2], k_v * vlim_i.val[3], vdist_i_y);
+    dist(p_e, state.n_active_e, 3, k_v * vlim_e.val[0], k_v * vlim_e.val[1], vdist_e_x);
+    dist(p_e, state.n_active_e, 4, k_v * vlim_e.val[2], k_v * vlim_e.val[3], vdist_e_y);
 }
+
+void diagnostics::update_boundary_current_distributions(){
+
+	int n_active_select = 0;
+
+	// select particles at the top boundary
+	vmin = {x_min, y_max, LOW, LOW, LOW, LOW};
+	vmax = {x_max, HIGH, HIGH, HIGH, HIGH, HIGH};
+
+	particle_operations::select_particles(p_i_removed, n_removed_i, p_select, n_active_select, vmin, vmax);
+	dist(p_select, n_active_select, 0, 0, x_max, top_dist_i);
+
+	particle_operations::select_particles(p_e_removed, n_removed_e, p_select, n_active_select, vmin, vmax);
+	dist(p_select, n_active_select, 0, 0, x_max, top_dist_e);
+
+	// select particles at the rhs boundary
+	vmin = {x_max, y_min, LOW, LOW, LOW, LOW};
+	vmax = {HIGH, y_max, HIGH, HIGH, HIGH, HIGH};
+
+	particle_operations::select_particles(p_i_removed, n_removed_i, p_select, n_active_select, vmin, vmax);
+	dist(p_select, n_active_select, 1, 0, y_max, rhs_dist_i);
+
+	particle_operations::select_particles(p_e_removed, n_removed_e, p_select, n_active_select, vmin, vmax);
+	dist(p_select, n_active_select, 1, 0, y_max, rhs_dist_e);
+}
+
+void diagnostics::reduce_distributions(){
+
+	//velocity distributions
+	MPI_Reduce(vdist_i_x.val, vdist_i_global_x.val, n_v_i, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce(vdist_i_y.val, vdist_i_global_y.val, n_v_i, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(vdist_e_x.val, vdist_e_global_x.val, n_v_e, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(vdist_e_y.val, vdist_e_global_y.val, n_v_e, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+	//boundary current distributions
+	MPI_Reduce(top_dist_i.val, top_dist_i_global.val, n_v_i, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce(rhs_dist_i.val, rhs_dist_i_global.val, n_v_i, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(top_dist_e.val, top_dist_e_global.val, n_v_e, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(rhs_dist_e.val, rhs_dist_e_global.val, n_v_e, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+	boundary_dist_set_zero();
+}
+
 
 
 void diagnostics::update_series(double n_inj_el, double n_inj_i) {
@@ -261,4 +326,11 @@ void diagnostics::update_izfield(mesh_set & mesh, fmatrix & p_i, imatrix & lpos_
 void diagnostics::izfield_set_zero(){
 	izfield_global.set_zero();
 	izfield.set_zero();
+}
+
+void diagnostics::boundary_dist_set_zero(){
+	top_dist_e.set_zero();
+	top_dist_i.set_zero();
+	rhs_dist_e.set_zero();
+	rhs_dist_i.set_zero();
 }
