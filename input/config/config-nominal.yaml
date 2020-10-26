@@ -106,6 +106,7 @@ diagnostics:
   series:
     measure_step: 1
     save_step: 50000
+    short_series_start_progress: 0.9
     end_save: true
 
   rf_av:
@@ -114,6 +115,9 @@ diagnostics:
   field_series:
     save_step: 1
     end_save: true
+
+  iz_field:
+    start_progress: 0.0
 
   vdist:
     save_step: 10000

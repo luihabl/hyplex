@@ -23,6 +23,8 @@ diagnostics::diagnostics(configuration & _config, state_info & _state): config(_
 	n_v_e = config.i("diagnostics/vdist/electrons/n_v");
     n_v_i = config.i("diagnostics/vdist/ions/n_v");
 
+	n_e_iz = 0;
+
 	n_mesh_x = config.i("geometry/n_mesh_x");
 	n_mesh_y = config.i("geometry/n_mesh_y");
 	
@@ -143,6 +145,17 @@ void diagnostics::dist(fmatrix & p, int & n_active, int col, double v_0, double 
 	}
 }
 
+double diagnostics::av_div(fmatrix & p, int & n_active){
+	double cos_theta = 0, vx = 0, vy = 0;
+	for(int i = 0; i < n_active; i++){
+		vx = p.val[i * 6 + 3];
+		vy = p.val[i * 6 + 4];
+
+		cos_theta += vx / sqrt(vx*vx + vy*vy);
+	}
+	return cos_theta / (double) n_active;
+}
+
 
 void diagnostics::update_velocity_distributions(fmatrix & p_e, fmatrix & p_i){
 	if(state.step % step_save_vdist != 0) return;
@@ -171,6 +184,9 @@ void diagnostics::update_boundary_current_distributions(){
 
 	particle_operations::select_particles(p_e_removed, n_removed_e, p_select, n_active_select, vmin, vmax);
 	dist(p_select, n_active_select, 0, 0, x_max, top_dist_e);
+
+	// add axial current
+	// dont forget to divide these distributions by n*dt to give current 
 
 	// select particles at the rhs boundary
 	vmin = {x_max, y_min, LOW, LOW, LOW, LOW};
@@ -202,7 +218,7 @@ void diagnostics::reduce_distributions(){
 
 
 
-void diagnostics::update_series(double n_inj_el, double n_inj_i) {
+void diagnostics::update_series() {
 	if(state.step % series_measure_step == 0){
         
 		gseries["time"].val[n_points_series] = state.step * dt;
@@ -333,4 +349,14 @@ void diagnostics::boundary_dist_set_zero(){
 	top_dist_i.set_zero();
 	rhs_dist_e.set_zero();
 	rhs_dist_i.set_zero();
+}
+
+void diagnostics::update_all(mesh_set & mesh, fmatrix & p_e, fmatrix & p_i, imatrix & lpos_e, imatrix & lpos_i){
+	update_series();
+	update_velocity_distributions(p_e, p_i);
+	update_boundary_current_distributions();
+	update_internal_wmesh(mesh, p_e, p_i, lpos_e, lpos_i);
+	update_ufield(mesh, p_e, p_i, lpos_e, lpos_i);
+	update_kfield(mesh, p_e, p_i, lpos_e, lpos_i);
+	update_izfield(mesh, p_i, lpos_i, n_e_iz);
 }

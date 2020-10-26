@@ -259,7 +259,7 @@ int main(int argc, char* argv[])
         // Step 6: Monte-Carlo collisions
         if(mcc_coll){
             if(state.step % k_sub == 0) coll.collisions_i(p_i, state.n_active_i, lpos_i, mesh, dens_n);
-            n_e_iz = coll.collisions_e(p_e, state.n_active_e, lpos_e, p_i, state.n_active_i, lpos_i, mesh, dens_n);
+            diag.n_e_iz = coll.collisions_e(p_e, state.n_active_e, lpos_e, p_i, state.n_active_i, lpos_i, mesh, dens_n);
         }
 
         tp.val[8] = sys_now();
@@ -268,14 +268,7 @@ int main(int argc, char* argv[])
 
         output.print_info();
 
-        diag.update_series(n_inj_el, n_inj_i);
-        diag.update_velocity_distributions(p_e, p_i);
-        diag.update_boundary_current_distributions();
-        
-        diag.update_internal_wmesh(mesh, p_e, p_i, lpos_e, lpos_i);
-        diag.update_ufield(mesh, p_e, p_i, lpos_e, lpos_i);
-        diag.update_kfield(mesh, p_e, p_i, lpos_e, lpos_i);
-        diag.update_izfield(mesh, p_i, lpos_i, n_e_iz);
+        diag.update_all(mesh, p_e, p_i, lpos_e, lpos_i);
 
         output.save_state(p_e, p_i);
         output.save_fields_snapshot(phi, wmesh_e_global, wmesh_i_global, diag, mesh, "");
