@@ -127,6 +127,7 @@ fmatrix load_csv(string file_path, char delim, int cols)
 
 void output_manager::save_state(fmatrix & p_e, fmatrix & p_i, bool force){
 
+    if(!state_save) return;
     if(!(force || state.step % step_save_state == 0)) return;
 
     check_output_folder();
@@ -380,6 +381,7 @@ void output_manager::save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmat
 
 void output_manager::save_series(diagnostics & diag, bool force)
 {
+    if(!series_save) return;
     if(!(force || state.step % step_save_series == 0)) return;
 
     if(mpi_rank == 0){
@@ -408,18 +410,6 @@ void output_manager::save_series(diagnostics & diag, bool force)
     verbose_log("Saved time series", verbosity >= 1);
 }
 
-void output_manager::save_field_series(fmatrix & field, double conversion_constant, bool force)
-{
-    if(!(force || state.step % step_save_fseries == 0)) return;
-
-    check_output_folder();
-    file.create_group("field_series");
-    
-    fmatrix field_corrected = conversion_constant * field;
-
-    file.write_dataset("field_series/" + to_string(state.step), field_corrected);
-    file.write_attribute("field_series/" + to_string(state.step), "Time [s]", (double) state.step * dt);
-}
 
 output_manager::output_manager(system_clock::time_point _start_utc, state_info & _state, configuration & _config, mesh_set & _mesh): state(_state), config(_config), mesh(_mesh){
     
@@ -437,15 +427,19 @@ output_manager::output_manager(system_clock::time_point _start_utc, state_info &
     print_timing_step = config.i("diagnostics/print_info/print_timing_step"); 
     dt = config.f("time/dt");
     
+    step_file_refresh = config.i("diagnostics/output_file/file_refresh_step");
     step_print_info  = config.i("diagnostics/print_info/print_step");
     step_save_state  = config.i("diagnostics/state/save_step");
     step_save_fields = config.i("diagnostics/fields_snapshot/save_step");
     step_save_series = config.i("diagnostics/series/save_step");
-    step_save_fseries = config.i("diagnostics/field_series/save_step");
     step_update_metadata = config.i("diagnostics/metadata/update_step");
     n_mesh_x = config.i("geometry/n_mesh_x");
     n_mesh_y = config.i("geometry/n_mesh_y");
 
+    output_overwrite = config.b("diagnostics/output_file/overwrite");
+    state_save = config.b("diagnostics/state/save");
+    series_save = config.b("diagnostics/series/save");
+    
     step_save_vdist = config.i("diagnostics/vdist/save_step");
 
     int nx = config.i("geometry/n_mesh_x");
@@ -458,15 +452,7 @@ output_manager::output_manager(system_clock::time_point _start_utc, state_info &
     td.set_zero();
     verbosity = config.i("simulation/verbosity");
     
-    if(mpi_rank == 0) output_name = build_output_name("hy_" + format("%Y-%m-%d", start_utc));
-    
-    int str_size = (int) output_name.size();
-    MPI_Bcast(&str_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    if (mpi_rank != 0) output_name.resize(str_size);
-    
-    MPI_Bcast(const_cast<char*>(output_name.data()), str_size, MPI_CHAR, 0, MPI_COMM_WORLD);
-    
-    file = exdir(output_path / output_name, false);
+    start_new_file();
 }
 
 
@@ -480,6 +466,11 @@ output_manager::output_manager(string prefix, state_info & _state, configuration
 
     verbosity = config.i("simulation/verbosity");
     
+    start_new_file(prefix);
+}
+
+void output_manager::start_new_file(string prefix){
+
     if(mpi_rank == 0) output_name = build_output_name(prefix);
     
     int str_size = (int) output_name.size();
@@ -489,9 +480,18 @@ output_manager::output_manager(string prefix, state_info & _state, configuration
     MPI_Bcast(const_cast<char*>(output_name.data()), str_size, MPI_CHAR, 0, MPI_COMM_WORLD);
     
     file = exdir(output_path / output_name, false);
+    
+    save_initial_data();
 }
 
+void output_manager::start_new_file(){    
+    start_new_file("hy_" + format("%Y-%m-%d", start_utc));
+}
 
+void output_manager::refresh_file(){
+    if(output_overwrite && (state.step % step_file_refresh == 0))
+        start_new_file();
+}
 
 string output_manager::build_output_name(string filename_preffix){
 
@@ -555,7 +555,6 @@ void output_manager::check_output_folder(){
     if(!file.file_exists()){
         file = exdir(output_path / output_name, false);
         save_initial_data();
-        update_metadata();
     }
 }
 

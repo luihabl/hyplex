@@ -172,7 +172,6 @@ int main(int argc, char* argv[])
 
     // ----------------------------- Output manager ---------------------------
     output_manager output(start_utc, state, config, mesh);
-    output.save_initial_data();
 
 	// ----------------------------- Main loop --------------------------------
 
@@ -266,19 +265,20 @@ int main(int argc, char* argv[])
 
         //  ----------------------------- Diagnostics -------------------------
 
+        output.refresh_file();
         output.print_info();
-
-        diag.update_all(mesh, p_e, p_i, lpos_e, lpos_i);
-
+        diag.update_all(mesh, p_e, p_i, lpos_e, lpos_i); // <- add starting step and saving step for boundary current distribution.
+                                                         // <- remove steps from the specific functions in update_all and put them inside update_all, this will make it easier to call specific functions individually for field series
         output.save_state(p_e, p_i);
-        output.save_fields_snapshot(phi, wmesh_e_global, wmesh_i_global, diag, mesh, "");
+        output.save_fields_snapshot(phi, wmesh_e_global, wmesh_i_global, diag, mesh, ""); 
         output.save_series(diag);
         output.save_distributions(diag);
         output.update_metadata();
-        output.fields_rf_average(phi, wmesh_e_global, wmesh_i_global, diag, mesh);
+        // output.fields_rf_average(phi, wmesh_e_global, wmesh_i_global, diag, mesh); // <- this is not working properly, since the "save_field_snapshot" saves everything, including stuff that was not averaged
+        // double k_phi = config.f("p/k_phi");
+        // output.save_field_series(phi, k_phi); 
 
         tp.val[9] = sys_now();
-
         output.print_loop_timing(tp);
     }
 
@@ -286,9 +286,9 @@ int main(int argc, char* argv[])
     if(mpi_rank==0) std::cout << "Total execution duration: " << tdiff_h(start, stop) << " hours" << endl;
 
     // ----------------------------- Saving outputs ---------------------------
-    diag.update_internal_wmesh(mesh, p_e, p_i, lpos_e, lpos_i, config.b("diagnostics/fields_snapshot/end_save"));
-    diag.update_ufield(mesh, p_e, p_i, lpos_e, lpos_i, config.b("diagnostics/fields_snapshot/end_save"));
-    diag.update_kfield(mesh, p_e, p_i, lpos_e, lpos_i, config.b("diagnostics/fields_snapshot/end_save"));
+    diag.update_internal_wmesh(mesh, p_e, p_i, lpos_e, lpos_i, config.b("diagnostics/fields_snapshot/end_save")); // <- it is bad that this is not included in "update_all"
+    diag.update_ufield(mesh, p_e, p_i, lpos_e, lpos_i, config.b("diagnostics/fields_snapshot/end_save")); // <- it is bad that this is not included in "update_all"
+    diag.update_kfield(mesh, p_e, p_i, lpos_e, lpos_i, config.b("diagnostics/fields_snapshot/end_save")); // <- it is bad that this is not included in "update_all"
     
     output.save_state(p_e, p_i, config.b("diagnostics/state/end_save"));
     output.save_fields_snapshot(phi, wmesh_e_global, wmesh_i_global, diag, mesh, "",  config.b("diagnostics/fields_snapshot/end_save"));
