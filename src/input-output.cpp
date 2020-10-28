@@ -489,8 +489,7 @@ void output_manager::start_new_file(){
 }
 
 void output_manager::refresh_file(){
-    if(output_overwrite && (state.step % step_file_refresh == 0))
-        start_new_file();
+    if(!output_overwrite && (state.step % step_file_refresh == 0)) start_new_file();
 }
 
 string output_manager::build_output_name(string filename_preffix){
