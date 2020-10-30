@@ -526,8 +526,8 @@ void output_manager::save_initial_data(){
     YAML::Node attributes = file.get_attributes("");
 
     attributes["metadata"]["version"] = GIT_VERSION;
-    attributes["metadata"]["start_utc"] = time_to_string(start_utc);
-    attributes["metadata"]["stop_utc"] = time_to_string(start_utc);
+    attributes["metadata"]["start_utc"] = clk::time_to_string(start_utc);
+    attributes["metadata"]["stop_utc"] = clk::time_to_string(start_utc);
     attributes["metadata"]["initial_step"] = state.step_offset;
     attributes["config"] = config_node;
     attributes["config"]["simulation"]["job_name"] = config.s("p/job_name");
@@ -543,8 +543,8 @@ void output_manager::update_metadata(string status, bool force){
     if(mpi_rank != 0) return;
 
     YAML::Node attributes = file.get_attributes("");
-    attributes["metadata"]["stop_utc"] = time_to_string(sys_now());
-    attributes["metadata"]["elapsed_hours"] = tdiff_h(start_utc, sys_now());
+    attributes["metadata"]["stop_utc"] = clk::time_to_string(clk::sys_now());
+    attributes["metadata"]["elapsed_hours"] = clk::tdiff_h(start_utc, clk::sys_now());
     attributes["metadata"]["status"] = status;
     attributes["metadata"]["progress"] = float (state.step - state.step_offset) / config.f("time/n_steps");
     file.write_attribute("", attributes);
@@ -590,11 +590,11 @@ void output_manager::fields_rf_average(fmatrix & phi, fmatrix & wmesh_e, fmatrix
     if(verbosity >= 2)
     {
         for(size_t j=0; j < tp.n1 - 1; j++){
-            td.val[j] += tdiff_ms(tp.val[j], tp.val[j+1]) / (double) print_timing_step;
+            td.val[j] += clk::tdiff_ms(tp.val[j], tp.val[j+1]) / (double) print_timing_step;
         }
 
         if((state.step+1) % print_timing_step == 0){
-            print_td(td, (int) tp.n1 - 1);
+            clk::print_td(td, (int) tp.n1 - 1);
             td.set_zero();
         }
     }

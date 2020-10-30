@@ -39,9 +39,9 @@ int main(int argc, char* argv[])
     MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
     double mpi_size_double = (double) mpi_size;
 
-    auto start_utc = sys_now();
+    auto start_utc = clk::sys_now();
     cout << "Hyplex " << GIT_VERSION << endl;
-    cout << "Starting at " <<  time_to_string(start_utc) << " UTC" << endl << endl;
+    cout << "Starting at " <<  clk::time_to_string(start_utc) << " UTC" << endl << endl;
 
     // ------------------- Loading configuration ------------------------------
 
@@ -181,16 +181,16 @@ int main(int argc, char* argv[])
     tmatrix<system_clock::time_point> tp(10);
 
     io::verbose_log(" ---- Starting main loop ---- ", verbosity >= 1);
-    auto start = sys_now();
+    auto start = clk::sys_now();
 	for (state.step = state.step_offset; state.step < n_steps + state.step_offset; state.step++)
 	{
-        tp.val[0] = sys_now();
+        tp.val[0] = clk::sys_now();
 
 		// Step 1.0: particle weighting
         if(state.step % k_sub == 0) pic_operations::weight(p_i, state.n_active_i, wmesh_i, mesh, lpos_i);
         pic_operations::weight(p_e, state.n_active_e, wmesh_e, mesh, lpos_e);
 
-        tp.val[1] = sys_now();
+        tp.val[1] = clk::sys_now();
 
         // Step 2.0 integration of Poisson's equation
         
@@ -204,7 +204,7 @@ int main(int argc, char* argv[])
 
             solver.solve(phi_poisson, voltages, wmesh_i_global, wmesh_e_global);
 
-            tp.val[2] = sys_now();
+            tp.val[2] = clk::sys_now();
 
             state.sigma_0 = state.sigma_1;
 
@@ -215,7 +215,7 @@ int main(int argc, char* argv[])
 
             phi = phi_poisson + (state.phi_zero * phi_laplace);
 
-            tp.val[3] = sys_now();
+            tp.val[3] = clk::sys_now();
 
             // Step 2.1: calculation of electric field
             fields.calculate_efield(efield_x, efield_y, phi, wmesh_i_global, wmesh_e_global, mesh, electrode_mask);
@@ -225,25 +225,25 @@ int main(int argc, char* argv[])
         MPI_Bcast(efield_x.val, n_mesh_total, MPI_DOUBLE, 0, MPI_COMM_WORLD);
         MPI_Bcast(efield_y.val, n_mesh_total, MPI_DOUBLE, 0, MPI_COMM_WORLD);
         
-        tp.val[4] = sys_now();
+        tp.val[4] = clk::sys_now();
         
         // Step 2.2: field weighting
         if(state.step % k_sub == 0) pic.electric_field_at_particles(efield_x_at_p_i, efield_y_at_p_i, efield_x, efield_y, p_i, state.n_active_i, mesh, lpos_i);
         pic.electric_field_at_particles(efield_x_at_p_e, efield_y_at_p_e, efield_x, efield_y, p_e, state.n_active_e, mesh, lpos_e);
 
-        tp.val[5] = sys_now();
+        tp.val[5] = clk::sys_now();
 
         // Step 3: integration of equations of motion
         if(state.step % k_sub == 0) pops.move_i(p_i, state.n_active_i, efield_x_at_p_i, efield_y_at_p_i);
         pops.move_e(p_e, state.n_active_e, efield_x_at_p_e, efield_y_at_p_e);
 
-        tp.val[6] = sys_now();
+        tp.val[6] = clk::sys_now();
 
         // // Step 4: particle loss at boundaries
         if(state.step % k_sub == 0) pops.boundaries_ob_count(p_i, state.n_active_i, lpos_i, state.n_out_ob_i, state.n_out_thr_i, diag.p_i_removed, diag.n_removed_i, true);
         pops.boundaries_ob_count(p_e, state.n_active_e, lpos_e, state.n_out_ob_e, state.n_out_thr_e, diag.p_e_removed, diag.n_removed_e, true);
 
-        tp.val[7] = sys_now();
+        tp.val[7] = clk::sys_now();
 
         // Step 5: particles injection
         if(state.step % k_sub == 0) state.n_in_thr_i = pops.add_flux_particles(p_i, state.n_active_i, t_i, v_drift_i, m_i, n_inj_i / mpi_size_double, k_sub);
@@ -261,7 +261,7 @@ int main(int argc, char* argv[])
             diag.n_e_iz = coll.collisions_e(p_e, state.n_active_e, lpos_e, p_i, state.n_active_i, lpos_i, mesh, dens_n);
         }
 
-        tp.val[8] = sys_now();
+        tp.val[8] = clk::sys_now();
 
         //  ----------------------------- Diagnostics -------------------------
 
@@ -278,12 +278,12 @@ int main(int argc, char* argv[])
         // double k_phi = config.f("p/k_phi");
         // output.save_field_series(phi, k_phi); 
 
-        tp.val[9] = sys_now();
+        tp.val[9] = clk::sys_now();
         output.print_loop_timing(tp);
     }
 
-    auto stop = sys_now();
-    if(mpi_rank==0) std::cout << "Total execution duration: " << tdiff_h(start, stop) << " hours" << endl;
+    auto stop = clk::sys_now();
+    if(mpi_rank==0) cout << "Total execution duration: " << clk::tdiff_h(start, stop) << " hours" << endl;
 
     // ----------------------------- Saving outputs ---------------------------
     diag.update_internal_wmesh(mesh, p_e, p_i, lpos_e, lpos_i, config.b("diagnostics/fields_snapshot/end_save")); // <- it is bad that this is not included in "update_all"

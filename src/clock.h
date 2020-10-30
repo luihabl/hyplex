@@ -13,6 +13,8 @@ using namespace std;
 using namespace std::chrono;
 using namespace date;
 
+namespace clk {
+
 template <class T>
 double tdiff_s(T t1, T t2){
     auto duration = duration_cast<microseconds>(t2 - t1);
@@ -75,6 +77,6 @@ inline void print_td(fmatrix & td, int n_td){
     cout << endl;
 }
 
-
+}
 
 #endif
