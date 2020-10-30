@@ -275,9 +275,7 @@ int main(int argc, char* argv[])
         output.save_distributions(diag);
         output.update_metadata();
         // output.fields_rf_average(phi, wmesh_e_global, wmesh_i_global, diag, mesh); // <- this is not working properly, since the "save_field_snapshot" saves everything, including stuff that was not averaged
-        // double k_phi = config.f("p/k_phi");
-        // output.save_field_series(phi, k_phi); 
-
+        
         tp.val[9] = clk::sys_now();
         output.print_loop_timing(tp);
     }

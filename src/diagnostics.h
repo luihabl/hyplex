@@ -76,10 +76,11 @@ class diagnostics{
         void update_ufield(mesh_set & mesh, fmatrix & p_e, fmatrix & p_i, imatrix & lpos_e, imatrix & lpos_i, bool force = false);
         void update_kfield(mesh_set & mesh, fmatrix & p_e, fmatrix & p_i, imatrix & lpos_e, imatrix & lpos_i, bool force = false);
         void update_izfield(mesh_set & mesh, fmatrix & p_i, imatrix & lpos_i, int n_iz);
-        void izfield_set_zero();
+        void reduce_izfield();
         void update_internal_wmesh(mesh_set & mesh, fmatrix & p_e, fmatrix & p_i, imatrix & lpos_e, imatrix & lpos_i, bool force = false);
         void set_internal_wmesh(fmatrix & _wmesh_e_global, fmatrix & _wmesh_i_global);
         double av_div(fmatrix & p, int & n_active);
+        double calc_axial_I_out_ob_i();
 };
 
 

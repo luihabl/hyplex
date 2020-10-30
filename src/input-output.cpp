@@ -309,6 +309,9 @@ void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration 
 void output_manager::save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, diagnostics & diag, mesh_set & mesh, string suffix, bool force)
 {
     if(!(force || state.step % step_save_fields == 0)) return;
+
+    diag.reduce_izfield();
+
     if(mpi_rank != 0) return;
 
     check_output_folder();
@@ -374,7 +377,6 @@ void output_manager::save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmat
 
     fmatrix izfield_corrected = diag.izfield_global / (k_dens * dt * (double) step_save_fields);
     file.write_dataset(izfield_group / "ionization", diag.izfield_global);
-    diag.izfield_set_zero();
 
     verbose_log("Saved fields snapshot", verbosity >= 1);
 }

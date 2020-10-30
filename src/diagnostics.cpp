@@ -98,7 +98,7 @@ diagnostics::diagnostics(configuration & _config, state_info & _state): config(_
     
     gseries_keys = tmatrix<string>({"time", "v_cap"});
         
-    lseries_keys = tmatrix<string>({"n_active_e", "n_active_i", "I_out_ob_e", "I_out_ob_i",
+    lseries_keys = tmatrix<string>({"n_active_e", "n_active_i", "I_out_ob_e", "I_out_ob_i", "axial_I_out_ob_i",
                                     "I_out_thr_e", "I_out_thr_i", "I_in_thr_i", "I_in_thr_e"});
     
 	series_measure_step = config.i("diagnostics/series/measure_step");
@@ -145,16 +145,7 @@ void diagnostics::dist(fmatrix & p, int & n_active, int col, double v_0, double 
 	}
 }
 
-double diagnostics::av_div(fmatrix & p, int & n_active){
-	double cos_theta = 0, vx = 0, vy = 0;
-	for(int i = 0; i < n_active; i++){
-		vx = p.val[i * 6 + 3];
-		vy = p.val[i * 6 + 4];
 
-		cos_theta += vx / sqrt(vx*vx + vy*vy);
-	}
-	return cos_theta / (double) n_active;
-}
 
 
 void diagnostics::update_velocity_distributions(fmatrix & p_e, fmatrix & p_i){
@@ -217,6 +208,35 @@ void diagnostics::reduce_distributions(){
 }
 
 
+double diagnostics::av_div(fmatrix & p, int & n_active){
+	double cos_theta = 0, vx = 0, vy = 0;
+	for(int i = 0; i < n_active; i++){
+		vx = p.val[i * 6 + 3];
+		vy = p.val[i * 6 + 4];
+
+		cos_theta += vx / sqrt(vx*vx + vy*vy);
+	}
+	return cos_theta / (double) n_active;
+}
+
+double diagnostics::calc_axial_I_out_ob_i(){
+
+	double i_axial = 0;
+	double vx = 0, vy = 0;
+	for(int i = 0; i < n_removed_i; i++){
+		
+		if((p_i_removed.val[i * 6 + 0] < x_max) && (p_i_removed.val[i * 6 + 1] < y_max)) continue;
+
+		vx = p_i_removed.val[i * 6 + 3];
+		vy = p_i_removed.val[i * 6 + 4];
+
+		i_axial += vx / std::sqrt(vx*vx + vy*vy);
+	}
+
+	return i_axial * n_factor * q / dt;
+}
+
+
 
 void diagnostics::update_series() {
 	if(state.step % series_measure_step == 0){
@@ -232,6 +252,7 @@ void diagnostics::update_series() {
 		lseries["I_out_ob_i"].val[n_points_series] = state.n_out_ob_i * n_factor * q / dt;
 		lseries["I_out_thr_e"].val[n_points_series] = state.n_out_thr_e * n_factor * q / dt;
 		lseries["I_out_thr_i"].val[n_points_series] = state.n_out_thr_i * n_factor * q / dt;
+		lseries["axial_I_out_ob_i"].val[n_points_series] = calc_axial_I_out_ob_i();
 
 		n_points_series += 1;
     }
@@ -334,13 +355,11 @@ void diagnostics::update_kfield(mesh_set & mesh, fmatrix & p_e, fmatrix & p_i, i
 void diagnostics::update_izfield(mesh_set & mesh, fmatrix & p_i, imatrix & lpos_i, int n_iz){
 	if(state.step < izfield_start_progress * (double) n_steps) return;
 	int n_start =  state.n_active_i - n_iz;
-	izfield_global.set_zero();
 	pic_operations::weight_n(p_i, n_start, state.n_active_i, izfield, mesh, lpos_i);
-	MPI_Reduce(izfield.val, izfield_global.val, n_mesh_x * n_mesh_y, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 }
 
-void diagnostics::izfield_set_zero(){
-	izfield_global.set_zero();
+void diagnostics::reduce_izfield(){
+	MPI_Reduce(izfield.val, izfield_global.val, n_mesh_x * n_mesh_y, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 	izfield.set_zero();
 }
 
