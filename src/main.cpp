@@ -75,7 +75,7 @@ int main(int argc, char* argv[])
     const string inj_model      = config.s("electrons/inj_model");
     const int n_mesh_total      = config.i("geometry/n_mesh_x") * config.i("geometry/n_mesh_y");
 
-    verbose_log("Initializing general variables", verbosity >= 1);
+    io::verbose_log("Initializing general variables", verbosity >= 1);
  
     // General field variables
 
@@ -89,13 +89,13 @@ int main(int argc, char* argv[])
     double sigma_laplace;
     
     // Doiagnostics variables
-    verbose_log("Initializing diagnostics variables", verbosity >= 1);
+    io::verbose_log("Initializing diagnostics variables", verbosity >= 1);
     fmatrix phi_av          = fmatrix::zeros(n_mesh_x, n_mesh_y);
     fmatrix wmesh_e_av      = fmatrix::zeros(n_mesh_x, n_mesh_y);
     fmatrix wmesh_i_av      = fmatrix::zeros(n_mesh_x, n_mesh_y);
     
 	// Particle 1 - Electrons
-    verbose_log("Initializing electrons variables", verbosity >= 1);
+    io::verbose_log("Initializing electrons variables", verbosity >= 1);
 	fmatrix p_e             = fmatrix::zeros(n_max_particles / mpi_size, 6);
     imatrix lpos_e          = imatrix::zeros(n_max_particles / mpi_size, 2);
 	fmatrix wmesh_e         = fmatrix::zeros(n_mesh_x, n_mesh_y);
@@ -106,7 +106,7 @@ int main(int argc, char* argv[])
     int n_e_iz = 0;
 	
 	// Particle 2 - Ions
-    verbose_log("Initializing ions variables", verbosity >= 1);
+    io::verbose_log("Initializing ions variables", verbosity >= 1);
 	fmatrix p_i             = fmatrix::zeros(n_max_particles / mpi_size, 6);
     imatrix lpos_i          = imatrix::zeros(n_max_particles / mpi_size, 2);
 	fmatrix wmesh_i         = fmatrix::zeros(n_mesh_x, n_mesh_y);
@@ -118,11 +118,11 @@ int main(int argc, char* argv[])
     int n_out_ob_i_global = 0, n_out_ob_e_global = 0;
     
     // Particle 3 - Neutrals
-    verbose_log("Initializing neutral variables", verbosity >= 1);
+    io::verbose_log("Initializing neutral variables", verbosity >= 1);
     fmatrix dens_n          = fmatrix::zeros(n_mesh_x, n_mesh_y);
 
     // ----------------------------- Operation objects -------------------------
-    verbose_log("Initializing mesh", verbosity >= 1);
+    io::verbose_log("Initializing mesh", verbosity >= 1);
 
     mesh_set mesh(config);
     mesh.init_mesh();
@@ -133,7 +133,7 @@ int main(int argc, char* argv[])
     diagnostics diag(config, state);
 
     // ----------------------------- Solver -----------------------------------
-    verbose_log("Initializing solver", verbosity >= 1);
+    io::verbose_log("Initializing solver", verbosity >= 1);
 
     rsolver solver(mesh, config);
     setup_rsolver(solver, mesh, electrode_mask);
@@ -149,16 +149,16 @@ int main(int argc, char* argv[])
     string expm_neutral = config.s("neutrals/expm_neutral");
 
     if (expm_neutral == "dsmc"){
-        verbose_log(" ---- Starting DSMC loop ---- ", verbosity >= 1);
+        io::verbose_log(" ---- Starting DSMC loop ---- ", verbosity >= 1);
         run_dsmc(mesh, dens_n, config);
     }
     else if (expm_neutral == "constant") {
-        verbose_log(" ---- Setting constant neutral density ---- ", verbosity >= 1);
+        io::verbose_log(" ---- Setting constant neutral density ---- ", verbosity >= 1);
         dens_n.set_all(config.f("neutrals/n_neutral"));
     } 
     else if (expm_neutral == "load") {
-        verbose_log(" ---- Loading neutral density field ---- ", verbosity >= 1);
-        load_fmatrix(dens_n, config.s("project/input_path") + "dens_n.exdir", "dens_n");
+        io::verbose_log(" ---- Loading neutral density field ---- ", verbosity >= 1);
+        io::load_fmatrix(dens_n, config.s("project/input_path") + "dens_n.exdir", "dens_n");
     }
 
     // ----------------------------- MCC --------------------------------------
@@ -168,19 +168,19 @@ int main(int argc, char* argv[])
     
     // ----------------------------- Loading initial state -------------------
 
-    if(config.s("simulation/initial_state") == "load")  load_state(p_e, p_i, state, config);
+    if(config.s("simulation/initial_state") == "load")  io::load_state(p_e, p_i, state, config);
 
     // ----------------------------- Output manager ---------------------------
-    output_manager output(start_utc, state, config, mesh);
+   io::output_manager output(start_utc, state, config, mesh);
 
 	// ----------------------------- Main loop --------------------------------
 
     // Printing initial information
-    print_initial_info(coll.p_null_e, coll.p_null_i, config);
+    io::print_initial_info(coll.p_null_e, coll.p_null_i, config);
 
     tmatrix<system_clock::time_point> tp(10);
 
-    verbose_log(" ---- Starting main loop ---- ", verbosity >= 1);
+    io::verbose_log(" ---- Starting main loop ---- ", verbosity >= 1);
     auto start = sys_now();
 	for (state.step = state.step_offset; state.step < n_steps + state.step_offset; state.step++)
 	{

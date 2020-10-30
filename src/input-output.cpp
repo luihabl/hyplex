@@ -29,6 +29,8 @@
 using namespace std;
 using namespace std::chrono;
 
+namespace io {
+
 void verbose_log(string message, bool print){
     if(print) cout << message << endl;
 }
@@ -642,3 +644,4 @@ void output_manager::save_distributions(diagnostics & diag, bool force){
 
 
 
+}

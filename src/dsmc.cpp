@@ -17,7 +17,7 @@ void run_dsmc(mesh_set & mesh, fmatrix & dens_n, configuration & config){
     pic_operations pic(config);
     particle_operations pops(config, pic);
     state_info state_empty;
-    output_manager out("dens_n", state_empty, config, mesh);
+    io::output_manager out("dens_n", state_empty, config, mesh);
 
     fmatrix p_n             = fmatrix::zeros(config.i("particles/n_max_particles"), 6);
     imatrix lpos_n          = imatrix::zeros(config.i("particles/n_max_particles"), 2);
@@ -47,7 +47,7 @@ void run_dsmc(mesh_set & mesh, fmatrix & dens_n, configuration & config){
         pops.move_n(p_n, n_active_n, k_sub_dsmc);
         pops.boundaries_n_pump(p_n, n_active_n, lpos_n, pump_prob);
         // pops.boundaries_n(p_n, n_active_n, lpos_n);
-        if(rank == 0) print_dsmc_info(i, n_active_n * size, 1000, n_steps_dsmc);
+        if(rank == 0) io::print_dsmc_info(i, n_active_n * size, 1000, n_steps_dsmc);
     }
 
     MPI_Allreduce(wmesh_n_av.val, wmesh_n.val, config.i("geometry/n_mesh_x") * config.i("geometry/n_mesh_y"), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
@@ -91,13 +91,13 @@ void run_dsmc_2(mesh_set & mesh, fmatrix & dens_n, configuration & config, strin
         
         pops.move_n(p_n, n_active_n, k_sub_dsmc);
         pops.boundaries_n(p_n, n_active_n, lpos_n);
-        if(rank == 0) print_dsmc_info(i, n_active_n * size, 1000, n_steps_dsmc);
+        if(rank == 0) io::print_dsmc_info(i, n_active_n * size, 1000, n_steps_dsmc);
     }
 
     MPI_Allreduce(wmesh_n_av.val, wmesh_n.val, config.i("geometry/n_mesh_x") * config.i("geometry/n_mesh_y"), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
     dens_n = config.f("particles/n_factor_dsmc") *  (4.0 / pow(config.f("geometry/dx"), 2)) * wmesh_n / mesh.v;
 
     if(rank == 0){
-        save_fmatrix(dens_n, config.s("project/output_path") + output_name, "dens_n");
+        io::save_fmatrix(dens_n, config.s("project/output_path") + output_name, "dens_n");
     }
 }

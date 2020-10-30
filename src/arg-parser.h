@@ -60,7 +60,7 @@ argparser::argparser(int argc, char* argv[]){
 template <class T>
 void argparser::set_from_obj(args::ValueFlag<T> & opt, string key, T default_value){
     values[key] = opt ? args::get(opt) : default_value;
-    if(opt) verbose_log( "Setting option " + key + ": " +  values[key], true);
+    if(opt) io::verbose_log( "Setting option " + key + ": " +  values[key], true);
 }
 
 string argparser::get(string key, string default_value){

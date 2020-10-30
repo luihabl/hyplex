@@ -25,6 +25,8 @@
 using namespace std;
 using namespace std::chrono;
 
+namespace io {
+
 void verbose_log(string message, bool print);
 void print_initial_info(double p_null_e, double p_null_i, configuration & config);
 void print_dsmc_info(int i, int n_active_n, int step_interval, int n_steps);
@@ -97,6 +99,7 @@ void load_fmatrix(tmatrix<T> & m, string filename, string dataname){
 
 // ------------------- output manager class ---------------------------------
 
+
 class output_manager 
 {
     private:
@@ -149,7 +152,7 @@ void output_manager::save_fmatrix(tmatrix<T> & m, ghc::filesystem::path datapath
 }
 
 
-
+}
 
 #endif
 
