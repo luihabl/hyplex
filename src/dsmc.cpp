@@ -40,9 +40,7 @@ void run_dsmc(mesh_set & mesh, fmatrix & dens_n, configuration & config){
     
     for (int i = 0; i < n_steps_dsmc; i++){
         pops.add_flux_particles(p_n, n_active_n, t_neutral, 0, m_i, n_inj_n / (double) size, k_sub_dsmc);
-
-        // cout << rank << " step: " << i << endl;
-
+        
         if(i > n_steps_dsmc - n_average_dsmc){
             pic.weight(p_n, n_active_n, wmesh_n, mesh, lpos_n);
             average_field(wmesh_n_av, wmesh_n, i - (n_steps_dsmc - n_average_dsmc));
