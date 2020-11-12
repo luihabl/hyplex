@@ -150,6 +150,7 @@ int main(int argc, char* argv[])
 
     if (expm_neutral == "dsmc"){
         io::verbose_log(" ---- Starting DSMC loop ---- ", verbosity >= 1);
+        cout << mpi_rank << " (1)" << endl;
         run_dsmc(mesh, dens_n, config);
     }
     else if (expm_neutral == "constant") {
