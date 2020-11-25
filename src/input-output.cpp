@@ -462,6 +462,8 @@ output_manager::output_manager(system_clock::time_point _start_utc, state_info &
 
 output_manager::output_manager(string prefix, state_info & _state, configuration & _config, mesh_set & _mesh): state(_state), config(_config), mesh(_mesh){
     
+    start_utc = clk::sys_now();
+
     MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
     

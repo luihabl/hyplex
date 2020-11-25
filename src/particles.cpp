@@ -269,8 +269,6 @@ void particle_operations::boundaries_n_pump(fmatrix & p, int & n_active, imatrix
     // }
 
 	int n_remove = 0;
-    imatrix tbremoved((size_t) (n_active * 0.5) + 150); 
-
     double x, y;
 	const double x_max = ((double) n_mesh_x - 1);
     const double y_max = ((double) n_mesh_y - 1) * (dy / dx);

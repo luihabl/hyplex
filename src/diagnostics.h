@@ -11,7 +11,7 @@ using namespace std;
 class diagnostics{
 
     private:
-        double k_v, dt, k_phi, n_factor, q, izfield_start_progress, x_min, x_max, y_min, y_max;
+        double k_v, dt, k_phi, n_factor, q, izfield_start_progress, x_min, x_max, y_min, y_max, k_sub_dsmc;
         int series_measure_step, n_mesh_x, n_mesh_y, step_save_vdist, step_save_fields, steps_since_last_izfield_save, n_steps;
         configuration & config;
         state_info & state;
@@ -65,6 +65,8 @@ class diagnostics{
 
         int n_points_series;
         diagnostics(configuration & _config, state_info & _state);
+        diagnostics(configuration & _config, state_info & _state, tmatrix<string> & _gseries_keys,  tmatrix<string> & _lseries_keys, bool dsmc);
+        
         void dist(fmatrix & p, int & n_active, int col, double v_0, double v_1,  fmatrix & dmesh);
         void update_velocity_distributions(fmatrix & p_e, fmatrix & p_i);
         void update_boundary_current_distributions();
@@ -73,6 +75,7 @@ class diagnostics{
 
         void update_all(mesh_set & mesh, fmatrix & p_e, fmatrix & p_i, imatrix & lpos_e, imatrix & lpos_i);
         void update_series();
+        void update_series_dsmc();
         void update_ufield(mesh_set & mesh, fmatrix & p_e, fmatrix & p_i, imatrix & lpos_e, imatrix & lpos_i, bool force = false);
         void update_kfield(mesh_set & mesh, fmatrix & p_e, fmatrix & p_i, imatrix & lpos_e, imatrix & lpos_i, bool force = false);
         void update_izfield(mesh_set & mesh, fmatrix & p_i, imatrix & lpos_i, int n_iz);

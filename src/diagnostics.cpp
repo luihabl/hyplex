@@ -19,6 +19,7 @@ diagnostics::diagnostics(configuration & _config, state_info & _state): config(_
 	k_phi = config.f("p/k_phi");
 	n_factor = config.f("particles/n_factor");
 	q = config.f("physical/q");
+	k_sub_dsmc = config.f("time/k_sub_dsmc");
 
 	n_v_e = config.i("diagnostics/vdist/electrons/n_v");
     n_v_i = config.i("diagnostics/vdist/ions/n_v");
@@ -102,15 +103,116 @@ diagnostics::diagnostics(configuration & _config, state_info & _state): config(_
                                     "I_out_thr_e", "I_out_thr_i", "I_in_thr_i", "I_in_thr_e"});
     
 	series_measure_step = config.i("diagnostics/series/measure_step");
+
+	double n_steps = config.f("time/n_steps");
+    double measure_step = config.f("diagnostics/series/measure_step");
+    series_size = ceil(n_steps / measure_step);
+    
+    initialize_series();
+}
+
+
+diagnostics::diagnostics(configuration & _config, state_info & _state, tmatrix<string> & _gseries_keys,  tmatrix<string> & _lseries_keys, bool dsmc=false): config(_config), state(_state){
+	k_v  = config.f("p/k_v");
+	dt = config.f("time/dt");
+	k_phi = config.f("p/k_phi");
+	n_factor = config.f("particles/n_factor");
+	q = config.f("physical/q");
+	k_sub_dsmc = config.f("time/k_sub_dsmc");
+
+	n_v_e = config.i("diagnostics/vdist/electrons/n_v");
+    n_v_i = config.i("diagnostics/vdist/ions/n_v");
+
+	n_e_iz = 0;
+
+	n_mesh_x = config.i("geometry/n_mesh_x");
+	n_mesh_y = config.i("geometry/n_mesh_y");
+	
+	double dx = config.f("geometry/dx");
+	double dy = config.f("geometry/dy");
+	x_max = ((double) n_mesh_x - 1);
+	y_max = ((double) n_mesh_y - 1) * (dy / dx);
+
+	step_save_vdist = config.i("diagnostics/vdist/save_step");
+	step_save_fields = config.i("diagnostics/fields_snapshot/save_step");
+
+    n_steps = config.i("time/n_steps");
+	izfield_start_progress = config.f("diagnostics/iz_field/start_progress");
+
+	steps_since_last_izfield_save = 0;
+
+	vdist_e_x = fmatrix::zeros(n_v_e);
+	vdist_e_y = fmatrix::zeros(n_v_e);
+    vdist_e_global_x = fmatrix::zeros(n_v_e);
+	vdist_e_global_y = fmatrix::zeros(n_v_e);
+    vdist_i_x = fmatrix::zeros(n_v_i);
+	vdist_i_y = fmatrix::zeros(n_v_i);
+    vdist_i_global_x = fmatrix::zeros(n_v_i);
+	vdist_i_global_y = fmatrix::zeros(n_v_i);
+
+
+	top_dist_e = fmatrix::zeros(n_v_e);
+	top_dist_i = fmatrix::zeros(n_v_i);
+	top_dist_e_global = fmatrix::zeros(n_v_e);
+	top_dist_i_global = fmatrix::zeros(n_v_i);
+
+	rhs_dist_e = fmatrix::zeros(n_v_e);
+	rhs_dist_i = fmatrix::zeros(n_v_i);
+	rhs_dist_e_global = fmatrix::zeros(n_v_e);
+	rhs_dist_i_global = fmatrix::zeros(n_v_i);
+
+	vmin = fmatrix::zeros(6);
+	vmax = fmatrix::zeros(6);
+
+	kfield_e = fmatrix::zeros(n_mesh_x, n_mesh_y);
+	kfield_i = fmatrix::zeros(n_mesh_x, n_mesh_y);
+	ufield_e_x = fmatrix::zeros(n_mesh_x, n_mesh_y);
+	ufield_e_y = fmatrix::zeros(n_mesh_x, n_mesh_y);
+	ufield_i_x = fmatrix::zeros(n_mesh_x, n_mesh_y);
+	ufield_i_y = fmatrix::zeros(n_mesh_x, n_mesh_y);
+	izfield = fmatrix::zeros(n_mesh_x, n_mesh_y);
+
+	kfield_e_global = fmatrix::zeros(n_mesh_x, n_mesh_y);
+	kfield_i_global = fmatrix::zeros(n_mesh_x, n_mesh_y);
+	ufield_e_x_global = fmatrix::zeros(n_mesh_x, n_mesh_y);
+	ufield_e_y_global = fmatrix::zeros(n_mesh_x, n_mesh_y);
+	ufield_i_x_global = fmatrix::zeros(n_mesh_x, n_mesh_y);
+	ufield_i_y_global = fmatrix::zeros(n_mesh_x, n_mesh_y);
+	izfield_global = fmatrix::zeros(n_mesh_x, n_mesh_y);
+
+	wmesh_e = fmatrix::zeros(n_mesh_x, n_mesh_y);
+	wmesh_i = fmatrix::zeros(n_mesh_x, n_mesh_y);
+	wmesh_e_global = fmatrix::zeros(n_mesh_x, n_mesh_y);
+	wmesh_i_global = fmatrix::zeros(n_mesh_x, n_mesh_y);
+
+	p_select = fmatrix::zeros(100000, 6);
+	p_e_removed = fmatrix::zeros(100000, 6);
+	p_i_removed = fmatrix::zeros(100000,6);
+	n_removed_e = n_removed_i = 0;
+
+    vlim_e = fmatrix({config.fs("diagnostics/vdist/electrons/vlim_x").val[0], config.fs("diagnostics/vdist/electrons/vlim_x").val[1],
+              config.fs("diagnostics/vdist/electrons/vlim_y").val[0], config.fs("diagnostics/vdist/electrons/vlim_y").val[1]});
+
+    vlim_i = fmatrix({config.fs("diagnostics/vdist/ions/vlim_x").val[0], config.fs("diagnostics/vdist/ions/vlim_x").val[1],
+              config.fs("diagnostics/vdist/ions/vlim_y").val[0], config.fs("diagnostics/vdist/ions/vlim_y").val[1]});
+    
+    gseries_keys = _gseries_keys;        
+    lseries_keys = _lseries_keys;
+    
+	series_measure_step = config.i("diagnostics/series/measure_step");
+
+	    
+    double n_steps;
+	if (dsmc) n_steps = config.f("time/n_steps_dsmc");
+	else n_steps = config.f("time/n_steps");
+    double measure_step = config.f("diagnostics/series/measure_step");
+    series_size = ceil(n_steps / measure_step);
     
     initialize_series();
 }
 
 void diagnostics::initialize_series(){
-    
-    double n_steps = config.f("time/n_steps");
-    double measure_step = config.f("diagnostics/series/measure_step");
-    series_size = ceil(n_steps / measure_step);
+
     
     for(int i = 0; i < (int) lseries_keys.n1; i++)
         lseries[lseries_keys.val[i]] = fmatrix::zeros(series_size);
@@ -253,6 +355,16 @@ void diagnostics::update_series() {
 		lseries["I_out_thr_e"].val[n_points_series] = state.n_out_thr_e * n_factor * q / dt;
 		lseries["I_out_thr_i"].val[n_points_series] = state.n_out_thr_i * n_factor * q / dt;
 		lseries["axial_I_out_ob_i"].val[n_points_series] = calc_axial_I_out_ob_i();
+
+		n_points_series += 1;
+    }
+}
+
+void diagnostics::update_series_dsmc() {
+	if(state.step % series_measure_step == 0){
+        
+		gseries["time"].val[n_points_series] = dt * state.step * k_sub_dsmc;
+		lseries["n_active_n"].val[n_points_series] = state.n_active_n;
 
 		n_points_series += 1;
     }
