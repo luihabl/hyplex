@@ -460,7 +460,7 @@ output_manager::output_manager(system_clock::time_point _start_utc, state_info &
 }
 
 
-output_manager::output_manager(string prefix, state_info & _state, configuration & _config, mesh_set & _mesh): state(_state), config(_config), mesh(_mesh){
+output_manager::output_manager(string prefix, state_info & _state, configuration & _config, mesh_set & _mesh, bool dsmc): state(_state), config(_config), mesh(_mesh){
     
     start_utc = clk::sys_now();
 
@@ -471,6 +471,9 @@ output_manager::output_manager(string prefix, state_info & _state, configuration
     job_name = config.s("p/job_name");
 
     verbosity = config.i("simulation/verbosity");
+
+    if (dsmc) n_steps = config.i("time/n_steps_dsmc");
+    else n_steps = config.i("time/n_steps");
     
     start_new_file(prefix);
 }
@@ -550,7 +553,7 @@ void output_manager::update_metadata(string status, bool force){
     attributes["metadata"]["stop_utc"] = clk::time_to_string(clk::sys_now());
     attributes["metadata"]["elapsed_hours"] = clk::tdiff_h(start_utc, clk::sys_now());
     attributes["metadata"]["status"] = status;
-    attributes["metadata"]["progress"] = float (state.step - state.step_offset) / config.f("time/n_steps");
+    attributes["metadata"]["progress"] = (float) (state.step - state.step_offset) / (float) n_steps;
     file.write_attribute("", attributes);
 
     verbose_log("Metadata updated", verbosity >= 1);

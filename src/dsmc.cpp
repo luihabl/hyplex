@@ -23,7 +23,7 @@ void run_dsmc(mesh_set & mesh, fmatrix & dens_n, configuration & config){
     tmatrix<string> lseries_keys = tmatrix<string>({"n_active_n"});
 
     diagnostics diag(config, state, gseries_keys, lseries_keys, true); 
-    io::output_manager out("dens_n", state, config, mesh);
+    io::output_manager out("dens_n", state, config, mesh, true);
 
     fmatrix p_n             = fmatrix::zeros(config.i("particles/n_max_particles"), 6);
     imatrix lpos_n          = imatrix::zeros(config.i("particles/n_max_particles"), 2);
@@ -61,7 +61,7 @@ void run_dsmc(mesh_set & mesh, fmatrix & dens_n, configuration & config){
     dens_n = config.f("particles/n_factor_dsmc") *  (4.0 / pow(config.f("geometry/dx"), 2)) * wmesh_n / mesh.v;
 
     out.save_series(diag, true);
-    out.update_metadata();
+    out.update_metadata("completed", true);
     if(rank == 0){
         out.save_fmatrix(dens_n, "dens_n");
     }
