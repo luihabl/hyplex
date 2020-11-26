@@ -103,7 +103,6 @@ int main(int argc, char* argv[])
     fmatrix efield_x_at_p_e = fmatrix::zeros(n_max_particles / mpi_size);
     fmatrix efield_y_at_p_e = fmatrix::zeros(n_max_particles / mpi_size);
     double n_inj_el          = config.f("p/n_inj_el");
-    int n_e_iz = 0;
 	
 	// Particle 2 - Ions
     io::verbose_log("Initializing ions variables", verbosity >= 1);
