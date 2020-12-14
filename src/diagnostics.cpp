@@ -198,15 +198,18 @@ diagnostics::diagnostics(configuration & _config, state_info & _state, tmatrix<s
     
     gseries_keys = _gseries_keys;        
     lseries_keys = _lseries_keys;
-    
-	series_measure_step = config.i("diagnostics/series/measure_step");
 
-	    
-    double n_steps;
-	if (dsmc) n_steps = config.f("time/n_steps_dsmc");
-	else n_steps = config.f("time/n_steps");
-    double measure_step = config.f("diagnostics/series/measure_step");
-    series_size = ceil(n_steps / measure_step);
+	double n_steps;
+	if (dsmc){
+		n_steps = config.f("time/n_steps_dsmc");
+		series_measure_step = config.f("diagnostics/series/measure_step_dsmc");
+	}
+	else {
+		n_steps = config.f("time/n_steps");
+		series_measure_step = config.f("diagnostics/series/measure_step");
+
+	}
+    series_size = ceil(n_steps / (double) series_measure_step);
     
     initialize_series();
 }
