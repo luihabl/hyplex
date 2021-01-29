@@ -134,6 +134,8 @@ void output_manager::save_state(fmatrix & p_e, fmatrix & p_i, bool force){
 
     check_output_folder();
     const double dx = config.f("geometry/dx");
+    const bool save_p_i = config.b("diagnostics/state/save_p_i");
+    const bool save_p_e = config.b("diagnostics/state/save_p_e");
 
     int n_active_e_total=0, n_active_i_total=0,
         n_out_ob_e_total=0, n_out_ob_i_total=0;
@@ -188,8 +190,8 @@ void output_manager::save_state(fmatrix & p_e, fmatrix & p_i, bool force){
 
     file.create_group("state");
 
-    file.write_dataset("state/p_i", p_i_corrected);
-    file.write_dataset("state/p_e", p_e_corrected);
+    if (save_p_i) file.write_dataset("state/p_i", p_i_corrected);
+    if (save_p_e) file.write_dataset("state/p_e", p_e_corrected);
     
     map<string, double> state_attrs_double;
     state_attrs_double = {
