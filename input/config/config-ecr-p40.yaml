@@ -17,7 +17,7 @@ project:
   cross_sections_path: "input/cross-sections/"
 
 simulation:
-  job_name: "dc-p40"
+  job_name: "ecr-p40"
   initial_state: "new"                      # Load input for simulation state or start again: 'load' or 'new'
   verbosity: 1                              # Verbosity level: 0 means minimum messages
 
@@ -37,7 +37,7 @@ geometry:
   a_y: 0.0                                  # Grid distorsion coefficient in the y direction []
 
 time:
-  dt: 5.0e-12                               # Time step [s]
+  dt: 2.0e-11                               # Time step [s]
   n_steps: 5e6                              # Number of simulation steps to be executed []
   n_steps_dsmc: 18e6                       # Number of DSMC simulation steps to be executed []
   n_average: 1                              # Number of average steps []
@@ -50,7 +50,7 @@ boundaries:
   volt_1: 0.0                               # Voltage on the chamber walls [V]
   c_cap: 1.0e-11                            # Capacitance of thruster connection [F]
   ob_type: "dirichlet"                      # Type of outer boundary condition: neumann, dirichlet
-  n_pump_prob: 0.4                         # Neutral pumping capacity of boundaries: 0 - all flow escape, 1 - all flow is reflected
+  n_pump_prob: 0.40                         # Neutral pumping capacity of boundaries: 0 - all flow escape, 1 - all flow is reflected
 
 thruster:
   mfc: 3.0                                  # Mass flow rate of thruster [sccm]
@@ -60,12 +60,12 @@ thruster:
   v_rf: 1000.0                              # Amplitude of the RF signal [V]
 
 particles:
-  n_factor: 3.2e5                           # Macro-particle weight factor (i.e. how many particles one macro-particle represents) []
+  n_factor: 6.72e4                           # Macro-particle weight factor (i.e. how many particles one macro-particle represents) []
   n_factor_dsmc: 5e9                        # Macro-particle weight factor for neutrals []
   n_max_particles: 2e7                      # Maximum number of particles in the array []
 
 neutrals:
-  expm_neutral: "dsmc"                      # Expansion model of neutral flow: 'dsmc', 'constant' or 'load'
+  expm_neutral: "load"                      # Expansion model of neutral flow: 'dsmc', 'constant' or 'load'
   mcc_coll: true                            # Toggle MCC collisions: true or false
   t_neutral: 0.02585                        # Temperature of neutral gas [eV]
   n_neutral: 4.82e18                        # Density of neutral gas [m^-3]
@@ -75,16 +75,16 @@ electrons:
   sqr_duty_cycle: 0.1                       # Duty cycle of square pulsed injection []
   m_el: 9.10938356e-31                      # Electron mass [kg]
   q_el: -1.60217662e-19                     # Electron charge [C]
-  t_el: 5.0                                 # Initial electron temperature [eV]
-  i_el: 1.1235                              # Electron injection current [A/m]
+  t_el: 20.0                                # Initial electron temperature [eV]
+  i_el: 2.254                               # Electron injection current [A/m]
   v_drift_el: 0.0                           # Electron injection drift velocity [m/s]
 
 ions:
   gas_name: "xenon"                         # Name of gas: 'helium' or 'xenon'
   q_i: 1.60217662e-19                       # Ion charge [kg]
   t_i: 0.025                                # Initial ion temperature [eV]
-  i_i: 0.1155                               # Ion injection current [A/m]
-  v_drift_i: 38427.34                       # Ion injection drift velocity [m/s]
+  i_i: 0.01155                              # Ion injection current [A/m]
+  v_drift_i: 3833.91                        # Ion injection drift velocity [m/s]
 
 diagnostics:
   output_file:

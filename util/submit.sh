@@ -6,7 +6,6 @@
 #SBATCH --error="output/log/%j.err"                     # Direct STDERR here (file identifier), %j is substituted for the job number
 #SBATCH --output="output/log/%j.out"                    # Direct STDOUT here (file identifier), %j is substituted for the job number
 #SBATCH --verbose                                       # Increase informational messages
-
 #SBATCH --ntasks=12                                      # Number of tasks (max 64) for your parallel job
 
 # Put your email here to receive execution location by mail

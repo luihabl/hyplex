@@ -1,5 +1,6 @@
 /run
 /build/
+/output/
 /lib/hypre*/*
 /lib/yaml*/*
 /output/**/*.csv
@@ -16,6 +17,7 @@
 /output/*.err
 /input/**/*.h5
 /input/**/*.exdir
+/input/*.exdir
 /.vscode/
 **/__pycache__/
 *.DS_Store

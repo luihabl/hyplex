@@ -17,8 +17,8 @@ project:
   cross_sections_path: "input/cross-sections/"
 
 simulation:
-  job_name: "dc-p40"
-  initial_state: "new"                      # Load input for simulation state or start again: 'load' or 'new'
+  job_name: "dc-short"
+  initial_state: "load"                      # Load input for simulation state or start again: 'load' or 'new'
   verbosity: 1                              # Verbosity level: 0 means minimum messages
 
 physical:
@@ -38,34 +38,33 @@ geometry:
 
 time:
   dt: 5.0e-12                               # Time step [s]
-  n_steps: 5e6                              # Number of simulation steps to be executed []
-  n_steps_dsmc: 18e6                       # Number of DSMC simulation steps to be executed []
+  n_steps: 40000                             # Number of simulation steps to be executed []
+  n_steps_dsmc: 0.5e6                       # Number of DSMC simulation steps to be executed []
   n_average: 1                              # Number of average steps []
-  n_average_dsmc: 200000                     # Number of DSMC average steps []
+  n_average_dsmc: 50000                     # Number of DSMC average steps []
   k_sub: 1                                  # Ion subcycling factor []
-  k_sub_dsmc: 800                           # DSMC subcycling factor []
+  k_sub_dsmc: 400                           # DSMC subcycling factor []
 
 boundaries:
   volt_0: 0.0                               # Voltage on the thruster [V]
   volt_1: 0.0                               # Voltage on the chamber walls [V]
   c_cap: 1.0e-11                            # Capacitance of thruster connection [F]
   ob_type: "dirichlet"                      # Type of outer boundary condition: neumann, dirichlet
-  n_pump_prob: 0.4                         # Neutral pumping capacity of boundaries: 0 - all flow escape, 1 - all flow is reflected
 
 thruster:
   mfc: 3.0                                  # Mass flow rate of thruster [sccm]
   eta_p: 0.5                                # Propellant utilization efficiency []
-  freq: 30.0e6                              # Frequency of signal [Hz]
+  freq: 6e6                              # Frequency of signal [Hz]
   v_sb: 1003.02722                          # Self-bias voltage [V]
   v_rf: 1000.0                              # Amplitude of the RF signal [V]
 
 particles:
   n_factor: 3.2e5                           # Macro-particle weight factor (i.e. how many particles one macro-particle represents) []
-  n_factor_dsmc: 5e9                        # Macro-particle weight factor for neutrals []
-  n_max_particles: 2e7                      # Maximum number of particles in the array []
+  n_factor_dsmc: 1e8                        # Macro-particle weight factor for neutrals []
+  n_max_particles: 1e7                      # Maximum number of particles in the array []
 
 neutrals:
-  expm_neutral: "dsmc"                      # Expansion model of neutral flow: 'dsmc', 'constant' or 'load'
+  expm_neutral: "load"                      # Expansion model of neutral flow: 'dsmc', 'constant' or 'load'
   mcc_coll: true                            # Toggle MCC collisions: true or false
   t_neutral: 0.02585                        # Temperature of neutral gas [eV]
   n_neutral: 4.82e18                        # Density of neutral gas [m^-3]
@@ -87,10 +86,7 @@ ions:
   v_drift_i: 38427.34                       # Ion injection drift velocity [m/s]
 
 diagnostics:
-  output_file:
-    overwrite: true
-    file_refresh_step: 10000
-
+  
   print_info:
     print_step: 100
     print_timing_step: 10
@@ -100,7 +96,6 @@ diagnostics:
     end_save: true  
 
   state:
-    save: true
     save_step: 10000
     end_save: true                              
 
@@ -109,22 +104,16 @@ diagnostics:
     end_save: true   
   
   series:
-    save: true
     measure_step: 1
-    measure_step_dsmc: 1000
     save_step: 50000
-    short_series_start_progress: 0.9
     end_save: true
 
   rf_av:
-    start_progress: 0.9
+    start_progress: 0.1
   
   field_series:
     save_step: 1
     end_save: true
-
-  iz_field:
-    start_progress: 0.9
 
   vdist:
     save_step: 10000
@@ -136,7 +125,7 @@ diagnostics:
     ions:
       n_v: 200
       vlim_x: [-50000, 50000]
-      vlim_y: [-50000, 50000]
+      vlim_y: [-50000, 50000]  
                          
 helium:
   m_i: 6.67e-27                             # Ion mass [kg]

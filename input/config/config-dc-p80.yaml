@@ -17,7 +17,7 @@ project:
   cross_sections_path: "input/cross-sections/"
 
 simulation:
-  job_name: "dc-p40"
+  job_name: "dc-p80"
   initial_state: "new"                      # Load input for simulation state or start again: 'load' or 'new'
   verbosity: 1                              # Verbosity level: 0 means minimum messages
 
@@ -50,7 +50,7 @@ boundaries:
   volt_1: 0.0                               # Voltage on the chamber walls [V]
   c_cap: 1.0e-11                            # Capacitance of thruster connection [F]
   ob_type: "dirichlet"                      # Type of outer boundary condition: neumann, dirichlet
-  n_pump_prob: 0.4                         # Neutral pumping capacity of boundaries: 0 - all flow escape, 1 - all flow is reflected
+  n_pump_prob: 0.8                         # Neutral pumping capacity of boundaries: 0 - all flow escape, 1 - all flow is reflected
 
 thruster:
   mfc: 3.0                                  # Mass flow rate of thruster [sccm]

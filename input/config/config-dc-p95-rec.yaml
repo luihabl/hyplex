@@ -17,8 +17,8 @@ project:
   cross_sections_path: "input/cross-sections/"
 
 simulation:
-  job_name: "dc-p40"
-  initial_state: "new"                      # Load input for simulation state or start again: 'load' or 'new'
+  job_name: "dc-p95-rec"
+  initial_state: "load"                      # Load input for simulation state or start again: 'load' or 'new'
   verbosity: 1                              # Verbosity level: 0 means minimum messages
 
 physical:
@@ -38,7 +38,7 @@ geometry:
 
 time:
   dt: 5.0e-12                               # Time step [s]
-  n_steps: 5e6                              # Number of simulation steps to be executed []
+  n_steps: 100000                            # Number of simulation steps to be executed []
   n_steps_dsmc: 18e6                       # Number of DSMC simulation steps to be executed []
   n_average: 1                              # Number of average steps []
   n_average_dsmc: 200000                     # Number of DSMC average steps []
@@ -50,7 +50,7 @@ boundaries:
   volt_1: 0.0                               # Voltage on the chamber walls [V]
   c_cap: 1.0e-11                            # Capacitance of thruster connection [F]
   ob_type: "dirichlet"                      # Type of outer boundary condition: neumann, dirichlet
-  n_pump_prob: 0.4                         # Neutral pumping capacity of boundaries: 0 - all flow escape, 1 - all flow is reflected
+  n_pump_prob: 0.95                         # Neutral pumping capacity of boundaries: 0 - all flow escape, 1 - all flow is reflected
 
 thruster:
   mfc: 3.0                                  # Mass flow rate of thruster [sccm]
@@ -65,7 +65,7 @@ particles:
   n_max_particles: 2e7                      # Maximum number of particles in the array []
 
 neutrals:
-  expm_neutral: "dsmc"                      # Expansion model of neutral flow: 'dsmc', 'constant' or 'load'
+  expm_neutral: "load"                      # Expansion model of neutral flow: 'dsmc', 'constant' or 'load'
   mcc_coll: true                            # Toggle MCC collisions: true or false
   t_neutral: 0.02585                        # Temperature of neutral gas [eV]
   n_neutral: 4.82e18                        # Density of neutral gas [m^-3]
@@ -88,28 +88,30 @@ ions:
 
 diagnostics:
   output_file:
-    overwrite: true
-    file_refresh_step: 10000
+    overwrite: false
+    file_refresh_step: 5000
 
   print_info:
     print_step: 100
     print_timing_step: 10
 
   metadata:
-    update_step: 10000
+    update_step: 5000
     end_save: true  
 
   state:
     save: true
-    save_step: 10000
+    save_step: 5000
+    save_p_i: true
+    save_p_e: false
     end_save: true                              
 
   fields_snapshot:
-    save_step: 10000
-    end_save: true   
+    save_step: 1000
+    end_save: false  
   
   series:
-    save: true
+    save: false
     measure_step: 1
     measure_step_dsmc: 1000
     save_step: 50000
@@ -121,14 +123,14 @@ diagnostics:
   
   field_series:
     save_step: 1
-    end_save: true
+    end_save: false
 
   iz_field:
     start_progress: 0.9
 
   vdist:
     save_step: 10000
-    end_save: true
+    end_save: false
     electrons:
       n_v: 200
       vlim_x: [-20e6, 20e6]
