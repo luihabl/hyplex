@@ -102,7 +102,9 @@ diagnostics:
   state:
     save: true
     save_step: 10000
-    end_save: true                              
+    end_save: true   
+    save_p_i: true
+    save_p_e: true                           
 
   fields_snapshot:
     save_step: 10000

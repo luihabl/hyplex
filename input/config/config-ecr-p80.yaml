@@ -60,7 +60,7 @@ thruster:
   v_rf: 1000.0                              # Amplitude of the RF signal [V]
 
 particles:
-  n_factor: 3.2e6                           # Macro-particle weight factor (i.e. how many particles one macro-particle represents) []
+  n_factor: 6.72e4                          # Macro-particle weight factor (i.e. how many particles one macro-particle represents) []
   n_factor_dsmc: 5e9                        # Macro-particle weight factor for neutrals []
   n_max_particles: 2e7                      # Maximum number of particles in the array []
 
@@ -102,6 +102,8 @@ diagnostics:
   state:
     save: true
     save_step: 10000
+    save_p_i: true
+    save_p_e: true
     end_save: true                              
 
   fields_snapshot:
