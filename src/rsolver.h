@@ -10,7 +10,7 @@
 
 class rsolver{
     
-public:
+private:
     // private variables
     HYPRE_StructGrid     hypre_grid;
     HYPRE_StructStencil  hypre_stencil;
@@ -55,8 +55,9 @@ public:
     void set_dirichlet_box(imatrix & box, int counter);
     void set_neumann_box(imatrix & box, int counter);
     int get_node_type(int i, int j, int ioff=0, int joff=0);
-};
 
-void setup_rsolver(rsolver & solver, mesh_set & mesh, imatrix & electrode_mask);
+    void setup(mesh_set & mesh, imatrix & electrode_mask);
+
+};
 
 #endif

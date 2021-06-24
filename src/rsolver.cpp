@@ -342,43 +342,43 @@ bool rsolver::in_box(int i, int j, int ill, int jll, int iur, int jur){
 }
 
 
-void setup_rsolver(rsolver & solver, mesh_set & mesh, imatrix & electrode_mask){
+void rsolver::setup(mesh_set & mesh, imatrix & electrode_mask){
     
     int n_dirichlet = 0, n_neumann = 0;
 
-    if(solver.config.s("boundaries/ob_type") == "dirichlet"){
+    if(this->config.s("boundaries/ob_type") == "dirichlet"){
         n_dirichlet = 3;
         n_neumann   = 2;
     }
-    if(solver.config.s("boundaries/ob_type") == "neumann"){
+    if(this->config.s("boundaries/ob_type") == "neumann"){
         n_dirichlet = 1;
         n_neumann   = 4;
     }
 
-    solver.late_init(n_neumann, n_dirichlet);
+    this->late_init(n_neumann, n_dirichlet);
     
-    imatrix box_thruster        = {0, 0, 0, solver.config.i("geometry/n_thruster") - 1};
-    imatrix box_top_thruster    = {0, solver.config.i("geometry/n_thruster"), 0, solver.config.i("geometry/n_mesh_y") - 2};
-    imatrix box_ob_top          = {0, solver.config.i("geometry/n_mesh_y") - 1, solver.config.i("geometry/n_mesh_x") - 2, solver.config.i("geometry/n_mesh_y") - 1};
-    imatrix box_ob_right        = {solver.config.i("geometry/n_mesh_x") - 1, 0, solver.config.i("geometry/n_mesh_x") - 1, solver.config.i("geometry/n_mesh_y") - 1};
-    imatrix box_sym             = {1, 0, solver.config.i("geometry/n_mesh_x") - 2, 0};
+    imatrix box_thruster        = {0, 0, 0, this->config.i("geometry/n_thruster") - 1};
+    imatrix box_top_thruster    = {0, this->config.i("geometry/n_thruster"), 0, this->config.i("geometry/n_mesh_y") - 2};
+    imatrix box_ob_top          = {0, this->config.i("geometry/n_mesh_y") - 1, this->config.i("geometry/n_mesh_x") - 2, this->config.i("geometry/n_mesh_y") - 1};
+    imatrix box_ob_right        = {this->config.i("geometry/n_mesh_x") - 1, 0, this->config.i("geometry/n_mesh_x") - 1, this->config.i("geometry/n_mesh_y") - 1};
+    imatrix box_sym             = {1, 0, this->config.i("geometry/n_mesh_x") - 2, 0};
 
-    if(solver.config.s("boundaries/ob_type") == "neumann"){
-        solver.set_dirichlet_box(box_thruster, 0);
-        solver.set_neumann_box(box_top_thruster, 0);
-        solver.set_neumann_box(box_ob_top, 1);
-        solver.set_neumann_box(box_ob_right, 2);
-        solver.set_neumann_box(box_sym, 3);
+    if(this->config.s("boundaries/ob_type") == "neumann"){
+        this->set_dirichlet_box(box_thruster, 0);
+        this->set_neumann_box(box_top_thruster, 0);
+        this->set_neumann_box(box_ob_top, 1);
+        this->set_neumann_box(box_ob_right, 2);
+        this->set_neumann_box(box_sym, 3);
     }
 
-    if(solver.config.s("boundaries/ob_type") == "dirichlet"){
+    if(this->config.s("boundaries/ob_type") == "dirichlet"){
         
-        solver.set_neumann_box(box_sym, 0);
-        solver.set_neumann_box(box_top_thruster, 1);
+        this->set_neumann_box(box_sym, 0);
+        this->set_neumann_box(box_top_thruster, 1);
 
-        solver.set_dirichlet_box(box_ob_top, 0);
-        solver.set_dirichlet_box(box_thruster, 1);
-        solver.set_dirichlet_box(box_ob_right, 2);
+        this->set_dirichlet_box(box_ob_top, 0);
+        this->set_dirichlet_box(box_thruster, 1);
+        this->set_dirichlet_box(box_ob_right, 2);
             
         electrode_mask.setbox_value(1, box_ob_top.val[0], box_ob_top.val[1], box_ob_top.val[2], box_ob_top.val[3]);
         electrode_mask.setbox_value(1, box_ob_right.val[0], box_ob_right.val[1], box_ob_right.val[2], box_ob_right.val[3]);
@@ -386,7 +386,7 @@ void setup_rsolver(rsolver & solver, mesh_set & mesh, imatrix & electrode_mask){
 
     electrode_mask.setbox_value(2, box_thruster.val[0], box_thruster.val[1], box_thruster.val[2], box_thruster.val[3]);
 
-    solver.assemble();
+    this->assemble();
 
 }   
 

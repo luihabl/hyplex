@@ -79,10 +79,10 @@ int main(int argc, char* argv[])
  
     // General field variables
 
-	fmatrix phi             = fmatrix::zeros(n_mesh_x, n_mesh_y);
+    fmatrix phi             = fmatrix::zeros(n_mesh_x, n_mesh_y);
     fmatrix phi_laplace     = fmatrix::zeros(n_mesh_x, n_mesh_y);
     fmatrix phi_poisson     = fmatrix::zeros(n_mesh_x, n_mesh_y);
-	fmatrix efield_x        = fmatrix::zeros(n_mesh_x, n_mesh_y);
+    fmatrix efield_x        = fmatrix::zeros(n_mesh_x, n_mesh_y);
     fmatrix efield_y        = fmatrix::zeros(n_mesh_x, n_mesh_y);
     imatrix electrode_mask  = imatrix::zeros(n_mesh_x, n_mesh_y);
     fmatrix voltages        = fmatrix::zeros(4);
@@ -94,23 +94,23 @@ int main(int argc, char* argv[])
     fmatrix wmesh_e_av      = fmatrix::zeros(n_mesh_x, n_mesh_y);
     fmatrix wmesh_i_av      = fmatrix::zeros(n_mesh_x, n_mesh_y);
     
-	// Particle 1 - Electrons
+    // Particle 1 - Electrons
     io::verbose_log("Initializing electrons variables", verbosity >= 1);
-	fmatrix p_e             = fmatrix::zeros(n_max_particles / mpi_size, 6);
+    fmatrix p_e             = fmatrix::zeros(n_max_particles / mpi_size, 6);
     imatrix lpos_e          = imatrix::zeros(n_max_particles / mpi_size, 2);
-	fmatrix wmesh_e         = fmatrix::zeros(n_mesh_x, n_mesh_y);
+    fmatrix wmesh_e         = fmatrix::zeros(n_mesh_x, n_mesh_y);
     fmatrix wmesh_e_global   = fmatrix::zeros(n_mesh_x, n_mesh_y);
     fmatrix efield_x_at_p_e = fmatrix::zeros(n_max_particles / mpi_size);
     fmatrix efield_y_at_p_e = fmatrix::zeros(n_max_particles / mpi_size);
     double n_inj_el          = config.f("p/n_inj_el");
-	
-	// Particle 2 - Ions
+        
+    // Particle 2 - Ions
     io::verbose_log("Initializing ions variables", verbosity >= 1);
-	fmatrix p_i             = fmatrix::zeros(n_max_particles / mpi_size, 6);
+    fmatrix p_i             = fmatrix::zeros(n_max_particles / mpi_size, 6);
     imatrix lpos_i          = imatrix::zeros(n_max_particles / mpi_size, 2);
-	fmatrix wmesh_i         = fmatrix::zeros(n_mesh_x, n_mesh_y);
-    fmatrix wmesh_i_global   = fmatrix::zeros(n_mesh_x, n_mesh_y);
-	fmatrix efield_x_at_p_i = fmatrix::zeros(n_max_particles / mpi_size);
+    fmatrix wmesh_i         = fmatrix::zeros(n_mesh_x, n_mesh_y);
+    fmatrix wmesh_i_global  = fmatrix::zeros(n_mesh_x, n_mesh_y);
+    fmatrix efield_x_at_p_i = fmatrix::zeros(n_max_particles / mpi_size);
     fmatrix efield_y_at_p_i = fmatrix::zeros(n_max_particles / mpi_size);
     double n_inj_i          = config.f("p/n_inj_i");
     
@@ -135,7 +135,7 @@ int main(int argc, char* argv[])
     io::verbose_log("Initializing solver", verbosity >= 1);
 
     rsolver solver(mesh, config);
-    setup_rsolver(solver, mesh, electrode_mask);
+    solver.setup(mesh, electrode_mask);
 
     voltages = {1, 0, 1, 1};
     solver.solve(phi_laplace, voltages, wmesh_i, wmesh_e);
@@ -171,7 +171,7 @@ int main(int argc, char* argv[])
     if(config.s("simulation/initial_state") == "load")  io::load_state(p_e, p_i, state, config);
 
     // ----------------------------- Output manager ---------------------------
-   io::output_manager output(start_utc, state, config, mesh);
+    io::output_manager output(start_utc, state, config, mesh);
 
 	// ----------------------------- Main loop --------------------------------
 
