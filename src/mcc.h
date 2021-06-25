@@ -30,10 +30,11 @@ struct mcc
     double nu_prime_e, nu_prime_i;
     double p_null_e, p_null_i;
 
-    particle_operations & pops;
-    pic_operations & pic;
+    particle_operations * pops;
+    pic_operations * pic;
 
-    mcc(configuration & config, particle_operations & pops, pic_operations & pic);
+    mcc() = default;
+    mcc(configuration & config, particle_operations * pops, pic_operations * pic);
     ~mcc();
 
     double find_nu_prime_e(fmatrix & dens_n, fmatrix & vmesh);

@@ -11,6 +11,7 @@ struct pic_operations{
 
     int n_mesh_x, n_mesh_y;
 
+    pic_operations() = default;
     pic_operations(configuration & config);
 
     static void weight(fmatrix & p, int & n_active, fmatrix & wmesh, mesh_set & mesh, imatrix & lpos);

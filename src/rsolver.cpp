@@ -19,12 +19,12 @@ using namespace std::chrono;
 using namespace std;
 // ------------------- constructors / destructor -------------------------
 
-rsolver::rsolver(mesh_set & _mesh, int _n_neumann, int _n_dirichlet, configuration & _config): mesh(_mesh), config(_config){
+rsolver::rsolver(mesh_set * _mesh, int _n_neumann, int _n_dirichlet, configuration * _config): mesh(_mesh), config(_config){
 
     n_neumann = _n_neumann;
     n_dirichlet = _n_dirichlet;
-    n_mesh_x = (int) _mesh.nx;
-    n_mesh_y = (int) _mesh.ny;
+    n_mesh_x = (int) _mesh->nx;
+    n_mesh_y = (int) _mesh->ny;
     n_input_dirichlet = 0;
     n_solve = 0;
 
@@ -38,10 +38,10 @@ rsolver::rsolver(mesh_set & _mesh, int _n_neumann, int _n_dirichlet, configurati
     inner_ur = {n_mesh_x - 2, n_mesh_y - 2};
 }
 
-rsolver::rsolver(mesh_set & _mesh, configuration & _config): mesh(_mesh), config(_config){
+rsolver::rsolver(mesh_set * _mesh, configuration * _config): mesh(_mesh), config(_config){
 
-    n_mesh_x = (int) _mesh.nx;
-    n_mesh_y = (int) _mesh.ny;
+    n_mesh_x = (int) _mesh->nx;
+    n_mesh_y = (int) _mesh->ny;
     n_input_dirichlet = 0;
     n_solve = 0;
 
@@ -67,7 +67,6 @@ rsolver::~rsolver(){
     HYPRE_StructMatrixDestroy(hypre_A);
     HYPRE_StructVectorDestroy(hypre_b);
     HYPRE_StructVectorDestroy(hypre_x);
-    MPI_Finalize();
 }
 
 
@@ -157,12 +156,12 @@ void rsolver::set_inner_nodes(){
         for (int j = 0; j < n_mesh_y; j++) { 
             if(get_node_type(i, j) == 0){
 
-                double vol = mesh.v.val[i * mesh.v.n2 + j];
-                double d0 =   1/ (mesh.k1_x(i, j) * mesh.k2_x(i, j)) + 1/(mesh.k1_y(i, j) * mesh.k2_y(i, j));
-                double d1 = - 1/ (mesh.k1_x(i, j) * mesh.k3_x(i, j));
-                double d2 = - 1/ (mesh.k2_x(i, j) * mesh.k3_x(i, j));
-                double d3 = - 1/ (mesh.k1_y(i, j) * mesh.k3_y(i, j));
-                double d4 = - 1/ (mesh.k2_y(i, j) * mesh.k3_y(i, j)); 
+                double vol = mesh->v.val[i * mesh->v.n2 + j];
+                double d0 =   1/ (mesh->k1_x(i, j) * mesh->k2_x(i, j)) + 1/(mesh->k1_y(i, j) * mesh->k2_y(i, j));
+                double d1 = - 1/ (mesh->k1_x(i, j) * mesh->k3_x(i, j));
+                double d2 = - 1/ (mesh->k2_x(i, j) * mesh->k3_x(i, j));
+                double d3 = - 1/ (mesh->k1_y(i, j) * mesh->k3_y(i, j));
+                double d4 = - 1/ (mesh->k2_y(i, j) * mesh->k3_y(i, j)); 
                 double val[5] = {vol * d0, vol * d1, vol * d2, vol * d3, vol * d4};               
 
                 ll = {i, j};
@@ -204,46 +203,46 @@ void rsolver::set_neumann_nodes(){
                 // Neumann point in the x direction
                 if (get_node_type(i, j, stencil_offsets[2][0], stencil_offsets[2][1]) == -1) {
 
-                    d0 +=  1 / (mesh.k1_x(i, j) * mesh.k1_x(i, j));
-                    d1 = - 1 / (mesh.k1_x(i, j) * mesh.k1_x(i, j));
+                    d0 +=  1 / (mesh->k1_x(i, j) * mesh->k1_x(i, j));
+                    d1 = - 1 / (mesh->k1_x(i, j) * mesh->k1_x(i, j));
                     d2 =   0.0;
 
                 }
                 else if (get_node_type(i, j, stencil_offsets[1][0], stencil_offsets[1][1]) == -1) {
 
-                    d0 +=  1 / (mesh.k2_x(i, j) * mesh.k2_x(i, j));
+                    d0 +=  1 / (mesh->k2_x(i, j) * mesh->k2_x(i, j));
                     d1 =   0.0;
-                    d2 = - 1 / (mesh.k2_x(i, j) * mesh.k2_x(i, j));
+                    d2 = - 1 / (mesh->k2_x(i, j) * mesh->k2_x(i, j));
 
                 }
                 else {
-                    d0 +=  1 / (mesh.k1_x(i, j) * mesh.k2_x(i, j));
-                    d1 = - 1 / (mesh.k1_x(i, j) * mesh.k3_x(i, j));
-                    d2 = - 1 / (mesh.k2_x(i, j) * mesh.k3_x(i, j));
+                    d0 +=  1 / (mesh->k1_x(i, j) * mesh->k2_x(i, j));
+                    d1 = - 1 / (mesh->k1_x(i, j) * mesh->k3_x(i, j));
+                    d2 = - 1 / (mesh->k2_x(i, j) * mesh->k3_x(i, j));
                 }
                 
                 // Neumann point in the y direction
                 if (get_node_type(i, j, stencil_offsets[4][0], stencil_offsets[4][1]) == -1) {
 
-                    d0 +=  1 / (mesh.k1_y(i, j) * mesh.k1_y(i, j));
-                    d3 = - 1 / (mesh.k1_y(i, j) * mesh.k1_y(i, j));
+                    d0 +=  1 / (mesh->k1_y(i, j) * mesh->k1_y(i, j));
+                    d3 = - 1 / (mesh->k1_y(i, j) * mesh->k1_y(i, j));
                     d4 =   0.0;
 
                 }
                 else if (get_node_type(i, j, stencil_offsets[3][0], stencil_offsets[3][1]) == -1) {
 
-                    d0 +=  1 / (mesh.k2_y(i, j) * mesh.k2_y(i, j));
+                    d0 +=  1 / (mesh->k2_y(i, j) * mesh->k2_y(i, j));
                     d3 =   0.0;
-                    d4 = - 1 / (mesh.k2_y(i, j) * mesh.k2_y(i, j));
+                    d4 = - 1 / (mesh->k2_y(i, j) * mesh->k2_y(i, j));
                     
                 }
                 else {
-                    d0 +=  1 / (mesh.k1_y(i, j) * mesh.k2_y(i, j));
-                    d3 = - 1 / (mesh.k1_y(i, j) * mesh.k3_y(i, j));
-                    d4 = - 1 / (mesh.k2_y(i, j) * mesh.k3_y(i, j));
+                    d0 +=  1 / (mesh->k1_y(i, j) * mesh->k2_y(i, j));
+                    d3 = - 1 / (mesh->k1_y(i, j) * mesh->k3_y(i, j));
+                    d4 = - 1 / (mesh->k2_y(i, j) * mesh->k3_y(i, j));
                 }
                 
-                double vol = mesh.v.val[i * mesh.v.n2 + j];
+                double vol = mesh->v.val[i * mesh->v.n2 + j];
                 double val[5] = {vol * d0, vol * d1, vol * d2, vol * d3, vol * d4};
                 
                 ll = {i, j};
@@ -259,16 +258,16 @@ void rsolver::add_dirichlet_input(int i, int j, int stencil, int n_bc){
 
     switch(stencil){
         case 1: 
-            dirichlet_input.val[n_input_dirichlet * 4 + 3] = mesh.v.val[i * mesh.v.n2 + j] / (mesh.k1_x(i, j) * mesh.k3_x(i, j));
+            dirichlet_input.val[n_input_dirichlet * 4 + 3] = mesh->v.val[i * mesh->v.n2 + j] / (mesh->k1_x(i, j) * mesh->k3_x(i, j));
             break;
         case 2: 
-            dirichlet_input.val[n_input_dirichlet * 4 + 3] = mesh.v.val[i * mesh.v.n2 + j] / (mesh.k2_x(i, j) * mesh.k3_x(i, j));
+            dirichlet_input.val[n_input_dirichlet * 4 + 3] = mesh->v.val[i * mesh->v.n2 + j] / (mesh->k2_x(i, j) * mesh->k3_x(i, j));
             break;
         case 3: 
-            dirichlet_input.val[n_input_dirichlet * 4 + 3] = mesh.v.val[i * mesh.v.n2 + j] / (mesh.k1_y(i, j) * mesh.k3_y(i, j));
+            dirichlet_input.val[n_input_dirichlet * 4 + 3] = mesh->v.val[i * mesh->v.n2 + j] / (mesh->k1_y(i, j) * mesh->k3_y(i, j));
             break;
         case 4: 
-            dirichlet_input.val[n_input_dirichlet * 4 + 3] = mesh.v.val[i * mesh.v.n2 + j] / (mesh.k2_y(i, j) * mesh.k3_y(i, j));
+            dirichlet_input.val[n_input_dirichlet * 4 + 3] = mesh->v.val[i * mesh->v.n2 + j] / (mesh->k2_y(i, j) * mesh->k3_y(i, j));
             break;
         default:
             cout << "stencil error in dirichlet bc" << endl;
@@ -292,7 +291,7 @@ int rsolver::dirichlet_boundary_number(int i, int j){
 // ------------------- solving --------------------------------
 
 void rsolver::solve(fmatrix & solution, fmatrix & voltages, fmatrix & w_i, fmatrix & w_e){
-    double gamma = config.f("p/gamma");
+    double gamma = config->f("p/gamma");
     for(int i = 0; i < n_mesh_x; i++)
         for(int j = 0; j < n_mesh_y; j++){
             if(get_node_type(i, j) == 0 || get_node_type(i, j) == 2)
@@ -346,39 +345,39 @@ void rsolver::setup(mesh_set & mesh, imatrix & electrode_mask){
     
     int n_dirichlet = 0, n_neumann = 0;
 
-    if(this->config.s("boundaries/ob_type") == "dirichlet"){
+    if(config->s("boundaries/ob_type") == "dirichlet"){
         n_dirichlet = 3;
         n_neumann   = 2;
     }
-    if(this->config.s("boundaries/ob_type") == "neumann"){
+    if(config->s("boundaries/ob_type") == "neumann"){
         n_dirichlet = 1;
         n_neumann   = 4;
     }
 
-    this->late_init(n_neumann, n_dirichlet);
+    late_init(n_neumann, n_dirichlet);
     
-    imatrix box_thruster        = {0, 0, 0, this->config.i("geometry/n_thruster") - 1};
-    imatrix box_top_thruster    = {0, this->config.i("geometry/n_thruster"), 0, this->config.i("geometry/n_mesh_y") - 2};
-    imatrix box_ob_top          = {0, this->config.i("geometry/n_mesh_y") - 1, this->config.i("geometry/n_mesh_x") - 2, this->config.i("geometry/n_mesh_y") - 1};
-    imatrix box_ob_right        = {this->config.i("geometry/n_mesh_x") - 1, 0, this->config.i("geometry/n_mesh_x") - 1, this->config.i("geometry/n_mesh_y") - 1};
-    imatrix box_sym             = {1, 0, this->config.i("geometry/n_mesh_x") - 2, 0};
+    imatrix box_thruster        = {0, 0, 0, config->i("geometry/n_thruster") - 1};
+    imatrix box_top_thruster    = {0, config->i("geometry/n_thruster"), 0, config->i("geometry/n_mesh_y") - 2};
+    imatrix box_ob_top          = {0, config->i("geometry/n_mesh_y") - 1, config->i("geometry/n_mesh_x") - 2, config->i("geometry/n_mesh_y") - 1};
+    imatrix box_ob_right        = {config->i("geometry/n_mesh_x") - 1, 0, config->i("geometry/n_mesh_x") - 1, config->i("geometry/n_mesh_y") - 1};
+    imatrix box_sym             = {1, 0, config->i("geometry/n_mesh_x") - 2, 0};
 
-    if(this->config.s("boundaries/ob_type") == "neumann"){
-        this->set_dirichlet_box(box_thruster, 0);
-        this->set_neumann_box(box_top_thruster, 0);
-        this->set_neumann_box(box_ob_top, 1);
-        this->set_neumann_box(box_ob_right, 2);
-        this->set_neumann_box(box_sym, 3);
+    if(config->s("boundaries/ob_type") == "neumann"){
+        set_dirichlet_box(box_thruster, 0);
+        set_neumann_box(box_top_thruster, 0);
+        set_neumann_box(box_ob_top, 1);
+        set_neumann_box(box_ob_right, 2);
+        set_neumann_box(box_sym, 3);
     }
 
-    if(this->config.s("boundaries/ob_type") == "dirichlet"){
+    if(config->s("boundaries/ob_type") == "dirichlet"){
         
-        this->set_neumann_box(box_sym, 0);
-        this->set_neumann_box(box_top_thruster, 1);
+        set_neumann_box(box_sym, 0);
+        set_neumann_box(box_top_thruster, 1);
 
-        this->set_dirichlet_box(box_ob_top, 0);
-        this->set_dirichlet_box(box_thruster, 1);
-        this->set_dirichlet_box(box_ob_right, 2);
+        set_dirichlet_box(box_ob_top, 0);
+        set_dirichlet_box(box_thruster, 1);
+        set_dirichlet_box(box_ob_right, 2);
             
         electrode_mask.setbox_value(1, box_ob_top.val[0], box_ob_top.val[1], box_ob_top.val[2], box_ob_top.val[3]);
         electrode_mask.setbox_value(1, box_ob_right.val[0], box_ob_right.val[1], box_ob_right.val[2], box_ob_right.val[3]);
@@ -386,7 +385,7 @@ void rsolver::setup(mesh_set & mesh, imatrix & electrode_mask){
 
     electrode_mask.setbox_value(2, box_thruster.val[0], box_thruster.val[1], box_thruster.val[2], box_thruster.val[3]);
 
-    this->assemble();
+    assemble();
 
 }   
 

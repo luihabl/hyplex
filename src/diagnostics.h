@@ -13,8 +13,8 @@ class diagnostics{
     private:
         double k_v, dt, k_phi, n_factor, q, izfield_start_progress, x_min, x_max, y_min, y_max, k_sub_dsmc;
         int series_measure_step, n_mesh_x, n_mesh_y, step_save_vdist, step_save_fields, steps_since_last_izfield_save, n_steps;
-        configuration & config;
-        state_info & state;
+        configuration * config;
+        state_info * state;
 
         fmatrix wmesh_e, wmesh_i;
         
@@ -37,6 +37,11 @@ class diagnostics{
         void initialize_series();
     
     public:
+
+        diagnostics() = default;
+        diagnostics(configuration * _config, state_info * _state);
+        diagnostics(configuration * _config, state_info * _state, tmatrix<string> & _gseries_keys,  tmatrix<string> & _lseries_keys, bool dsmc);
+
         int n_e_iz;
 
         int series_size;
@@ -64,8 +69,6 @@ class diagnostics{
         int n_removed_e, n_removed_i;
 
         int n_points_series;
-        diagnostics(configuration & _config, state_info & _state);
-        diagnostics(configuration & _config, state_info & _state, tmatrix<string> & _gseries_keys,  tmatrix<string> & _lseries_keys, bool dsmc);
         
         void dist(fmatrix & p, int & n_active, int col, double v_0, double v_1,  fmatrix & dmesh);
         void update_velocity_distributions(fmatrix & p_e, fmatrix & p_i);

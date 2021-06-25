@@ -21,8 +21,8 @@ private:
     imatrix              dirichlet_boxes, neumann_boxes, node_type;
     imatrix              ll, ur, inner_ll, inner_ur;
     fmatrix              dirichlet_input;
-    mesh_set &           mesh;
-    configuration &      config;
+    mesh_set *           mesh;
+    configuration *      config;
     int                  n_mesh_x, n_mesh_y, n_solve;
     int                  n_dirichlet, n_input_dirichlet, n_neumann;
     
@@ -44,8 +44,9 @@ private:
     
 public:
     // constructors and destructors
-    rsolver(mesh_set & mesh, int n_neumann, int n_dirichlet, configuration & config);
-    rsolver(mesh_set & mesh, configuration & config);
+    rsolver() = default;
+    rsolver(mesh_set * mesh, int n_neumann, int n_dirichlet, configuration * config);
+    rsolver(mesh_set * mesh, configuration * config);
     ~rsolver();
     
     // public methods

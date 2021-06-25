@@ -16,14 +16,14 @@ namespace dsmc{
 void run_dsmc(mesh_set & mesh, fmatrix & dens_n, configuration & config){
     
     pic_operations pic(config);
-    particle_operations pops(config, pic);
+    particle_operations pops(config, &pic);
     state_info state;
 
     tmatrix<string> gseries_keys = tmatrix<string>({"time"});
     tmatrix<string> lseries_keys = tmatrix<string>({"n_active_n"});
 
-    diagnostics diag(config, state, gseries_keys, lseries_keys, true); 
-    io::output_manager out("dens_n", state, config, mesh, true);
+    diagnostics diag(&config, &state, gseries_keys, lseries_keys, true); 
+    io::output_manager out("dens_n", &state, &config, &mesh, true);
 
     fmatrix p_n             = fmatrix::zeros(config.i("particles/n_max_particles"), 6);
     imatrix lpos_n          = imatrix::zeros(config.i("particles/n_max_particles"), 2);

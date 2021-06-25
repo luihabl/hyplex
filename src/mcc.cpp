@@ -14,7 +14,7 @@
 #include "input-output.h"
 
 
-mcc::mcc(configuration & config, particle_operations & _pops, pic_operations & _pic): pops(_pops), pic(_pic)
+mcc::mcc(configuration & config, particle_operations * _pops, pic_operations * _pic): pops(_pops), pic(_pic)
 {
     n_exc = config.i("p/n_exc");
     e_exc = config.fs("ugas/e_exc");
@@ -186,7 +186,7 @@ int mcc::collisions_e(fmatrix & p, int & n_active, imatrix & lpos, fmatrix & p_i
 	{
 		i = particle_samples.val[k];
 		kinetic_energy = kinetic_energy_ev(p, i, m_el);
-        neutral_density = pic.field_at_position(dens_n, mesh, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0], lpos.val[i * 2 + 1]);
+        neutral_density = pic->field_at_position(dens_n, mesh, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0], lpos.val[i * 2 + 1]);
 		random_number_1 = r_unif();
 
 		// Elastic collision:
@@ -214,10 +214,10 @@ int mcc::collisions_e(fmatrix & p, int & n_active, imatrix & lpos, fmatrix & p_i
         freq_ratio_1 += collision_frequency(neutral_density, interp(ionization_cs, kinetic_energy), kinetic_energy, m_el) / nu_prime_e;
 		if (random_number_1 > freq_ratio_0 && random_number_1 <= freq_ratio_1 && kinetic_energy >= e_iz)
 		{
-            int new_electron_index = pops.add_particle_copy(p, n_active, lpos, i);
+            int new_electron_index = pops->add_particle_copy(p, n_active, lpos, i);
             electron_ionization_collision(p, i, kinetic_energy, e_iz);
             electron_ionization_collision(p, new_electron_index, kinetic_energy, e_iz);
-            pops.add_maxwellian_particle_at_position(p_i, n_active_i, lpos_i, t_neutral, m_i, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0] , lpos.val[i * 2 + 1]); // <========== particle is added here
+            pops->add_maxwellian_particle_at_position(p_i, n_active_i, lpos_i, t_neutral, m_i, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0] , lpos.val[i * 2 + 1]); // <========== particle is added here
             n_iz += 1;
             continue;
 		}
@@ -287,7 +287,7 @@ void mcc::collisions_i(fmatrix & p, int & n_active, imatrix & lpos, mesh_set & m
 	for (int k = 0; k < n_null; k++)
 	{
 		i = particle_samples.val[k];
-        neutral_density = pic.field_at_position(dens_n, mesh, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0], lpos.val[i * 2 + 1]);
+        neutral_density = pic->field_at_position(dens_n, mesh, p.val[i * 6 + 0], p.val[i * 6 + 1], lpos.val[i * 2 + 0], lpos.val[i * 2 + 1]);
         
         v_neutral = {r_norm() * (dt / dx) * sqrt(q * t_neutral / m_i),
                      r_norm() * (dt / dx) * sqrt(q * t_neutral / m_i),

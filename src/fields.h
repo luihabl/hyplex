@@ -13,7 +13,7 @@ struct mesh_set{
     double a_x, a_y;
     double dx, dy;
 
-
+    mesh_set() = default;
     mesh_set(configuration & config);
     void init_mesh();
 
@@ -32,7 +32,7 @@ struct field_operations{
     int n_mesh_x, n_mesh_y;
     double eps_0, dt, c_cap, pi, gamma, k_q;
 
-
+    field_operations() = default;
     field_operations(configuration & config);
 
     double ac_voltage_at_time(size_t i, double freq_hz, double amplitude, double phase);

@@ -22,7 +22,7 @@ struct argparser{
 };
 
 
-argparser::argparser(int argc, char* argv[]){
+inline argparser::argparser(int argc, char* argv[]){
     
     args::ArgumentParser parser("This is the Hyplex code.", "This code runs with MPI, possibly causing other flags to be passed here.");
     args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
@@ -58,12 +58,12 @@ argparser::argparser(int argc, char* argv[]){
 }
 
 template <class T>
-void argparser::set_from_obj(args::ValueFlag<T> & opt, string key, T default_value){
+inline void argparser::set_from_obj(args::ValueFlag<T> & opt, string key, T default_value){
     values[key] = opt ? args::get(opt) : default_value;
     if(opt) io::verbose_log( "Setting option " + key + ": " +  values[key], true);
 }
 
-string argparser::get(string key, string default_value){
+inline string argparser::get(string key, string default_value){
     string val = values[key];
     return val == "" ? default_value : val;
 }
