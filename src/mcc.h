@@ -14,7 +14,7 @@ struct mcc
     // cross-sections
     fmatrix elastic_cs;
     fmatrix ionization_cs;
-    fmatrix* excitation_cs;
+    tmatrix<fmatrix> excitation_cs;
     fmatrix isotropic_cs;
     fmatrix backscattering_cs;
 
@@ -35,7 +35,6 @@ struct mcc
 
     mcc() = default;
     mcc(configuration & config, particle_operations * pops, pic_operations * pic);
-    ~mcc();
 
     double find_nu_prime_e(fmatrix & dens_n, fmatrix & vmesh);
     double find_nu_prime_i(fmatrix & dens_n, fmatrix & vmesh);

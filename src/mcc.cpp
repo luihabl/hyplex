@@ -27,8 +27,8 @@ mcc::mcc(configuration & config, particle_operations * _pops, pic_operations * _
     elastic_cs = io::load_csv(config.s("project/cross_sections_path") + config.s("ugas/els_path"));
     ionization_cs = io::load_csv(config.s("project/cross_sections_path") + config.s("ugas/iz_path"));
 
-    excitation_cs = new fmatrix[n_exc];
-    for(int i = 0; i < n_exc; i++) excitation_cs[i] = io::load_csv(config.s("project/cross_sections_path") + exc_path.val[i]);
+    excitation_cs = tmatrix<fmatrix>(n_exc);
+    for(int i = 0; i < n_exc; i++) excitation_cs.val[i] = io::load_csv(config.s("project/cross_sections_path") + exc_path.val[i]);
     
     isotropic_cs = io::load_csv(config.s("project/cross_sections_path") + config.s("ugas/iso_path"));
     backscattering_cs = io::load_csv(config.s("project/cross_sections_path") + config.s("ugas/bs_path"));
@@ -49,9 +49,6 @@ mcc::mcc(configuration & config, particle_operations * _pops, pic_operations * _
     t_neutral = config.f("neutrals/t_neutral");
 }
 
-mcc::~mcc(){
-    delete[] excitation_cs;
-}
 
 
 void mcc::initialize_mcc(fmatrix & dens_n, fmatrix & vmesh){
@@ -70,7 +67,7 @@ double mcc::calc_total_cs(double energy, int n_exc){
     total_cs += interp(ionization_cs, energy);
     
     for(int i = 0; i < n_exc; i++){
-        total_cs += interp(excitation_cs[i], energy);
+        total_cs += interp(excitation_cs.val[i], energy);
     }
     
     return total_cs;
@@ -106,9 +103,9 @@ double mcc::find_nu_prime_e(fmatrix & dens_n, fmatrix & vmesh)
     }
     
     for(int n = 0; n < n_exc; n++){
-        for (size_t i = 0; i < excitation_cs[n].n1; i++)
+        for (size_t i = 0; i < excitation_cs.val[n].n1; i++)
         {
-            energy = excitation_cs[n].val[i * 2 + 0];
+            energy = excitation_cs.val[n].val[i * 2 + 0];
 
             total_cs = calc_total_cs(energy, n_exc);
 
@@ -201,7 +198,7 @@ int mcc::collisions_e(fmatrix & p, int & n_active, imatrix & lpos, fmatrix & p_i
         for(int n = 0; n < n_exc; n++){
             // Excitation collisions:
             freq_ratio_0 = freq_ratio_1;
-            freq_ratio_1 += collision_frequency(neutral_density, interp(excitation_cs[n], kinetic_energy), kinetic_energy, m_el) / nu_prime_e;
+            freq_ratio_1 += collision_frequency(neutral_density, interp(excitation_cs.val[n], kinetic_energy), kinetic_energy, m_el) / nu_prime_e;
             if (random_number_1 > freq_ratio_0 && random_number_1 <= freq_ratio_1 && kinetic_energy >= e_exc.val[n])
             {
                 electron_excitation_collision(p, i, kinetic_energy, e_exc.val[n]);
