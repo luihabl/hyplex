@@ -58,6 +58,7 @@ public:
     int get_node_type(int i, int j, int ioff=0, int joff=0);
 
     void setup(mesh_set & mesh, imatrix & electrode_mask);
+    void setup_benchmark(mesh_set & mesh, imatrix & electrode_mask);
 
 };
 

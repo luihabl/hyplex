@@ -390,3 +390,27 @@ void rsolver::setup(mesh_set & mesh, imatrix & electrode_mask){
 }   
 
 
+void rsolver::setup_benchmark(mesh_set & mesh, imatrix & electrode_mask){
+    
+    int n_dirichlet = 2;
+    int n_neumann   = 2;
+
+    late_init(n_neumann, n_dirichlet);
+    
+    imatrix box_left_electrode  = {0, 0, 0, config->i("geometry/n_mesh_y") - 1};
+    imatrix box_right_electrode = {config->i("geometry/n_mesh_x") - 1, 0, config->i("geometry/n_mesh_x") - 1, config->i("geometry/n_mesh_y") - 1};
+    imatrix box_top_sym         = {1, config->i("geometry/n_mesh_y") - 1, config->i("geometry/n_mesh_x") - 2, config->i("geometry/n_mesh_y") - 1};
+    imatrix box_bot_sym         = {1, 0, config->i("geometry/n_mesh_x") - 2, 0};
+
+    set_neumann_box(box_top_sym, 0);
+    set_neumann_box(box_bot_sym, 1);
+    set_dirichlet_box(box_left_electrode, 0);
+    set_dirichlet_box(box_right_electrode, 1);
+
+    electrode_mask.setbox_value(1, box_right_electrode.val[0], box_right_electrode.val[1], box_right_electrode.val[2], box_right_electrode.val[3]);
+    electrode_mask.setbox_value(2, box_left_electrode.val[0], box_left_electrode.val[1], box_left_electrode.val[2], box_left_electrode.val[3]);
+
+    assemble();
+}   
+
+
