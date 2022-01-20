@@ -13,7 +13,7 @@ else ifeq ($(machine),hopper)
   LDFLAGS =  -Llib/yaml -lyaml-cpp -Llib/hypre-2.18.2/src/hypre/lib -lHYPRE
   CXXFLAGS = -Ilib -Ilib/yaml -Ilib/hypre-2.18.2/src/hypre/include -std=$(cpp_std) -O3 -march=x86-64 -Wall
 else
-  CC = g++
+  CC = mpic++
   LDFLAGS = -L/usr/local/lib -Llib/$(hypre_dir)/src/hypre/lib -Llib/yaml -lmpi -lHYPRE -lyaml-cpp
   CXXFLAGS = -I/usr/local/include -Ilib -Ilib/$(hypre_dir)/src/hypre/include -Ilib/yaml -std=$(cpp_std) -O3 -g -march=native -Wall
 endif
