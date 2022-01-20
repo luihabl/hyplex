@@ -7,6 +7,7 @@
 #include "particles.h"
 #include "particles-in-mesh.h"
 
+#include <vector>
 
 struct mcc
 {
@@ -14,7 +15,7 @@ struct mcc
     // cross-sections
     fmatrix elastic_cs;
     fmatrix ionization_cs;
-    tmatrix<fmatrix> excitation_cs;
+    std::vector<fmatrix> excitation_cs;
     fmatrix isotropic_cs;
     fmatrix backscattering_cs;
 
