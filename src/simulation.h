@@ -44,13 +44,15 @@ class simulation{
 
         // ---- Simulation variables
 
-        int n_steps;        
+        int n_steps;
         int k_sub;          
         int n_mesh_x;       
         int n_mesh_y;       
         int n_thruster;     
         int n_max_particles;
-        int verbosity;      
+        int verbosity;
+        double dt;
+        double freq;
         double m_el;        
         double t_el;        
         double v_drift_el;  
@@ -100,6 +102,8 @@ class simulation{
         mesh_set mesh;
 
         string expm_neutral;
+
+        bool is_benchmark;
 
 
 };

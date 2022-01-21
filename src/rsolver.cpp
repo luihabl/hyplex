@@ -343,6 +343,12 @@ bool rsolver::in_box(int i, int j, int ill, int jll, int iur, int jur){
 
 void rsolver::setup(mesh_set & mesh, imatrix & electrode_mask){
     
+    if(config->s("boundaries/ob_type") == "benchmark")
+    {
+        setup_benchmark(mesh, electrode_mask);
+        return;
+    }
+
     int n_dirichlet = 0, n_neumann = 0;
 
     if(config->s("boundaries/ob_type") == "dirichlet"){

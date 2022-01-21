@@ -35,7 +35,8 @@ void simulation::setup() {
     cout << "Hyplex " << GIT_VERSION << endl;
     cout << "Starting at " <<  clk::time_to_string(start_utc) << " UTC" << endl << endl;
 
-    
+    is_benchmark = config.s("boundaries/ob_type") == "benchmark";
+
     n_steps           = config.i("time/n_steps");
     k_sub             = config.i("time/k_sub");
     n_mesh_x          = config.i("geometry/n_mesh_x");
@@ -54,6 +55,8 @@ void simulation::setup() {
     mcc_coll          = config.b("neutrals/mcc_coll");
     inj_model         = config.s("electrons/inj_model");
     n_mesh_total      = config.i("geometry/n_mesh_x") * config.i("geometry/n_mesh_y");
+    dt                = config.f("time/dt");
+    freq              = config.f("thruster/freq");
 
     io::verbose_log("Initializing general variables", verbosity >= 1);
  
@@ -155,11 +158,24 @@ void simulation::run() {
     rsolver solver(&mesh, &config);
     solver.setup(mesh, electrode_mask);
 
-    voltages = {1, 0, 1, 1};
+    if(is_benchmark)
+        voltages = {0, 1, 1, 1};
+    else
+        voltages = {1, 0, 1, 1};
+
     solver.solve(phi_laplace, voltages, wmesh_i, wmesh_e);
 
-    voltages = {volt_1_norm, volt_0_norm, volt_1_norm, volt_1_norm};
+    if(is_benchmark)
+        voltages = {0, 0, 0, 1};
+    else
+        voltages = {volt_1_norm, volt_0_norm, volt_1_norm, volt_1_norm};
+    
     sigma_laplace = fields.sigma_from_phi(phi_laplace, mesh, wmesh_e, wmesh_i, electrode_mask);
+
+    if(is_benchmark) { //load initial particles
+        pops.add_maxwellian_particles(p_e, state.n_active_e, t_el, m_el, config.i("benchmark/ppc") * (n_mesh_x - 1) / mpi.size);
+        pops.add_maxwellian_particles(p_i, state.n_active_i, t_i, m_i, config.i("benchmark/ppc") * (n_mesh_x - 1) / mpi.size);
+    }
 
     // Printing initial information
     io::print_initial_info(coll.p_null_e, coll.p_null_i, config);
@@ -192,12 +208,19 @@ void simulation::run() {
 
             tp.val[2] = clk::sys_now();
 
-            state.sigma_0 = state.sigma_1;
+            if(is_benchmark)
+            {
+                state.phi_zero = volt_1_norm * std::sin(freq * ((double) state.step * dt));
+            }
+            else
+            {      
+                state.sigma_0 = state.sigma_1;
 
-            state.phi_zero = fields.calculate_phi_zero(state.sigma_1, n_out_ob_i_global - n_out_ob_e_global, state.q_cap, sigma_laplace, phi_poisson, mesh, wmesh_e_global, wmesh_i_global, electrode_mask);
+                state.phi_zero = fields.calculate_phi_zero(state.sigma_1, n_out_ob_i_global - n_out_ob_e_global, state.q_cap, sigma_laplace, phi_poisson, mesh, wmesh_e_global, wmesh_i_global, electrode_mask);
 
-            state.sigma_1 = fields.calculate_sigma(state.sigma_0, state.phi_zero, n_out_ob_i_global - n_out_ob_e_global, state.q_cap);
-            state.q_cap = fields.calculate_cap_charge(state.sigma_1, state.sigma_0, state.q_cap, n_out_ob_i_global - n_out_ob_e_global);
+                state.sigma_1 = fields.calculate_sigma(state.sigma_0, state.phi_zero, n_out_ob_i_global - n_out_ob_e_global, state.q_cap);
+                state.q_cap = fields.calculate_cap_charge(state.sigma_1, state.sigma_0, state.q_cap, n_out_ob_i_global - n_out_ob_e_global);
+            }
 
             phi = phi_poisson + (state.phi_zero * phi_laplace);
 
@@ -226,21 +249,33 @@ void simulation::run() {
         tp.val[6] = clk::sys_now();
 
         // // Step 4: particle loss at boundaries
-        if(state.step % k_sub == 0) pops.boundaries_ob_count(p_i, state.n_active_i, lpos_i, state.n_out_ob_i, state.n_out_thr_i, diag.p_i_removed, diag.n_removed_i, true);
-        pops.boundaries_ob_count(p_e, state.n_active_e, lpos_e, state.n_out_ob_e, state.n_out_thr_e, diag.p_e_removed, diag.n_removed_e, true);
-
+        if(is_benchmark)
+        {
+            if(state.step % k_sub == 0) pops.boundaries_benckmark(p_i, state.n_active_i, lpos_i);
+            pops.boundaries_benckmark(p_e, state.n_active_e, lpos_e);
+        }
+        else
+        {
+            if(state.step % k_sub == 0) pops.boundaries_ob_count(p_i, state.n_active_i, lpos_i, state.n_out_ob_i, state.n_out_thr_i, diag.p_i_removed, diag.n_removed_i, true);
+            pops.boundaries_ob_count(p_e, state.n_active_e, lpos_e, state.n_out_ob_e, state.n_out_thr_e, diag.p_e_removed, diag.n_removed_e, true);
+        }
+        
         tp.val[7] = clk::sys_now();
 
         // Step 5: particles injection
-        if(state.step % k_sub == 0) state.n_in_thr_i = pops.add_flux_particles(p_i, state.n_active_i, t_i, v_drift_i, m_i, n_inj_i / mpi.size_double, k_sub);
-        else state.n_in_thr_i = 0;
-        
-        if(inj_model == "constant");  //n_inj_el = n_inj_el;
-        else if(inj_model == "balanced")  n_inj_el = pops.balanced_injection(n_inj_el, 0.01, wmesh_i, wmesh_e, 0, 0, 0, n_thruster - 1);
-        else if(inj_model == "pulsed")    n_inj_el = pops.pulsed_injection(state.step);
-        else if(inj_model == "square")    n_inj_el = pops.square_injection(state.step);
-        state.n_in_thr_e = pops.add_flux_particles(p_e, state.n_active_e, t_el, v_drift_el, m_el, n_inj_el / mpi.size_double, 1);
-        
+
+        if(!is_benchmark)
+        {
+            if(state.step % k_sub == 0) state.n_in_thr_i = pops.add_flux_particles(p_i, state.n_active_i, t_i, v_drift_i, m_i, n_inj_i / mpi.size_double, k_sub);
+            else state.n_in_thr_i = 0;
+            
+            if(inj_model == "constant");  //n_inj_el = n_inj_el;
+            else if(inj_model == "balanced")  n_inj_el = pops.balanced_injection(n_inj_el, 0.01, wmesh_i, wmesh_e, 0, 0, 0, n_thruster - 1);
+            else if(inj_model == "pulsed")    n_inj_el = pops.pulsed_injection(state.step);
+            else if(inj_model == "square")    n_inj_el = pops.square_injection(state.step);
+            state.n_in_thr_e = pops.add_flux_particles(p_e, state.n_active_e, t_el, v_drift_el, m_el, n_inj_el / mpi.size_double, 1);
+        }
+
         // Step 6: Monte-Carlo collisions
         if(mcc_coll){
             if(state.step % k_sub == 0) coll.collisions_i(p_i, state.n_active_i, lpos_i, mesh, dens_n);

@@ -236,6 +236,39 @@ void particle_operations::boundaries_n(fmatrix & p, int & n_active, imatrix & lp
     }
 }
 
+void particle_operations::boundaries_benckmark(fmatrix & p, int & n_active, imatrix & lpos){
+
+	int n_remove = 0;
+    double x, y;
+	const double x_max = ((double) n_mesh_x - 1);
+    const double y_max = ((double) n_mesh_y - 1) * (dy / dx);
+    
+    for (int i = 0; i < n_active; i++)
+    {
+        x = p.val[i * 6 + 0];
+        y = p.val[i * 6 + 1];
+
+		if (x < x_max && x > 0 && y < y_max && y > 0) continue;
+
+
+        if (x > x_max || x < 0){
+			add_for_removal(tbremoved, n_remove, i);
+			continue;
+		}
+        	
+		if (y > y_max) {
+			reflect_particle_specular(p, i, x, y, 1);
+		}
+		
+		if (y < 0) {
+            reflect_particle_specular(p, i, x, y, 3);
+        }
+
+    }
+    
+    remove_particles(tbremoved, n_remove, p, n_active, lpos);
+}
+
 void particle_operations::boundaries_n_pump(fmatrix & p, int & n_active, imatrix & lpos, double pump_prob){
 
 	// int n_remove = 0;

@@ -28,8 +28,16 @@ void configuration::calculate_parameters(){
     set("geometry/dx", dx);
     set("geometry/dy", dy);
 
-    // ---- voltages ----
+    bool is_benchmark = s("boundaries/ob_type") == "benchmark";
+    
+    if(is_benchmark)
+    {
+        set("time/dt", 1.0 / (f("thruster/freq") * f("benchmark/dt_factor")));
+        set("particles/n_factor", f("benchmark/n_plasma") * f("geometry/l_x") * f("geometry/l_y") / (double) (i("benchmark/ppc") * (i("geometry/n_mesh_x") - 1) * (i("geometry/n_mesh_y") - 1)));
+    }   
+
     double dt = f("time/dt");
+
     double q =  f("physical/q");
     double m_el = f("electrons/m_el");
     double n_factor = f("particles/n_factor");
