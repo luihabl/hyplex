@@ -112,7 +112,7 @@ class output_manager
         configuration * config;
         mesh_set * mesh;
         
-        int verbosity, step_print_info, step_save_state, step_save_fields, step_save_series, step_update_metadata,
+        int verbosity, step_print_info, step_save_state, step_save_fields, step_save_series, step_update_metadata, step_average_field,
             rf_period_i, n_steps, print_timing_step, step_save_vdist, mpi_rank, mpi_size, n_mesh_x, n_mesh_y,
             step_file_refresh;
         double start_progress, dt;
@@ -134,8 +134,10 @@ class output_manager
         
         void save_state(fmatrix & p_e, fmatrix & p_i, bool force = false);
         void save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, diagnostics & diag, mesh_set & mesh, string suffix, bool force = false);
+        void save_fields_snapshot_reduced(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, mesh_set & mesh, string suffix, bool force = false);
         void save_series(diagnostics & diag, bool force = false); 
         void fields_rf_average(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, diagnostics & diag, mesh_set & mesh);
+        void fields_average(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, mesh_set & mesh);
         template <class T> void save_fmatrix(tmatrix<T> & m, ghc::filesystem::path datapath);
         void save_initial_data();
         void update_metadata(string status = "running", bool force = false);

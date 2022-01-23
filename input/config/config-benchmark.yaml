@@ -29,9 +29,9 @@ physical:
 
 geometry:
   l_x: 0.067                                # Spatial step in x [m]
-  l_y: 0.02                                # Spatial step in y [m]
+  l_y: 0.02                             # Spatial step in y [m]
   n_mesh_x: 129                             # Number of grid points in the x direction []
-  n_mesh_y: 4                               # Number of grid points in the y direction []
+  n_mesh_y: 5                               # Number of grid points in the y direction []
   n_thruster: 16                            # Number of nodes that represent the thruster []
   a_x: 0.0                                  # Grid distorsion coefficient in the x direction []
   a_y: 0.0                                  # Grid distorsion coefficient in the y direction []
@@ -40,7 +40,7 @@ time:
   dt: 2.0e-11                               # Time step [s]
   n_steps: 512000                              # Number of simulation steps to be executed []
   n_steps_dsmc: 18e6                       # Number of DSMC simulation steps to be executed []
-  n_average: 1                              # Number of average steps []
+  n_average: 12800                              # Number of average steps []
   n_average_dsmc: 200000                     # Number of DSMC average steps []
   k_sub: 1                                  # Ion subcycling factor []
   k_sub_dsmc: 800                           # DSMC subcycling factor []

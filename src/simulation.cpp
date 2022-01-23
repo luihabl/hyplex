@@ -159,22 +159,22 @@ void simulation::run() {
     solver.setup(mesh, electrode_mask);
 
     if(is_benchmark)
-        voltages = {0, 1, 1, 1};
+        voltages = {0, 1};
     else
         voltages = {1, 0, 1, 1};
 
     solver.solve(phi_laplace, voltages, wmesh_i, wmesh_e);
 
     if(is_benchmark)
-        voltages = {0, 0, 0, 1};
+        voltages = {0, 0};
     else
         voltages = {volt_1_norm, volt_0_norm, volt_1_norm, volt_1_norm};
     
     sigma_laplace = fields.sigma_from_phi(phi_laplace, mesh, wmesh_e, wmesh_i, electrode_mask);
 
     if(is_benchmark) { //load initial particles
-        pops.add_maxwellian_particles(p_e, state.n_active_e, t_el, m_el, config.i("benchmark/ppc") * (n_mesh_x - 1) / mpi.size);
-        pops.add_maxwellian_particles(p_i, state.n_active_i, t_i, m_i, config.i("benchmark/ppc") * (n_mesh_x - 1) / mpi.size);
+        pops.add_maxwellian_particles(p_e, state.n_active_e, t_el, m_el, (size_t) ceil(config.f("benchmark/n_total") / (double) mpi.size));
+        pops.add_maxwellian_particles(p_i, state.n_active_i, t_i, m_i, (size_t) ceil(config.f("benchmark/n_total") / (double) mpi.size));
     }
 
     // Printing initial information
@@ -210,7 +210,7 @@ void simulation::run() {
 
             if(is_benchmark)
             {
-                state.phi_zero = volt_1_norm * std::sin(freq * ((double) state.step * dt));
+                state.phi_zero = volt_1_norm * std::sin(2 * M_PI * freq * dt * (double) state.step);
             }
             else
             {      
@@ -295,7 +295,7 @@ void simulation::run() {
         output.save_series(diag);
         output.save_distributions(diag);
         output.update_metadata();
-        // output.fields_rf_average(phi, wmesh_e_global, wmesh_i_global, diag, mesh); // <- this is not working properly, since the "save_field_snapshot" saves everything, including stuff that was not averaged
+        output.fields_average(phi, wmesh_e_global, wmesh_i_global, mesh);
         
         tp.val[9] = clk::sys_now();
         output.print_loop_timing(tp);

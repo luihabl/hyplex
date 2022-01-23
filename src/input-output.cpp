@@ -308,6 +308,41 @@ void load_state(fmatrix & p_e, fmatrix & p_i, state_info & state, configuration 
 
 }
 
+void output_manager::save_fields_snapshot_reduced(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, mesh_set & mesh, string suffix, bool force)
+{
+    if(!(force || state->step % step_save_fields == 0)) return;
+
+    if(mpi_rank != 0) return;
+
+    check_output_folder();
+
+    ghc::filesystem::path obj_path = "fields" + suffix;
+
+    file.create_group(obj_path);
+
+    const double dx = config->f("geometry/dx");
+    const double dt = config->f("time/dt");
+    const double n_factor = config->f("particles/n_factor");
+    const double k_phi = config->f("p/k_phi");
+
+    file.write_attribute(obj_path, "Time [s]", (double) state->step * dt);
+    file.write_attribute(obj_path, "Step", (double) state->step);
+
+    fmatrix phi_corrected = phi / k_phi;
+    file.write_dataset(obj_path / "phi", phi_corrected);
+
+    fmatrix k_dens = mesh.v / ((4 / pow(dx, 2)) *  n_factor);
+
+    fmatrix dens_e = wmesh_e / k_dens;
+    file.write_dataset(obj_path / "dens_e", dens_e);
+
+    fmatrix dens_i = wmesh_i / k_dens;
+    file.write_dataset(obj_path / "dens_i", dens_i);
+
+    verbose_log("Saved reduced fields snapshot", verbosity >= 1);
+}
+
+
 void output_manager::save_fields_snapshot(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, diagnostics & diag, mesh_set & mesh, string suffix, bool force)
 {
     if(!(force || state->step % step_save_fields == 0)) return;
@@ -429,6 +464,7 @@ output_manager::output_manager(system_clock::time_point _start_utc, state_info *
 
     rf_period_i = config->i("p/rf_period_i");
     n_steps = config->i("time/n_steps");
+    step_average_field = config->i("time/n_average");
     start_progress = config->f("diagnostics/rf_av/start_progress");
     print_timing_step = config->i("diagnostics/print_info/print_timing_step"); 
     dt = config->f("time/dt");
@@ -590,6 +626,27 @@ void output_manager::fields_rf_average(fmatrix & phi, fmatrix & wmesh_e, fmatrix
         }
     }
 }
+
+
+void output_manager::fields_average(fmatrix & phi, fmatrix & wmesh_e, fmatrix & wmesh_i, mesh_set & mesh){
+    
+    if(mpi_rank != 0) return;
+
+    int i = state->step - state->step_offset;
+    if(i > n_steps - step_average_field - 1){
+        
+        int counter_av = i - (n_steps - step_average_field - 1);
+
+        average_field(phi_av, phi, counter_av);
+        average_field(wmesh_e_av, wmesh_e, counter_av);
+        average_field(wmesh_i_av, wmesh_i, counter_av);
+
+        if(i == n_steps - 1){
+            save_fields_snapshot_reduced(phi_av, wmesh_e_av, wmesh_i_av, mesh, "-av", true);
+        }
+    }
+}
+
 
 
  void output_manager::print_loop_timing(tmatrix<system_clock::time_point> & tp){
