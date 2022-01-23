@@ -17,7 +17,7 @@ project:
   cross_sections_path: "input/cross-sections/"
 
 simulation:
-  job_name: "benchmark"
+  job_name: "benchmark_D"
   initial_state: "new"                      # Load input for simulation state or start again: 'load' or 'new'
   verbosity: 1                              # Verbosity level: 0 means minimum messages
 
@@ -30,7 +30,7 @@ physical:
 geometry:
   l_x: 0.067                                # Spatial step in x [m]
   l_y: 0.02                             # Spatial step in y [m]
-  n_mesh_x: 129                             # Number of grid points in the x direction []
+  n_mesh_x: 513                             # Number of grid points in the x direction []
   n_mesh_y: 5                               # Number of grid points in the y direction []
   n_thruster: 16                            # Number of nodes that represent the thruster []
   a_x: 0.0                                  # Grid distorsion coefficient in the x direction []
@@ -38,24 +38,24 @@ geometry:
 
 time:
   dt: 2.0e-11                               # Time step [s]
-  n_steps: 512000                              # Number of simulation steps to be executed []
+  n_steps: 49152000                              # Number of simulation steps to be executed []
   n_steps_dsmc: 18e6                       # Number of DSMC simulation steps to be executed []
-  n_average: 12800                              # Number of average steps []
+  n_average: 102400                              # Number of average steps []
   n_average_dsmc: 200000                     # Number of DSMC average steps []
   k_sub: 1                                  # Ion subcycling factor []
   k_sub_dsmc: 800                           # DSMC subcycling factor []
 
 boundaries:
   volt_0: 0.0                               # Voltage on the thruster [V]
-  volt_1: 450.0                               # Voltage on the chamber walls [V]
+  volt_1: 120.0                               # Voltage on the chamber walls [V]
   c_cap: 1.0e-11                            # Capacitance of thruster connection [F]
   ob_type: "benchmark"                      # Type of outer boundary condition: neumann, dirichlet or benchmark
   n_pump_prob: 0.95                         # Neutral pumping capacity of boundaries: 0 - all flow escape, 1 - all flow is reflected
 
 benchmark:
-  ppc: 512
-  dt_factor: 400
-  n_plasma: 2.56e14
+  ppc: 64
+  dt_factor: 3200
+  n_plasma: 3.84e14
 
 thruster:
   mfc: 3.0                                  # Mass flow rate of thruster [sccm]
@@ -73,7 +73,7 @@ neutrals:
   expm_neutral: "constant"                      # Expansion model of neutral flow: 'dsmc', 'constant' or 'load'
   mcc_coll: true                           # Toggle MCC collisions: true or false
   t_neutral: 0.02585                        # Temperature of neutral gas [eV]
-  n_neutral: 9.64e20                        # Density of neutral gas [m^-3]
+  n_neutral: 32.1e21                        # Density of neutral gas [m^-3]
 
 electrons:
   inj_model: "constant"                     # Electron injection model: 'constant', 'pulsed', 'balanced', or 'square'
@@ -97,7 +97,7 @@ diagnostics:
     file_refresh_step: 10000
 
   print_info:
-    print_step: 100
+    print_step: 1000
     print_timing_step: 10
 
   metadata:
@@ -116,12 +116,12 @@ diagnostics:
     end_save: true   
   
   series:
-    save: true
-    measure_step: 1
+    save: false
+    measure_step: 100000
     measure_step_dsmc: 1000
     save_step: 50000
     short_series_start_progress: 0.9
-    end_save: true
+    end_save: false
 
   rf_av:
     start_progress: 0.9
